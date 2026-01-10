@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* Primary color */
+  --color-primary: #2563eb;
+  --color-primary-foreground: #ffffff;
+
+  /* Secondary color */
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #0f172a;
+
+  /* Background colors */
+  --color-background: #ffffff;
+  --color-foreground: #0f172a;
+
+  /* Card colors */
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+
+  /* Popover colors */
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f172a;
+
+  /* Muted colors */
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+
+  /* Accent colors */
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #0f172a;
+
+  /* Destructive (error) color */
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  /* Border and input colors */
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+
+  /* Ring (focus) color */
+  --color-ring: #2563eb;
+
+  /* Font family */
+  --font-roboto: "Roboto", sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: "Roboto", sans-serif;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
