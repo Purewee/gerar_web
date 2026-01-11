@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,9 +11,12 @@ import {
   useCartAdd,
   useFavoriteAdd,
   useFavoriteRemove,
-  useFavoriteStatus,
+  useOrderBuyNow,
+  useAddresses,
   getAuthToken,
+  queryKeys,
 } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 
 export default function ProductDetailPage() {
@@ -22,6 +25,7 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const productId = parseInt(params.id as string);
   const {
@@ -31,13 +35,26 @@ export default function ProductDetailPage() {
   } = useProduct(isNaN(productId) ? 0 : productId);
   const product = productResponse?.data;
 
+  // Local state for favorite status to enable optimistic updates
+  const [isFavorited, setIsFavorited] = useState(product?.isFavorite || false);
+
+  // Sync local state with product data when it changes
+  useEffect(() => {
+    if (product?.isFavorite !== undefined) {
+      setIsFavorited(product.isFavorite);
+    }
+  }, [product?.isFavorite]);
+
   const addToCartMutation = useCartAdd();
   const addFavoriteMutation = useFavoriteAdd();
   const removeFavoriteMutation = useFavoriteRemove();
-  const { data: favoriteStatusResponse } = useFavoriteStatus(
-    isNaN(productId) ? 0 : productId
-  );
-  const isFavorited = favoriteStatusResponse?.data?.isFavorited || false;
+  const buyNowMutation = useOrderBuyNow();
+
+  // Fetch user addresses to check if we can do instant checkout
+  const { data: addressesResponse } = useAddresses();
+  const addresses = addressesResponse?.data || [];
+  const defaultAddress =
+    addresses.find((addr) => addr.isDefault) || addresses[0];
 
   if (loading) {
     return (
@@ -52,7 +69,7 @@ export default function ProductDetailPage() {
 
   if (productError || !product) {
     return (
-      <div className="bg-gray-50 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-525px)] bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Бүтээгдэхүүн олдсонгүй</p>
           <Button onClick={() => router.push("/")}>
@@ -93,7 +110,9 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
+    if (!product) return;
+
     const token = getAuthToken();
     if (!token) {
       toast({
@@ -105,10 +124,18 @@ export default function ProductDetailPage() {
       return;
     }
 
-    toast({
-      title: "Төлбөр төлөх рүү шилжиж байна",
-      description: "Төлбөр төлөх хуудас руу шилжиж байна...",
-    });
+    // Store buyNow product info and redirect to order create page
+    // User will choose address and delivery time, then confirm to call buyNow API
+    sessionStorage.setItem(
+      "buyNowProduct",
+      JSON.stringify({
+        productId: product.id,
+        quantity: quantity,
+        productName: product.name,
+        productPrice: product.price,
+      })
+    );
+    router.push("/orders/create");
   };
 
   const handleToggleFavorite = async () => {
@@ -125,24 +152,70 @@ export default function ProductDetailPage() {
       return;
     }
 
+    // Optimistically update UI immediately
+    const newFavoriteStatus = !isFavorited;
+    setIsFavorited(newFavoriteStatus);
+
+    // Optimistically update query cache
+    const queryKey = queryKeys.products.detail(productId);
+    queryClient.setQueryData(queryKey, (oldData: any) => {
+      if (!oldData?.data) return oldData;
+      return {
+        ...oldData,
+        data: {
+          ...oldData.data,
+          isFavorite: newFavoriteStatus,
+        },
+      };
+    });
+
     try {
+      let response;
       if (isFavorited) {
-        await removeFavoriteMutation.mutateAsync(product.id);
+        // Remove from favorites
+        response = await removeFavoriteMutation.mutateAsync(product.id);
         toast({
           title: "Дуртай жагсаалтаас устгагдсан",
           description: `${product.name} дуртай жагсаалтаас устгагдлаа`,
         });
       } else {
-        await addFavoriteMutation.mutateAsync(product.id);
+        // Add to favorites
+        response = await addFavoriteMutation.mutateAsync(product.id);
         toast({
           title: "Дуртай жагсаалтад нэмэгдсэн",
           description: `${product.name} дуртай жагсаалтад нэмэгдлээ`,
         });
       }
+
+      // Update query cache with actual API response data
+      if (response?.data) {
+        queryClient.setQueryData(queryKey, (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            data: {
+              ...response.data,
+              isFavorite: newFavoriteStatus,
+            },
+          };
+        });
+      }
     } catch (error: any) {
+      // Revert optimistic update on error
+      setIsFavorited(!newFavoriteStatus);
+      queryClient.setQueryData(queryKey, (oldData: any) => {
+        if (!oldData?.data) return oldData;
+        return {
+          ...oldData,
+          data: {
+            ...oldData.data,
+            isFavorite: !newFavoriteStatus,
+          },
+        };
+      });
       toast({
         title: "Алдаа гарлаа",
-        description: error.message || "Дуртай жагсаалт шинэчлэхэд алдаа гарлаа",
+        description: error.message || "Шинэчлэхэд алдаа гарлаа",
         variant: "destructive",
       });
     }
@@ -223,20 +296,18 @@ export default function ProductDetailPage() {
                     {parseFloat(product.originalPrice).toLocaleString()}₮
                   </div>
                 )}
-              {product.discountPercentage && (
-                <div className="bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-full">
-                  {product.discountPercentage}% ХЯМДРАЛТАЙ
-                </div>
-              )}
             </div>
 
-            {product.stock > 0 && (
-              <div className="mb-4">
-                <span className="text-sm text-green-600 font-medium">
-                  Барааны үлдэгдэл: {product.stock} ширхэг
-                </span>
-              </div>
-            )}
+            <div className="mb-4">
+              <span
+                className={`text-sm font-medium ${
+                  product.stock > 0 ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                Барааны үлдэгдэл: {product.stock} ширхэг
+                {product.stock === 0 && " (Дууссан)"}
+              </span>
+            </div>
 
             <div className="mb-6">
               <h2 className="text-lg font-semibold mb-2">Тайлбар</h2>
@@ -283,9 +354,11 @@ export default function ProductDetailPage() {
               <Button
                 onClick={handleBuyNow}
                 className="flex-1"
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || buyNowMutation.isPending}
               >
-                Одоо худалдаж авах
+                {buyNowMutation.isPending
+                  ? "Бэлдэж байна..."
+                  : "Одоо худалдаж авах"}
               </Button>
               <Button
                 onClick={handleToggleFavorite}

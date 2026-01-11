@@ -17,24 +17,15 @@ function ProductsContent() {
   const queryParams: ProductsQueryParams = useMemo(() => {
     const params: ProductsQueryParams = {};
 
-    const categoryId = searchParams.get("categoryId");
-    if (categoryId) {
-      const id = parseInt(categoryId, 10);
-      if (!isNaN(id)) params.categoryId = id;
-    }
-
-    const categoryIds = searchParams.get("categoryIds");
-    if (categoryIds) {
-      const ids = categoryIds.split(",").map((id) => parseInt(id.trim(), 10)).filter((id) => !isNaN(id));
-      if (ids.length > 0) params.categoryIds = ids;
+    // Support both 'category' and 'categoryId' for backward compatibility
+    const categoryParam = searchParams.get("category") || searchParams.get("categoryId");
+    if (categoryParam) {
+      const id = parseInt(categoryParam, 10);
+      if (!isNaN(id)) params.category = id;
     }
 
     const search = searchParams.get("search");
     if (search) params.search = search;
-
-    const inStock = searchParams.get("inStock");
-    if (inStock === "true") params.inStock = true;
-    if (inStock === "false") params.inStock = false;
 
     const minPrice = searchParams.get("minPrice");
     if (minPrice) {
@@ -48,26 +39,11 @@ function ProductsContent() {
       if (!isNaN(price)) params.maxPrice = price;
     }
 
-    const minStock = searchParams.get("minStock");
-    if (minStock) {
-      const stock = parseInt(minStock, 10);
-      if (!isNaN(stock)) params.minStock = stock;
-    }
-
-    const maxStock = searchParams.get("maxStock");
-    if (maxStock) {
-      const stock = parseInt(maxStock, 10);
-      if (!isNaN(stock)) params.maxStock = stock;
-    }
-
-    const createdAfter = searchParams.get("createdAfter");
-    if (createdAfter) params.createdAfter = createdAfter;
-
-    const createdBefore = searchParams.get("createdBefore");
-    if (createdBefore) params.createdBefore = createdBefore;
-
     const sortBy = searchParams.get("sortBy");
-    if (sortBy && ["name", "price", "stock", "createdAt", "updatedAt"].includes(sortBy)) {
+    if (
+      sortBy &&
+      ["name", "price", "stock", "createdAt", "updatedAt"].includes(sortBy)
+    ) {
       params.sortBy = sortBy as ProductsQueryParams["sortBy"];
     }
 
@@ -99,6 +75,19 @@ function ProductsContent() {
   } = useProducts(queryParams);
   const products = productsResponse?.data || [];
   const searchQuery = searchParams.get("search");
+  const categoryId = queryParams.category;
+
+  // Get category name from products (if available)
+  const category =
+    products.length > 0 && products[0].category
+      ? products[0].category
+      : products.length > 0 &&
+        products[0].categories &&
+        products[0].categories.length > 0
+      ? products[0].categories[0]
+      : null;
+  
+  const categoryName = category?.name || (categoryId ? `Ангилал #${categoryId}` : null);
 
   return (
     <div className="h-full bg-gray-50">
@@ -116,10 +105,17 @@ function ProductsContent() {
                   Хайлтын үр дүн:{" "}
                   <span className="text-primary">"{searchQuery}"</span>
                 </>
+              ) : categoryName ? (
+                categoryName
               ) : (
                 "Бүх бүтээгдэхүүн"
               )}
             </h1>
+            {category?.description && (
+              <p className="text-sm text-gray-600 mt-2">
+                {category.description}
+              </p>
+            )}
             {products.length > 0 && (
               <p className="text-sm text-gray-500 mt-1">
                 {products.length} бараа олдлоо
@@ -176,9 +172,15 @@ function ProductsContent() {
                 id={product.id}
                 name={product.name}
                 price={parseFloat(product.price)}
-                original={product.originalPrice ? parseFloat(product.originalPrice) : undefined}
+                originalPrice={
+                  product.originalPrice
+                    ? parseFloat(product.originalPrice)
+                    : undefined
+                }
                 imageUrl={product.firstImage || product.images?.[0]}
-                icon={!product.firstImage && !product.images?.[0] ? "📦" : undefined}
+                icon={
+                  !product.firstImage && !product.images?.[0] ? "📦" : undefined
+                }
               />
             ))}
           </div>
@@ -192,7 +194,7 @@ export default function ProductsPage() {
   return (
     <Suspense
       fallback={
-        <div className="h-full bg-gray-50 flex items-center justify-center">
+        <div className="h-full min-h-[calc(100vh-525px)] bg-gray-50 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       }
@@ -201,4 +203,3 @@ export default function ProductsPage() {
     </Suspense>
   );
 }
-

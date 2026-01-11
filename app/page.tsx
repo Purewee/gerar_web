@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ProductCard, ProductCardProps } from "@/components/product-card";
+import { ProductCard } from "@/components/product-card";
+import { useProducts } from "@/lib/api";
 
 interface CarouselItem {
   id: number;
@@ -61,6 +62,18 @@ export default function Home() {
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+
+  // Fetch recently added products
+  const {
+    data: productsResponse,
+    isLoading: productsLoading,
+    error: productsError,
+  } = useProducts({
+    sortBy: "createdAt",
+    sortOrder: "desc",
+    limit: 10,
+  });
+  const recentProducts = productsResponse?.data || [];
 
   const restartTimer = useCallback(() => {
     if (intervalRef.current) {
@@ -214,14 +227,14 @@ export default function Home() {
         </section>
 
         {/* Featured Furniture Section */}
-        <section className="py-4">
+        <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center mb-6 sm:mb-8">
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold">
                 Сүүлд нэмэгдсэн бараа
               </h2>
               <a
-                href="#"
+                href="/products?sortBy=createdAt&sortOrder=desc"
                 className="text-primary hover:underline flex items-center gap-1 text-sm sm:text-base"
               >
                 Бүгдийг харах
@@ -240,51 +253,49 @@ export default function Home() {
                 </svg>
               </a>
             </div>
-            <div className="overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-              <div className="flex gap-3 sm:gap-4 md:gap-6 pb-4 min-w-max">
-                {(
-                  [
-                    {
-                      id: 1,
-                      name: "Орчин үеийн буйдангийн багц (3+2)",
-                      price: 32999,
-                      original: 74999,
-                      icon: "🛋️",
-                    },
-                    {
-                      id: 2,
-                      name: "Модон хоолны ширээний багц",
-                      price: 24999,
-                      original: 59999,
-                      icon: "🪑",
-                      featured: true,
-                    },
-                    {
-                      id: 3,
-                      name: "Квин хэмжээтэй орны хүрээ",
-                      price: 19999,
-                      original: 44999,
-                      icon: "🛏️",
-                    },
-                    {
-                      id: 4,
-                      name: "Хадгалах сонголттой кофе ширээ",
-                      price: 8999,
-                      original: 19999,
-                      icon: "☕",
-                    },
-                    {
-                      id: 5,
-                      name: "Орчин үеийн гэрэлтүүлэг",
-                      price: 15999,
-                      icon: "💡",
-                    },
-                  ] as ProductCardProps[]
-                ).map((item) => (
-                  <ProductCard key={item.id} {...item} />
-                ))}
+            {productsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-gray-600">Бараа ачаалж байна...</p>
+                </div>
               </div>
-            </div>
+            ) : productsError ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600">Бараа ачаалахад алдаа гарлаа</p>
+              </div>
+            ) : recentProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600">Одоогоор бараа байхгүй байна</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+                <div className="flex gap-3 sm:gap-4 md:gap-6 pb-4 min-w-max">
+                  {recentProducts.map((product) => {
+                    const price = parseFloat(product.price) || 0;
+                    const originalPrice = product.originalPrice
+                      ? parseFloat(product.originalPrice)
+                      : undefined;
+                    const imageUrl =
+                      product.firstImage ||
+                      (product.images && product.images.length > 0
+                        ? product.images[0]
+                        : undefined);
+
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        id={product.id}
+                        name={product.name}
+                        price={price}
+                        originalPrice={originalPrice}
+                        imageUrl={imageUrl}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </main>

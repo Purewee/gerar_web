@@ -79,7 +79,7 @@ export default function LoginPage() {
           title: "Амжилттай нэвтэрлээ",
           description: "Таны бүртгэлд амжилттай нэвтэрлээ",
         });
-        router.push("/profile");
+        router.push("/");
       }
     } catch (error: any) {
       toast({

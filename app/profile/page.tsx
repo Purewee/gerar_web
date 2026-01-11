@@ -32,6 +32,7 @@ import {
   useAddressDelete,
   useAddressSetDefault,
   type CreateAddressRequest,
+  type Address,
 } from "@/lib/api";
 import { ProductCard } from "@/components/product-card";
 import Link from "next/link";
@@ -116,7 +117,7 @@ function OrdersContent() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="flex flex-col space-y-4">
           {orders.map((order) => (
             <Link key={order.id} href={`/orders/${order.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
@@ -150,8 +151,18 @@ function OrdersContent() {
                       </p>
                       {order.address && (
                         <p className="text-sm text-gray-500">
-                          {order.address.provinceOrDistrict},{" "}
-                          {order.address.khorooOrSoum}
+                          {[
+                            order.address.provinceOrDistrict,
+                            order.address.khorooOrSoum,
+                            order.address.street,
+                            order.address.neighborhood,
+                            order.address.residentialComplex,
+                            order.address.building,
+                            order.address.entrance,
+                            order.address.apartmentNumber,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
                         </p>
                       )}
                       {order.items && order.items.length > 0 && (
@@ -187,18 +198,30 @@ function AddressesContent() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<CreateAddressRequest>({
-    fullName: "",
-    phoneNumber: "",
+    label: null,
     provinceOrDistrict: "",
     khorooOrSoum: "",
+    street: "",
+    neighborhood: null,
+    residentialComplex: null,
+    building: null,
+    entrance: null,
+    apartmentNumber: null,
+    addressNote: null,
   });
 
   const resetForm = () => {
     setFormData({
-      fullName: "",
-      phoneNumber: "",
+      label: null,
       provinceOrDistrict: "",
       khorooOrSoum: "",
+      street: "",
+      neighborhood: null,
+      residentialComplex: null,
+      building: null,
+      entrance: null,
+      apartmentNumber: null,
+      addressNote: null,
     });
     setShowAddForm(false);
     setEditingId(null);
@@ -233,21 +256,19 @@ function AddressesContent() {
     }
   };
 
-  const handleEdit = (address: any) => {
+  const handleEdit = (address: Address) => {
     setEditingId(address.id);
     setFormData({
-      label: address.label || undefined,
-      fullName: address.fullName,
-      phoneNumber: address.phoneNumber,
-      provinceOrDistrict: address.provinceOrDistrict,
-      khorooOrSoum: address.khorooOrSoum,
-      street: address.street || undefined,
-      neighborhood: address.neighborhood || undefined,
-      residentialComplex: address.residentialComplex || undefined,
-      building: address.building || undefined,
-      entrance: address.entrance || undefined,
-      apartmentNumber: address.apartmentNumber || undefined,
-      addressNote: address.addressNote || undefined,
+      label: address.label || null,
+      provinceOrDistrict: address.provinceOrDistrict || "",
+      khorooOrSoum: address.khorooOrSoum || "",
+      street: address.street || "",
+      neighborhood: address.neighborhood || null,
+      residentialComplex: address.residentialComplex || null,
+      building: address.building || null,
+      entrance: address.entrance || null,
+      apartmentNumber: address.apartmentNumber || null,
+      addressNote: address.addressNote || null,
       isDefault: address.isDefault,
     });
     setShowAddForm(true);
@@ -351,22 +372,10 @@ function AddressesContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Хаягийн нэр (сонголттой)
-                    </label>
-                    <Input
-                      value={formData.label || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, label: e.target.value })
-                      }
-                      placeholder="Жишээ: Гэр, Ажлын байр"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
                       Аймаг/Дүүрэг *
                     </label>
                     <Input
-                      value={formData.provinceOrDistrict}
+                      value={formData.provinceOrDistrict || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -374,6 +383,7 @@ function AddressesContent() {
                         })
                       }
                       required
+                      minLength={2}
                       placeholder="Аймаг эсвэл дүүрэг"
                     />
                   </div>
@@ -382,7 +392,7 @@ function AddressesContent() {
                       Хороо/Сум *
                     </label>
                     <Input
-                      value={formData.khorooOrSoum}
+                      value={formData.khorooOrSoum || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -390,31 +400,33 @@ function AddressesContent() {
                         })
                       }
                       required
+                      minLength={2}
                       placeholder="Хороо эсвэл сум"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Гудамж (сонголттой)
+                      Гудамж *
                     </label>
                     <Input
                       value={formData.street || ""}
                       onChange={(e) =>
                         setFormData({ ...formData, street: e.target.value })
                       }
+                      required
                       placeholder="Гудамж"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Хороолол (сонголттой)
+                      Хороолол
                     </label>
                     <Input
                       value={formData.neighborhood || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          neighborhood: e.target.value,
+                          neighborhood: e.target.value || null,
                         })
                       }
                       placeholder="Хороолол"
@@ -422,14 +434,14 @@ function AddressesContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Орон сууцны цогцолбор (сонголттой)
+                      Орон сууцны цогцолбор
                     </label>
                     <Input
                       value={formData.residentialComplex || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          residentialComplex: e.target.value,
+                          residentialComplex: e.target.value || null,
                         })
                       }
                       placeholder="Орон сууцны цогцолбор"
@@ -437,61 +449,79 @@ function AddressesContent() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Барилга (сонголттой)
+                      Барилга
                     </label>
                     <Input
                       value={formData.building || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, building: e.target.value })
+                        setFormData({
+                          ...formData,
+                          building: e.target.value || null,
+                        })
                       }
                       placeholder="Барилга"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Орц (сонголттой)
+                      Орц
                     </label>
                     <Input
                       value={formData.entrance || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, entrance: e.target.value })
+                        setFormData({
+                          ...formData,
+                          entrance: e.target.value || null,
+                        })
                       }
                       placeholder="Орц"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Орон сууцны дугаар (сонголттой)
+                      Хаалганы дугаар
                     </label>
                     <Input
                       value={formData.apartmentNumber || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          apartmentNumber: e.target.value,
+                          apartmentNumber: e.target.value || null,
                         })
                       }
-                      placeholder="Орон сууцны дугаар"
+                      placeholder="Хаалганы дугаар"
                     />
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Нэмэлт тэмдэглэл (сонголттой)
-                  </label>
-                  <textarea
-                    value={formData.addressNote || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        addressNote: e.target.value.slice(0, 500),
-                      })
-                    }
-                    maxLength={500}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="Нэмэлт тэмдэглэл (500 тэмдэгт хүртэл)"
-                  />
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium mb-2">
+                      Хаягийн тэмдэглэл
+                    </label>
+                    <Input
+                      value={formData.addressNote || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          addressNote: e.target.value || null,
+                        })
+                      }
+                      placeholder="Хаягийн тэмдэглэл"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium mb-2">
+                      Хаягийн нэр (Label)
+                    </label>
+                    <Input
+                      value={formData.label || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          label: e.target.value || null,
+                        })
+                      }
+                      placeholder="Жишээ: Гэрийн хаяг, Ажлын хаяг"
+                    />
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -553,34 +583,33 @@ function AddressesContent() {
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        {address.label && (
-                          <span className="px-2 py-1 bg-gray-100 rounded text-sm font-medium">
-                            {address.label}
-                          </span>
-                        )}
                         {address.isDefault && (
                           <span className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm font-medium">
                             Үндсэн
                           </span>
                         )}
                       </div>
-                      <p className="font-semibold mb-1">{address.fullName}</p>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {address.phoneNumber}
-                      </p>
+                      {address.label && (
+                        <p className="font-semibold text-base mb-1">
+                          {address.label}
+                        </p>
+                      )}
                       <p className="text-sm text-gray-700">
-                        {address.provinceOrDistrict}, {address.khorooOrSoum}
-                        {address.street && `, ${address.street}`}
-                        {address.neighborhood && `, ${address.neighborhood}`}
-                        {address.residentialComplex &&
-                          `, ${address.residentialComplex}`}
-                        {address.building && `, ${address.building}`}
-                        {address.entrance && `, ${address.entrance}`}
-                        {address.apartmentNumber &&
-                          `, ${address.apartmentNumber}`}
+                        {[
+                          address.provinceOrDistrict,
+                          address.khorooOrSoum,
+                          address.street,
+                          address.neighborhood,
+                          address.residentialComplex,
+                          address.building,
+                          address.entrance,
+                          address.apartmentNumber,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
                       </p>
                       {address.addressNote && (
-                        <p className="text-sm text-gray-500 mt-2">
+                        <p className="text-xs text-gray-500 mt-1">
                           Тэмдэглэл: {address.addressNote}
                         </p>
                       )}
@@ -728,7 +757,7 @@ function FavoritesContent() {
                   id={product.id}
                   name={product.name}
                   price={price}
-                  original={originalPrice}
+                  originalPrice={originalPrice}
                   imageUrl={imageUrl}
                   icon={!imageUrl ? "📦" : undefined}
                 />
@@ -921,19 +950,6 @@ export default function ProfilePage() {
                     placeholder="Имэйл хаягаа оруулна уу"
                   />
                 </div>
-
-                {/* Address */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Хаяг</label>
-                  <textarea
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    disabled={!editMode}
-                    placeholder="Хаягаа оруулна уу"
-                    rows={4}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                  />
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -955,7 +971,7 @@ export default function ProfilePage() {
 
   return (
     <div className="h-full bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="min-h-[calc(100vh-525px)] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar Menu */}
           <div className="lg:col-span-1">

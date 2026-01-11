@@ -20,10 +20,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Menu, Search, ShoppingCart, User, ChevronDown } from "lucide-react";
-import { useCategories, type Category } from "@/lib/api";
+import { useCategories, type Category, authApi, useCart } from "@/lib/api";
+import Link from "next/link";
 
 export function Navigation() {
-  const [cartCount, setCartCount] = useState(0);
   const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -34,23 +34,18 @@ export function Navigation() {
   );
   const router = useRouter();
 
+  // Fetch cart from API
+  const { data: cartResponse } = useCart();
+  const cartItems = cartResponse?.data || [];
+  const cartCount = cartItems.reduce(
+    (sum, item) => sum + (item.quantity || 1),
+    0
+  );
+
   useEffect(() => {
     setMounted(true);
     const auth = localStorage.getItem("isAuthenticated");
     setIsAuthenticated(auth === "true");
-
-    // Load cart count from localStorage
-    const updateCartCount = () => {
-      const savedCart = localStorage.getItem("cart");
-      if (savedCart) {
-        const cartItems = JSON.parse(savedCart);
-        const totalItems = cartItems.reduce(
-          (sum: number, item: any) => sum + (item.quantity || 1),
-          0
-        );
-        setCartCount(totalItems);
-      }
-    };
 
     // Update authentication state
     const updateAuthState = () => {
@@ -58,38 +53,30 @@ export function Navigation() {
       setIsAuthenticated(auth === "true");
     };
 
-    updateCartCount();
     // Listen for storage changes (when cart is updated in other tabs/components)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "cart") {
-        updateCartCount();
-      } else if (e.key === "isAuthenticated") {
+      if (e.key === "isAuthenticated") {
         updateAuthState();
       }
     };
     window.addEventListener("storage", handleStorageChange);
     // Custom event for same-tab updates
-    window.addEventListener("cartUpdated", updateCartCount);
     window.addEventListener("authStateChanged", updateAuthState);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("cartUpdated", updateCartCount);
       window.removeEventListener("authStateChanged", updateAuthState);
     };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("mobile");
-    localStorage.removeItem("profile_name");
-    localStorage.removeItem("profile_email");
-    localStorage.removeItem("profile_address");
+    // Use authApi logout to properly clear token and localStorage
+    authApi.logout();
     setIsAuthenticated(false);
     setMobileProfileMenuOpen(false);
     // Dispatch custom event for instant navigation update
     window.dispatchEvent(new CustomEvent("authStateChanged"));
-    window.location.href = "/";
+    router.push("/");
   };
 
   const handleSearch = (e: FormEvent, query: string) => {
@@ -110,7 +97,7 @@ export function Navigation() {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-[60]">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4 gap-4">
             {/* Profile Icon - Mobile/Small Screens (Left Side) */}
@@ -171,12 +158,14 @@ export function Navigation() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="bg-white border-0 shadow-lg"
+                    className="bg-white border-0 shadow-lg z-100"
                   >
                     <DropdownMenuItem asChild>
-                      <a href="/profile">Профайл харах</a>
+                      <Link href="/profile">Профайл</Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>Гарах</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      Гарах
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
@@ -231,7 +220,7 @@ export function Navigation() {
                                 <li key={child.id}>
                                   <NavigationMenuLink asChild>
                                     <a
-                                      href={`/category?cat=${encodeURIComponent(
+                                      href={`/products?category=${encodeURIComponent(
                                         child.id
                                       )}`}
                                       className="block select-none rounded-sm px-3 py-2 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
@@ -253,7 +242,7 @@ export function Navigation() {
                         className="shrink-0"
                       >
                         <NavigationMenuLink
-                          href={`/category?cat=${encodeURIComponent(
+                          href={`/products?category=${encodeURIComponent(
                             category.id
                           )}`}
                           className="text-sm text-gray-700 hover:text-primary whitespace-nowrap"
@@ -300,7 +289,9 @@ export function Navigation() {
                           );
                         } else {
                           router.push(
-                            `/category?cat=${encodeURIComponent(category.id)}`
+                            `/products?category=${encodeURIComponent(
+                              category.id
+                            )}`
                           );
                         }
                       }}
@@ -334,7 +325,9 @@ export function Navigation() {
                   ?.children?.map((child) => (
                     <a
                       key={child.id}
-                      href={`/category?cat=${encodeURIComponent(child.id)}`}
+                      href={`/products?category=${encodeURIComponent(
+                        child.id
+                      )}`}
                       className="text-xs sm:text-sm text-gray-600 hover:text-primary whitespace-nowrap py-1 shrink-0"
                       onClick={() => setExpandedCategoryId(null)}
                     >

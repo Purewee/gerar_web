@@ -6,7 +6,7 @@ export interface ProductCardProps {
   id: number;
   name: string;
   price: number;
-  original?: number;
+  originalPrice?: number;
   icon?: string;
   imageUrl?: string;
   featured?: boolean;
@@ -17,7 +17,7 @@ export function ProductCard({
   id,
   name,
   price,
-  original,
+  originalPrice,
   icon,
   imageUrl,
   featured = false,
@@ -37,14 +37,14 @@ export function ProductCard({
       >
         <CardContent className="flex flex-col justify-between h-full p-0">
           <div>
-            <div className="bg-gray-100 h-28 sm:h-32 md:h-40 flex rounded-t-xl items-center justify-center overflow-hidden">
+            <div className="border-b border-gray-200 h-28 sm:h-32 md:h-40 flex rounded-t-xl items-center justify-center overflow-hidden">
               {isImageUrl ? (
                 <Image
                   src={imageUrl}
                   alt={name}
                   width={224}
                   height={160}
-                  className="w-full h-full object-cover border-b"
+                  className="w-full h-full object-contain border-b"
                 />
               ) : (
                 <div className="text-3xl sm:text-4xl">{displayImage}</div>
@@ -58,9 +58,9 @@ export function ProductCard({
             <div className="text-base sm:text-lg md:text-xl font-semibold">
               {price.toLocaleString()}₮
             </div>
-            {original && original > price && (
+            {originalPrice && originalPrice > price && (
               <div className="text-xs sm:text-sm text-muted-foreground line-through">
-                {original.toLocaleString()}₮
+                {originalPrice.toLocaleString()}₮
               </div>
             )}
           </div>

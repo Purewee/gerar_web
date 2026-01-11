@@ -6,19 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { useOrderCreate, useAddresses, useCart } from "@/lib/api";
+import {
+  useOrderCreate,
+  useAddresses,
+  useCart,
+  useOrderBuyNow,
+} from "@/lib/api";
 
 export default function OrderCreatePage() {
   const router = useRouter();
   const { toast } = useToast();
   const createOrderMutation = useOrderCreate();
-  const { data: addressesResponse, isLoading: addressesLoading } = useAddresses();
+  const buyNowMutation = useOrderBuyNow();
+  const { data: addressesResponse, isLoading: addressesLoading } =
+    useAddresses();
   const { data: cartResponse } = useCart();
   const addresses = addressesResponse?.data || [];
   const cartItems = cartResponse?.data || [];
 
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-  const [deliveryTimeSlot, setDeliveryTimeSlot] = useState<"10-14" | "14-18" | "18-21" | "21-00" | "">("");
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null
+  );
+  const [deliveryTimeSlot, setDeliveryTimeSlot] = useState<
+    "10-14" | "14-18" | "18-21" | "21-00" | ""
+  >("");
+  const [buyNowProduct, setBuyNowProduct] = useState<{
+    productId: number;
+    quantity: number;
+    productName: string;
+    productPrice: string;
+  } | null>(null);
 
   useEffect(() => {
     // Check authentication
@@ -33,12 +50,19 @@ export default function OrderCreatePage() {
       return;
     }
 
-    // Set default address if available
-    if (addresses.length > 0 && !selectedAddressId) {
-      const defaultAddress = addresses.find((addr) => addr.isDefault) || addresses[0];
-      setSelectedAddressId(defaultAddress.id);
+    // Check if this is a buyNow flow
+    const buyNowProductStr = sessionStorage.getItem("buyNowProduct");
+    if (buyNowProductStr) {
+      try {
+        const product = JSON.parse(buyNowProductStr);
+        setBuyNowProduct(product);
+      } catch (e) {
+        console.error("Failed to parse buyNow product:", e);
+      }
     }
-  }, [addresses, router, toast, selectedAddressId]);
+
+    // Don't auto-select address or delivery time slot - user must choose manually
+  }, [addresses, router, toast]);
 
   const handleCreateOrder = async () => {
     if (!selectedAddressId) {
@@ -50,28 +74,80 @@ export default function OrderCreatePage() {
       return;
     }
 
-    if (cartItems.length === 0) {
+    if (!deliveryTimeSlot) {
       toast({
-        title: "Сагс хоосон",
-        description: "Захиалга үүсгэхийн тулд сагсанд бүтээгдэхүүн байх ёстой",
+        title: "Хүргэлтийн цаг сонгоно уу",
+        description: "Хүргэлтийн цаг сонгох шаардлагатай",
         variant: "destructive",
       });
-      router.push("/cart");
       return;
     }
 
     try {
-      const response = await createOrderMutation.mutateAsync({
-        addressId: selectedAddressId,
-        deliveryTimeSlot: deliveryTimeSlot || undefined,
-      });
-
-      if (response.data) {
-        toast({
-          title: "Захиалга үүслээ",
-          description: "Захиалга амжилттай үүслээ",
+      // If this is a buyNow flow, call buyNow API
+      if (buyNowProduct) {
+        const response = await buyNowMutation.mutateAsync({
+          productId: buyNowProduct.productId,
+          quantity: buyNowProduct.quantity,
+          addressId: selectedAddressId,
+          deliveryTimeSlot: deliveryTimeSlot as
+            | "10-14"
+            | "14-18"
+            | "18-21"
+            | "21-00",
         });
-        router.push(`/orders/${response.data.id}`);
+
+        const responseData = response.data as any;
+
+        // Clear buyNow product from sessionStorage
+        sessionStorage.removeItem("buyNowProduct");
+
+        // If direct order was created, redirect to order confirmation
+        if (responseData?.id && !responseData?.draftOrder) {
+          toast({
+            title: "Захиалга амжилттай",
+            description: "Захиалга үүсгэгдлээ",
+          });
+          router.push(`/orders/${responseData.id}`);
+          return;
+        }
+
+        // If draft order was created, handle accordingly
+        if (responseData?.sessionToken) {
+          toast({
+            title: "Захиалга үүсгэгдлээ",
+            description: "Захиалга амжилттай үүсгэгдлээ",
+          });
+          router.push(
+            `/orders/${responseData.id || responseData.draftOrder?.id}`
+          );
+          return;
+        }
+      } else {
+        // Regular cart flow
+        if (cartItems.length === 0) {
+          toast({
+            title: "Сагс хоосон",
+            description:
+              "Захиалга үүсгэхийн тулд сагсанд бүтээгдэхүүн байх ёстой",
+            variant: "destructive",
+          });
+          router.push("/cart");
+          return;
+        }
+
+        const response = await createOrderMutation.mutateAsync({
+          addressId: selectedAddressId,
+          deliveryTimeSlot: deliveryTimeSlot || undefined,
+        });
+
+        if (response.data) {
+          toast({
+            title: "Захиалга үүслээ",
+            description: "Захиалга амжилттай үүслээ",
+          });
+          router.push(`/orders/${response.data.id}`);
+        }
       }
     } catch (error: any) {
       toast({
@@ -103,12 +179,30 @@ export default function OrderCreatePage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-2xl sm:text-3xl">Захиалга үүсгэх</CardTitle>
+            <CardTitle className="text-2xl sm:text-3xl">
+              Захиалга үүсгэх
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* BuyNow Product Info */}
+            {buyNowProduct && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  Одоо худалдаж авах
+                </h3>
+                <p className="text-sm text-blue-800">
+                  {buyNowProduct.productName} - {buyNowProduct.quantity} ширхэг
+                </p>
+                <p className="text-sm font-medium text-blue-900 mt-1">
+                  {parseFloat(buyNowProduct.productPrice).toLocaleString()}₮
+                </p>
+              </div>
+            )}
             {/* Address Selection */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Хүргэлтийн хаяг сонгох</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                Хүргэлтийн хаяг сонгох
+              </h3>
               {addresses.length === 0 ? (
                 <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
                   <p className="text-gray-600 mb-4">Хаяг байхгүй байна</p>
@@ -131,19 +225,31 @@ export default function OrderCreatePage() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <p className="font-semibold">{address.fullName}</p>
+                            <p className="font-semibold">
+                              {address.fullName || "Хаяг"}
+                            </p>
                             {address.isDefault && (
                               <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                                 Үндсэн
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600">{address.phoneNumber}</p>
+                          {address.phoneNumber && (
+                            <p className="text-sm text-gray-600">
+                              {address.phoneNumber}
+                            </p>
+                          )}
                           <p className="text-sm text-gray-600">
-                            {address.provinceOrDistrict}, {address.khorooOrSoum}
-                            {address.street && `, ${address.street}`}
-                            {address.building && `, ${address.building}`}
-                            {address.apartmentNumber && `, ${address.apartmentNumber}`}
+                            {[
+                              address.provinceOrDistrict,
+                              address.khorooOrSoum,
+                              address.street,
+                              address.city,
+                              address.state,
+                              address.zipCode,
+                            ]
+                              .filter(Boolean)
+                              .join(", ")}
                           </p>
                         </div>
                         <div
@@ -173,7 +279,9 @@ export default function OrderCreatePage() {
 
             {/* Delivery Time Slot */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">Хүргэлтийн цаг сонгох</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                Хүргэлтийн цаг сонгох
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {(["10-14", "14-18", "18-21", "21-00"] as const).map((slot) => (
                   <button
@@ -194,15 +302,22 @@ export default function OrderCreatePage() {
             {/* Create Order Button */}
             <Button
               onClick={handleCreateOrder}
-              disabled={!selectedAddressId || createOrderMutation.isPending}
+              disabled={
+                !selectedAddressId ||
+                !deliveryTimeSlot ||
+                createOrderMutation.isPending ||
+                buyNowMutation.isPending
+              }
               className="w-full"
               size="lg"
             >
-              {createOrderMutation.isPending ? (
+              {createOrderMutation.isPending || buyNowMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Захиалга үүсгэж байна...
                 </>
+              ) : buyNowProduct ? (
+                "Одоо худалдаж авах"
               ) : (
                 "Захиалга үүсгэх"
               )}
@@ -213,4 +328,3 @@ export default function OrderCreatePage() {
     </div>
   );
 }
-

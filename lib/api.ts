@@ -1,6 +1,26 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type {
+  ApiResponse,
+  Pagination,
+  RegisterRequest,
+  LoginRequest,
+  User,
+  AuthResponse,
+  Category,
+  Product,
+  ProductsQueryParams,
+  CartItem,
+  FavoriteStatus,
+  Address,
+  CreateAddressRequest,
+  Order,
+  OrderItem,
+  CreateOrderRequest,
+  BuyNowRequest,
+  FinalizeOrderRequest,
+} from "./types";
 
 /**
  * Note: All queries default to refetchOnWindowFocus: false (configured in lib/providers.tsx).
@@ -10,24 +30,27 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: any;
-  };
-  timestamp?: string;
-}
-
-export interface Pagination {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+// Re-export types for convenience
+export type {
+  ApiResponse,
+  Pagination,
+  RegisterRequest,
+  LoginRequest,
+  User,
+  AuthResponse,
+  Category,
+  Product,
+  ProductsQueryParams,
+  CartItem,
+  FavoriteStatus,
+  Address,
+  CreateAddressRequest,
+  Order,
+  OrderItem,
+  CreateOrderRequest,
+  BuyNowRequest,
+  FinalizeOrderRequest,
+};
 
 // Get auth token from localStorage
 export const getAuthToken = (): string | null => {
@@ -94,15 +117,20 @@ export const queryKeys = {
   categories: {
     all: ["categories"] as const,
     lists: () => [...queryKeys.categories.all, "list"] as const,
-    list: (filters?: string) =>
-      [...queryKeys.categories.lists(), { filters }] as const,
+    list: (includeSubcategories?: boolean) =>
+      [...queryKeys.categories.lists(), { includeSubcategories }] as const,
     details: () => [...queryKeys.categories.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.categories.details(), id] as const,
-    products: (id: number, includeSubcategories?: boolean) =>
+    products: (
+      id: number,
+      includeSubcategories?: boolean,
+      page?: number,
+      limit?: number
+    ) =>
       [
         ...queryKeys.categories.detail(id),
         "products",
-        { includeSubcategories },
+        { includeSubcategories, page, limit },
       ] as const,
   },
 
@@ -150,31 +178,6 @@ export const queryKeys = {
 };
 
 // ==================== AUTHENTICATION ====================
-
-export interface RegisterRequest {
-  phoneNumber: string;
-  pin: string;
-  name: string;
-}
-
-export interface LoginRequest {
-  phoneNumber: string;
-  pin: string;
-}
-
-export interface User {
-  id: number;
-  phoneNumber: string;
-  name: string;
-  role: "USER" | "ADMIN";
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
 
 // Auth API functions (for mutations)
 const authApiFunctions = {
@@ -265,43 +268,6 @@ export const authApi = authApiFunctions;
 
 // ==================== PRODUCTS ====================
 
-export interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: string;
-  originalPrice: string | null;
-  images: string[];
-  firstImage: string | null;
-  hasDiscount: boolean;
-  discountAmount: string | null;
-  discountPercentage: number | null;
-  isFavorite?: boolean;
-  stock: number;
-  categories: Category[];
-  categoryId: number | null;
-  category?: Category;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProductsQueryParams {
-  categoryId?: number;
-  categoryIds?: number[];
-  search?: string;
-  inStock?: boolean;
-  minPrice?: number;
-  maxPrice?: number;
-  minStock?: number;
-  maxStock?: number;
-  createdAfter?: string;
-  createdBefore?: string;
-  sortBy?: "name" | "price" | "stock" | "createdAt" | "updatedAt";
-  sortOrder?: "asc" | "desc";
-  page?: number;
-  limit?: number;
-}
-
 // Products API functions
 const productsApiFunctions = {
   getAll: async (
@@ -309,37 +275,17 @@ const productsApiFunctions = {
   ): Promise<ApiResponse<Product[]>> => {
     const queryParams = new URLSearchParams();
 
-    if (params?.categoryId) {
-      queryParams.append("categoryId", params.categoryId.toString());
-    }
-    if (params?.categoryIds && params.categoryIds.length > 0) {
-      params.categoryIds.forEach((id) => {
-        queryParams.append("categoryIds[]", id.toString());
-      });
+    if (params?.category) {
+      queryParams.append("category", params.category.toString());
     }
     if (params?.search) {
       queryParams.append("search", params.search);
-    }
-    if (params?.inStock !== undefined) {
-      queryParams.append("inStock", params.inStock.toString());
     }
     if (params?.minPrice) {
       queryParams.append("minPrice", params.minPrice.toString());
     }
     if (params?.maxPrice) {
       queryParams.append("maxPrice", params.maxPrice.toString());
-    }
-    if (params?.minStock) {
-      queryParams.append("minStock", params.minStock.toString());
-    }
-    if (params?.maxStock) {
-      queryParams.append("maxStock", params.maxStock.toString());
-    }
-    if (params?.createdAfter) {
-      queryParams.append("createdAfter", params.createdAfter);
-    }
-    if (params?.createdBefore) {
-      queryParams.append("createdBefore", params.createdBefore);
     }
     if (params?.sortBy) {
       queryParams.append("sortBy", params.sortBy);
@@ -385,20 +331,22 @@ export const productsApi = productsApiFunctions;
 
 // ==================== CATEGORIES ====================
 
-export interface Category {
-  id: number;
-  name: string;
-  description: string | null;
-  parentId: number | null;
-  createdAt: string;
-  updatedAt: string;
-  children?: Category[];
-}
-
 // Categories API functions
 const categoriesApiFunctions = {
-  getAll: async (): Promise<ApiResponse<Category[]>> => {
-    return apiFetch<Category[]>("/categories");
+  getAll: async (
+    includeSubcategories?: boolean
+  ): Promise<ApiResponse<Category[]>> => {
+    const queryParams = new URLSearchParams();
+    if (includeSubcategories !== undefined) {
+      queryParams.append(
+        "includeSubcategories",
+        includeSubcategories.toString()
+      );
+    }
+    const queryString = queryParams.toString();
+    return apiFetch<Category[]>(
+      `/categories${queryString ? `?${queryString}` : ""}`
+    );
   },
 
   getById: async (id: number): Promise<ApiResponse<Category>> => {
@@ -407,18 +355,35 @@ const categoriesApiFunctions = {
 
   getProducts: async (
     id: number,
-    includeSubcategories?: boolean
+    includeSubcategories?: boolean,
+    page?: number,
+    limit?: number
   ): Promise<ApiResponse<Product[]>> => {
-    const query = includeSubcategories ? `?includeSubcategories=true` : "";
-    return apiFetch<Product[]>(`/categories/${id}/products${query}`);
+    const queryParams = new URLSearchParams();
+    if (includeSubcategories !== undefined) {
+      queryParams.append(
+        "includeSubcategories",
+        includeSubcategories.toString()
+      );
+    }
+    if (page) {
+      queryParams.append("page", page.toString());
+    }
+    if (limit) {
+      queryParams.append("limit", limit.toString());
+    }
+    const queryString = queryParams.toString();
+    return apiFetch<Product[]>(
+      `/categories/${id}/products${queryString ? `?${queryString}` : ""}`
+    );
   },
 };
 
 // Categories hooks
-export const useCategories = () => {
+export const useCategories = (includeSubcategories?: boolean) => {
   return useQuery({
-    queryKey: queryKeys.categories.list(),
-    queryFn: () => categoriesApiFunctions.getAll(),
+    queryKey: queryKeys.categories.list(includeSubcategories),
+    queryFn: () => categoriesApiFunctions.getAll(includeSubcategories),
     staleTime: 1.5 * 60 * 60 * 1000, // 1.5 hours
   });
 };
@@ -433,11 +398,19 @@ export const useCategory = (id: number) => {
 
 export const useCategoryProducts = (
   id: number,
-  includeSubcategories?: boolean
+  includeSubcategories?: boolean,
+  page?: number,
+  limit?: number
 ) => {
   return useQuery({
-    queryKey: queryKeys.categories.products(id, includeSubcategories),
-    queryFn: () => categoriesApiFunctions.getProducts(id, includeSubcategories),
+    queryKey: queryKeys.categories.products(
+      id,
+      includeSubcategories,
+      page,
+      limit
+    ),
+    queryFn: () =>
+      categoriesApiFunctions.getProducts(id, includeSubcategories, page, limit),
     enabled: !!id,
   });
 };
@@ -445,16 +418,6 @@ export const useCategoryProducts = (
 export const categoriesApi = categoriesApiFunctions;
 
 // ==================== CART ====================
-
-export interface CartItem {
-  id: number;
-  userId: number;
-  productId: number;
-  quantity: number;
-  product?: Product;
-  createdAt: string;
-  updatedAt: string;
-}
 
 // Cart API functions
 const cartApiFunctions = {
@@ -587,10 +550,8 @@ const favoritesApiFunctions = {
 
   checkStatus: async (
     productId: number
-  ): Promise<ApiResponse<{ productId: number; isFavorited: boolean }>> => {
-    return apiFetch<{ productId: number; isFavorited: boolean }>(
-      `/favorites/${productId}/status`
-    );
+  ): Promise<ApiResponse<FavoriteStatus>> => {
+    return apiFetch<FavoriteStatus>(`/favorites/${productId}/status`);
   },
 };
 
@@ -636,42 +597,6 @@ export const favoritesApi = favoritesApiFunctions;
 
 // ==================== ADDRESSES ====================
 
-export interface Address {
-  id: number;
-  userId: number;
-  label: string | null;
-  fullName: string;
-  phoneNumber: string;
-  provinceOrDistrict: string;
-  khorooOrSoum: string;
-  street: string | null;
-  neighborhood: string | null;
-  residentialComplex: string | null;
-  building: string | null;
-  entrance: string | null;
-  apartmentNumber: string | null;
-  addressNote: string | null;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateAddressRequest {
-  label?: string;
-  fullName: string;
-  phoneNumber: string;
-  provinceOrDistrict: string;
-  khorooOrSoum: string;
-  street?: string;
-  neighborhood?: string;
-  residentialComplex?: string;
-  building?: string;
-  entrance?: string;
-  apartmentNumber?: string;
-  addressNote?: string;
-  isDefault?: boolean;
-}
-
 // Addresses API functions
 const addressesApiFunctions = {
   getAll: async (): Promise<ApiResponse<Address[]>> => {
@@ -683,9 +608,29 @@ const addressesApiFunctions = {
   },
 
   create: async (data: CreateAddressRequest): Promise<ApiResponse<Address>> => {
+    // Get fullName from localStorage (check both profile_name and user_name)
+    const fullName =
+      (typeof window !== "undefined" &&
+        (localStorage.getItem("profile_name") ||
+          localStorage.getItem("user_name"))) ||
+      null;
+
+    // Get phoneNumber from localStorage
+    const phoneNumber =
+      (typeof window !== "undefined" && localStorage.getItem("mobile")) || null;
+
+    // Prepare request body with fullName and phoneNumber if available
+    const requestBody: any = { ...data };
+    if (fullName) {
+      requestBody.fullName = fullName;
+    }
+    if (phoneNumber) {
+      requestBody.phoneNumber = phoneNumber;
+    }
+
     return apiFetch<Address>("/addresses", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(requestBody),
     });
   },
 
@@ -779,35 +724,6 @@ export const addressesApi = addressesApiFunctions;
 
 // ==================== ORDERS ====================
 
-export interface OrderItem {
-  id: number;
-  orderId: number;
-  productId: number;
-  quantity: number;
-  price: string;
-  product?: Product;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Order {
-  id: number;
-  userId: number;
-  addressId: number | null;
-  deliveryTimeSlot: string | null;
-  totalAmount: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  address?: Address;
-  items?: OrderItem[];
-}
-
-export interface CreateOrderRequest {
-  addressId: number;
-  deliveryTimeSlot?: "10-14" | "14-18" | "18-21" | "21-00";
-}
-
 // Orders API functions
 const ordersApiFunctions = {
   getAll: async (): Promise<ApiResponse<Order[]>> => {
@@ -820,6 +736,20 @@ const ordersApiFunctions = {
 
   create: async (data: CreateOrderRequest): Promise<ApiResponse<Order>> => {
     return apiFetch<Order>("/orders", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  buyNow: async (data: BuyNowRequest): Promise<ApiResponse<Order | any>> => {
+    return apiFetch<Order | any>("/orders/buy-now", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  finalize: async (data: FinalizeOrderRequest): Promise<ApiResponse<Order>> => {
+    return apiFetch<Order>("/orders/finalize", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -846,6 +776,29 @@ export const useOrderCreate = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateOrderRequest) => ordersApiFunctions.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
+    },
+  });
+};
+
+export const useOrderBuyNow = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: BuyNowRequest) => ordersApiFunctions.buyNow(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
+    },
+  });
+};
+
+export const useOrderFinalize = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: FinalizeOrderRequest) =>
+      ordersApiFunctions.finalize(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
