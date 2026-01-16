@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -88,19 +91,24 @@ function OrdersContent() {
 
   if (orders.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl sm:text-3xl">
+      <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
             Миний захиалгууд
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12">
-            <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-muted-foreground mb-4">
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
+              <ShoppingBag className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Одоогоор захиалга байхгүй
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Анхны захиалгаа үүсгэх үү?
             </p>
-            <Button variant="link" asChild>
+            <Button variant="outline" asChild className="shadow-sm">
               <a href="/">Дэлгүүрт орох</a>
             </Button>
           </div>
@@ -110,39 +118,43 @@ function OrdersContent() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl sm:text-3xl">
+    <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+        <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
           Миний захиалгууд ({orders.length})
         </CardTitle>
+        <CardDescription className="mt-2">
+          Захиалгын түүхээ харах
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 lg:p-8">
         <div className="space-y-4">
           {orders.map((order) => (
             <Link key={order.id} href={`/orders/${order.id}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-4 sm:p-6">
+              <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200 hover:border-primary/30">
+                <CardContent className="p-5 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h3 className="text-lg font-semibold text-gray-900">
                           Захиалга #{order.id}
                         </h3>
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
                             order.status === "PENDING"
-                              ? "bg-yellow-100 text-yellow-800"
+                              ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
                               : order.status === "COMPLETED"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-green-100 text-green-800 border border-green-200"
                               : order.status === "CANCELLED"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
+                              ? "bg-red-100 text-red-800 border border-red-200"
+                              : "bg-gray-100 text-gray-800 border border-gray-200"
                           }`}
                         >
                           {order.status}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-1">
+                      <p className="text-sm text-gray-600 flex items-center gap-1">
+                        <span>📅</span>
                         {new Date(order.createdAt).toLocaleDateString("mn-MN", {
                           year: "numeric",
                           month: "long",
@@ -150,19 +162,20 @@ function OrdersContent() {
                         })}
                       </p>
                       {order.address && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
                           {order.address.provinceOrDistrict},{" "}
                           {order.address.khorooOrSoum}
                         </p>
                       )}
                       {order.items && order.items.length > 0 && (
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500">
                           {order.items.length} зүйл
                         </p>
                       )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-primary">
+                    <div className="text-right sm:text-left sm:min-w-[120px]">
+                      <p className="text-2xl font-bold text-primary">
                         {parseFloat(order.totalAmount).toLocaleString()}₮
                       </p>
                     </div>
@@ -192,6 +205,15 @@ function AddressesContent() {
     phoneNumber: "",
     provinceOrDistrict: "",
     khorooOrSoum: "",
+    label: undefined,
+    street: undefined,
+    neighborhood: undefined,
+    residentialComplex: undefined,
+    building: undefined,
+    entrance: undefined,
+    apartmentNumber: undefined,
+    addressNote: undefined,
+    isDefault: false,
   });
 
   const resetForm = () => {
@@ -200,6 +222,15 @@ function AddressesContent() {
       phoneNumber: "",
       provinceOrDistrict: "",
       khorooOrSoum: "",
+      label: undefined,
+      street: undefined,
+      neighborhood: undefined,
+      residentialComplex: undefined,
+      building: undefined,
+      entrance: undefined,
+      apartmentNumber: undefined,
+      addressNote: undefined,
+      isDefault: false,
     });
     setShowAddForm(false);
     setEditingId(null);
@@ -324,162 +355,250 @@ function AddressesContent() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl sm:text-3xl">
-            Хаягууд ({addresses.length})
-          </CardTitle>
+    <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+              Хаягууд ({addresses.length})
+            </CardTitle>
+            <CardDescription className="mt-2">
+              Хүргэлтийн хаягуудаа удирдах
+            </CardDescription>
+          </div>
           {!showAddForm && (
-            <Button onClick={() => setShowAddForm(true)}>
+            <Button 
+              onClick={() => setShowAddForm(true)}
+              className="shadow-md hover:shadow-lg transition-all duration-200"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Хаяг нэмэх
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 lg:p-8">
         {showAddForm && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>
+          <Card className="mb-8 border-2 border-primary/20 shadow-lg bg-gradient-to-br from-white to-primary/5">
+            <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10">
+              <CardTitle className="text-xl font-bold">
                 {editingId ? "Хаяг засах" : "Шинэ хаяг нэмэх"}
               </CardTitle>
+              <CardDescription>
+                {editingId ? "Хаягийн мэдээллээ шинэчлэнэ үү" : "Хүргэлт хийх хаягаа нэмнэ үү"}
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Хаягийн нэр (сонголттой)
-                    </label>
-                    <Input
-                      value={formData.label || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, label: e.target.value })
-                      }
-                      placeholder="Жишээ: Гэр, Ажлын байр"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Аймаг/Дүүрэг *
-                    </label>
-                    <Input
-                      value={formData.provinceOrDistrict}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          provinceOrDistrict: e.target.value,
-                        })
-                      }
-                      required
-                      placeholder="Аймаг эсвэл дүүрэг"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Хороо/Сум *
-                    </label>
-                    <Input
-                      value={formData.khorooOrSoum}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          khorooOrSoum: e.target.value,
-                        })
-                      }
-                      required
-                      placeholder="Хороо эсвэл сум"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Гудамж (сонголттой)
-                    </label>
-                    <Input
-                      value={formData.street || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, street: e.target.value })
-                      }
-                      placeholder="Гудамж"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Хороолол (сонголттой)
-                    </label>
-                    <Input
-                      value={formData.neighborhood || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          neighborhood: e.target.value,
-                        })
-                      }
-                      placeholder="Хороолол"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Орон сууцны цогцолбор (сонголттой)
-                    </label>
-                    <Input
-                      value={formData.residentialComplex || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          residentialComplex: e.target.value,
-                        })
-                      }
-                      placeholder="Орон сууцны цогцолбор"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Барилга (сонголттой)
-                    </label>
-                    <Input
-                      value={formData.building || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, building: e.target.value })
-                      }
-                      placeholder="Барилга"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Орц (сонголттой)
-                    </label>
-                    <Input
-                      value={formData.entrance || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, entrance: e.target.value })
-                      }
-                      placeholder="Орц"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Орон сууцны дугаар (сонголттой)
-                    </label>
-                    <Input
-                      value={formData.apartmentNumber || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          apartmentNumber: e.target.value,
-                        })
-                      }
-                      placeholder="Орон сууцны дугаар"
-                    />
+            <CardContent className="p-6 lg:p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Basic Information Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2 pb-2 border-b border-gray-200">
+                    <User className="w-4 h-4" />
+                    Үндсэн мэдээлэл
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="fullName" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Бүтэн нэр *
+                      </Label>
+                      <Input
+                        id="fullName"
+                        value={formData.fullName}
+                        onChange={(e) =>
+                          setFormData({ ...formData, fullName: e.target.value })
+                        }
+                        required
+                        placeholder="Бүтэн нэр"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phoneNumber" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Утасны дугаар *
+                      </Label>
+                      <Input
+                        id="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phoneNumber: e.target.value })
+                        }
+                        required
+                        placeholder="Утасны дугаар"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="label" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Хаягийн нэр <span className="text-gray-400 font-normal">(сонголттой)</span>
+                      </Label>
+                      <Input
+                        id="label"
+                        value={formData.label || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, label: e.target.value })
+                        }
+                        placeholder="Жишээ: Гэр, Ажлын байр"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Нэмэлт тэмдэглэл (сонголттой)
-                  </label>
-                  <textarea
+
+                {/* Location Section */}
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2 pb-2 border-b border-gray-200">
+                    <MapPin className="w-4 h-4" />
+                    Байршил
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="provinceOrDistrict" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Аймаг/Дүүрэг *
+                      </Label>
+                      <Input
+                        id="provinceOrDistrict"
+                        value={formData.provinceOrDistrict}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            provinceOrDistrict: e.target.value,
+                          })
+                        }
+                        required
+                        placeholder="Аймаг эсвэл дүүрэг"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="khorooOrSoum" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Хороо/Сум *
+                      </Label>
+                      <Input
+                        id="khorooOrSoum"
+                        value={formData.khorooOrSoum}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            khorooOrSoum: e.target.value,
+                          })
+                        }
+                        required
+                        placeholder="Хороо эсвэл сум"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="street" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Гудамж <span className="text-gray-400 font-normal">(сонголттой)</span>
+                      </Label>
+                      <Input
+                        id="street"
+                        value={formData.street || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, street: e.target.value })
+                        }
+                        placeholder="Гудамж"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="neighborhood" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Хороолол <span className="text-gray-400 font-normal">(сонголттой)</span>
+                      </Label>
+                      <Input
+                        id="neighborhood"
+                        value={formData.neighborhood || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            neighborhood: e.target.value,
+                          })
+                        }
+                        placeholder="Хороолол"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Building Details Section */}
+                <div className="space-y-4 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2 pb-2 border-b border-gray-200">
+                    Барилгын мэдээлэл <span className="text-gray-400 font-normal text-xs normal-case">(сонголттой)</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="residentialComplex" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Орон сууцны цогцолбор
+                      </Label>
+                      <Input
+                        id="residentialComplex"
+                        value={formData.residentialComplex || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            residentialComplex: e.target.value,
+                          })
+                        }
+                        placeholder="Орон сууцны цогцолбор"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="building" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Барилга
+                      </Label>
+                      <Input
+                        id="building"
+                        value={formData.building || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, building: e.target.value })
+                        }
+                        placeholder="Барилга"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="entrance" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Орц
+                      </Label>
+                      <Input
+                        id="entrance"
+                        value={formData.entrance || ""}
+                        onChange={(e) =>
+                          setFormData({ ...formData, entrance: e.target.value })
+                        }
+                        placeholder="Орц"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="apartmentNumber" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                        Орон сууцны дугаар
+                      </Label>
+                      <Input
+                        id="apartmentNumber"
+                        value={formData.apartmentNumber || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            apartmentNumber: e.target.value,
+                          })
+                        }
+                        placeholder="Орон сууцны дугаар"
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Notes */}
+                <div className="pt-4">
+                  <Label htmlFor="addressNote" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                    Нэмэлт тэмдэглэл <span className="text-gray-400 font-normal">(сонголттой)</span>
+                  </Label>
+                  <Textarea
+                    id="addressNote"
                     value={formData.addressNote || ""}
                     onChange={(e) =>
                       setFormData({
@@ -489,31 +608,38 @@ function AddressesContent() {
                     }
                     maxLength={500}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     placeholder="Нэмэлт тэмдэглэл (500 тэмдэгт хүртэл)"
+                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                   />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formData.addressNote?.length || 0}/500 тэмдэгт
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+
+                {/* Default Address Checkbox */}
+                <div className="flex items-center gap-3 pt-2 pb-4 border-t border-gray-200">
+                  <Checkbox
                     id="isDefault"
                     checked={formData.isDefault || false}
                     onChange={(e) =>
                       setFormData({ ...formData, isDefault: e.target.checked })
                     }
-                    className="w-4 h-4"
+                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                   />
-                  <label htmlFor="isDefault" className="text-sm">
+                  <Label htmlFor="isDefault" className="text-sm font-medium cursor-pointer">
                     Үндсэн хаяг болгох
-                  </label>
+                  </Label>
                 </div>
-                <div className="flex gap-2">
+
+                {/* Form Actions */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
                   <Button
                     type="submit"
                     disabled={
                       createAddressMutation.isPending ||
                       updateAddressMutation.isPending
                     }
+                    className="flex-1 shadow-md hover:shadow-lg transition-all duration-200"
                   >
                     {editingId
                       ? updateAddressMutation.isPending
@@ -523,7 +649,13 @@ function AddressesContent() {
                       ? "Нэмж байна..."
                       : "Нэмэх"}
                   </Button>
-                  <Button type="button" variant="outline" onClick={resetForm}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={resetForm}
+                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                    className="shadow-sm"
+                  >
                     Цуцлах
                   </Button>
                 </div>
@@ -533,13 +665,21 @@ function AddressesContent() {
         )}
 
         {addresses.length === 0 ? (
-          <div className="text-center py-12">
-            <MapPin className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-muted-foreground mb-4">
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
+              <MapPin className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Одоогоор хаяг байхгүй байна
+            </h3>
+            <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+              Захиалга үүсгэхийн тулд хаяг нэмэх шаардлагатай
             </p>
             {!showAddForm && (
-              <Button onClick={() => setShowAddForm(true)}>
+              <Button 
+                onClick={() => setShowAddForm(true)}
+                className="shadow-md hover:shadow-lg transition-all duration-200"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Хаяг нэмэх
               </Button>
@@ -548,70 +688,87 @@ function AddressesContent() {
         ) : (
           <div className="space-y-4">
             {addresses.map((address) => (
-              <Card key={address.id}>
-                <CardContent className="p-4 sm:p-6">
+              <Card 
+                key={address.id}
+                className={`transition-all duration-200 hover:shadow-lg ${
+                  address.isDefault ? "border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent" : "border border-gray-200"
+                }`}
+              >
+                <CardContent className="p-5 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {address.label && (
-                          <span className="px-2 py-1 bg-gray-100 rounded text-sm font-medium">
+                          <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">
                             {address.label}
                           </span>
                         )}
                         {address.isDefault && (
-                          <span className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm font-medium">
-                            Үндсэн
+                          <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold shadow-sm">
+                            ⭐ Үндсэн
                           </span>
                         )}
                       </div>
-                      <p className="font-semibold mb-1">{address.fullName}</p>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {address.phoneNumber}
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        {address.provinceOrDistrict}, {address.khorooOrSoum}
-                        {address.street && `, ${address.street}`}
-                        {address.neighborhood && `, ${address.neighborhood}`}
-                        {address.residentialComplex &&
-                          `, ${address.residentialComplex}`}
-                        {address.building && `, ${address.building}`}
-                        {address.entrance && `, ${address.entrance}`}
-                        {address.apartmentNumber &&
-                          `, ${address.apartmentNumber}`}
-                      </p>
-                      {address.addressNote && (
-                        <p className="text-sm text-gray-500 mt-2">
-                          Тэмдэглэл: {address.addressNote}
+                      <div>
+                        <p className="font-semibold text-gray-900 mb-1 text-lg">{address.fullName}</p>
+                        <p className="text-sm text-gray-600 flex items-center gap-1">
+                          <span>📞</span>
+                          {address.phoneNumber}
                         </p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                          {address.provinceOrDistrict}, {address.khorooOrSoum}
+                          {address.street && `, ${address.street}`}
+                          {address.neighborhood && `, ${address.neighborhood}`}
+                          {address.residentialComplex &&
+                            `, ${address.residentialComplex}`}
+                          {address.building && `, ${address.building}`}
+                          {address.entrance && `, ${address.entrance}`}
+                          {address.apartmentNumber &&
+                            `, ${address.apartmentNumber}`}
+                        </p>
+                      </div>
+                      {address.addressNote && (
+                        <div className="pt-2 border-t border-gray-100">
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Тэмдэглэл:</span> {address.addressNote}
+                          </p>
+                        </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
                       {!address.isDefault && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleSetDefault(address.id)}
                           disabled={setDefaultAddressMutation.isPending}
+                          className="shadow-sm hover:shadow-md transition-all duration-200"
                         >
                           Үндсэн болгох
                         </Button>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(address)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(address.id)}
-                        disabled={deleteAddressMutation.isPending}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(address)}
+                          className="shadow-sm hover:shadow-md transition-all duration-200"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(address.id)}
+                          disabled={deleteAddressMutation.isPending}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 shadow-sm hover:shadow-md transition-all duration-200"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -661,17 +818,24 @@ function FavoritesContent() {
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl sm:text-3xl">Миний дуртай</CardTitle>
+      <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            Миний дуртай
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">⚠️</div>
-            <p className="text-muted-foreground mb-4">
-              Алдаа гарлаа. Дахин оролдоно уу.
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-4">
+              <span className="text-4xl">⚠️</span>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Алдаа гарлаа
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Дахин оролдоно уу
             </p>
-            <Button variant="link" asChild>
+            <Button variant="outline" asChild className="shadow-sm">
               <a href="/">Дэлгүүрт орох</a>
             </Button>
           </div>
@@ -682,17 +846,24 @@ function FavoritesContent() {
 
   if (favorites.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl sm:text-3xl">Миний дуртай</CardTitle>
+      <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+        <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            Миний дуртай
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-12">
-            <Heart className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-muted-foreground mb-4">
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
+              <Heart className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Одоогоор дуртай бараа байхгүй
+            </h3>
+            <p className="text-muted-foreground mb-6">
+              Дуртай бараануудаа энд хадгална уу
             </p>
-            <Button variant="link" asChild>
+            <Button variant="outline" asChild className="shadow-sm">
               <a href="/">Дэлгүүрт орох</a>
             </Button>
           </div>
@@ -702,13 +873,16 @@ function FavoritesContent() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl sm:text-3xl">
+    <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+        <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
           Миний дуртай ({favorites.length})
         </CardTitle>
+        <CardDescription className="mt-2">
+          Дуртай бараануудаа харах
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6 lg:p-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {favorites.map((product) => {
             const price = parseFloat(product.price);
@@ -729,8 +903,9 @@ function FavoritesContent() {
                 />
                 <button
                   onClick={() => handleRemoveFavorite(product.id)}
-                  className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
+                  className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:scale-110 z-10 border border-red-100"
                   disabled={removeFavoriteMutation.isPending}
+                  title="Дуртай жагсаалтаас устгах"
                 >
                   <Heart className="w-5 h-5 text-red-600 fill-red-600" />
                 </button>
@@ -825,14 +1000,23 @@ export default function ProfilePage() {
     switch (activeMenu) {
       case "profile":
         return (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl sm:text-3xl">
-                  Миний профайл
-                </CardTitle>
+          <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                    Миний профайл
+                  </CardTitle>
+                  <CardDescription className="mt-2">
+                    Профайлын мэдээллээ засах
+                  </CardDescription>
+                </div>
                 {!editMode ? (
-                  <Button onClick={() => setEditMode(true)}>
+                  <Button 
+                    onClick={() => setEditMode(true)}
+                    className="shadow-md hover:shadow-lg transition-all duration-200"
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
                     Профайл засах
                   </Button>
                 ) : (
@@ -852,88 +1036,125 @@ export default function ProfilePage() {
                         setAddress(savedAddress);
                       }}
                       variant="outline"
+                      className="shadow-sm"
                     >
                       Цуцлах
                     </Button>
-                    <Button onClick={handleSave}>Хадгалах</Button>
+                    <Button 
+                      onClick={handleSave}
+                      className="shadow-md hover:shadow-lg transition-all duration-200"
+                    >
+                      Хадгалах
+                    </Button>
                   </div>
                 )}
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
+            <CardContent className="p-6 lg:p-8">
+              <div className="space-y-8">
                 {/* Profile Picture */}
-                <div className="flex items-center gap-6">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-primary/10 rounded-full flex items-center justify-center">
-                    <span className="text-3xl sm:text-4xl">👤</span>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-gray-100">
+                  <div className="relative group">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center shadow-lg ring-4 ring-primary/10">
+                      {name ? (
+                        <span className="text-2xl sm:text-3xl font-bold text-primary">
+                          {name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </span>
+                      ) : (
+                        <span className="text-4xl sm:text-5xl">👤</span>
+                      )}
+                    </div>
+                    {editMode && (
+                      <button className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105">
+                        Зураг солих
+                      </button>
+                    )}
                   </div>
-                  {editMode && (
-                    <button className="text-primary hover:underline text-sm sm:text-base">
-                      Зураг солих
-                    </button>
-                  )}
+                  <div className="flex-1">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
+                      {name || "Хэрэглэгч"}
+                    </h3>
+                    <p className="text-sm text-gray-600">{email || "Имэйл оруулаагүй"}</p>
+                    <p className="text-sm text-gray-500 mt-1">+976 {mobile}</p>
+                  </div>
                 </div>
 
-                {/* Mobile Number (Read-only) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Утасны дугаар
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 text-sm">+976</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Mobile Number (Read-only) */}
+                  <div className="md:col-span-2">
+                    <Label htmlFor="mobile" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                      Утасны дугаар
+                    </Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <span className="text-gray-500 text-sm font-medium">+976</span>
+                      </div>
+                      <Input
+                        id="mobile"
+                        type="tel"
+                        value={mobile}
+                        disabled
+                        className="pl-16 bg-gray-50 border-gray-200"
+                      />
                     </div>
+                    <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                      <span>ℹ️</span>
+                      Утасны дугаар өөрчлөх боломжгүй
+                    </p>
+                  </div>
+
+                  {/* Name */}
+                  <div>
+                    <Label htmlFor="name" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                      Бүтэн нэр
+                    </Label>
                     <Input
-                      type="tel"
-                      value={mobile}
-                      disabled
-                      className="pl-12"
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      disabled={!editMode}
+                      placeholder="Бүтэн нэрээ оруулна уу"
+                      className={!editMode ? "bg-gray-50" : ""}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Утасны дугаар өөрчлөх боломжгүй
-                  </p>
-                </div>
 
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Бүтэн нэр
-                  </label>
-                  <Input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={!editMode}
-                    placeholder="Бүтэн нэрээ оруулна уу"
-                  />
-                </div>
+                  {/* Email */}
+                  <div>
+                    <Label htmlFor="email" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                      Имэйл хаяг
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={!editMode}
+                      placeholder="Имэйл хаягаа оруулна уу"
+                      className={!editMode ? "bg-gray-50" : ""}
+                    />
+                  </div>
 
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Имэйл хаяг
-                  </label>
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={!editMode}
-                    placeholder="Имэйл хаягаа оруулна уу"
-                  />
-                </div>
-
-                {/* Address */}
-                <div>
-                  <label className="block text-sm font-medium mb-2">Хаяг</label>
-                  <textarea
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    disabled={!editMode}
-                    placeholder="Хаягаа оруулна уу"
-                    rows={4}
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                  />
+                  {/* Address */}
+                  <div className="md:col-span-2">
+                    <Label htmlFor="address" className="text-sm font-semibold text-gray-700 mb-2.5 block">
+                      Хаяг
+                    </Label>
+                    <Textarea
+                      id="address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      disabled={!editMode}
+                      placeholder="Хаягаа оруулна уу"
+                      rows={4}
+                      className={!editMode ? "bg-gray-50" : ""}
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -955,13 +1176,13 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="h-full bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Left Sidebar Menu */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardContent className="p-4">
+            <Card className="sticky top-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardContent className="p-4 lg:p-6">
                 <nav className="space-y-2">
                   {menuItems.map((item) => {
                     const Icon = item.icon;
@@ -969,31 +1190,37 @@ export default function ProfilePage() {
                       <button
                         key={item.id}
                         onClick={() => setActiveMenu(item.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 ${
                           activeMenu === item.id
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-gray-100 text-gray-700"
+                            ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
+                            : "hover:bg-gray-100/80 text-gray-700 hover:scale-[1.01] hover:shadow-sm"
                         }`}
                       >
-                        <Icon className="w-5 h-5" />
+                        <Icon className={`w-5 h-5 ${activeMenu === item.id ? "text-primary-foreground" : ""}`} />
                         <span className="font-medium">{item.label}</span>
                       </button>
                     );
                   })}
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors hover:bg-red-50 text-red-600"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span className="font-medium">Гарах</span>
-                  </button>
+                  <div className="pt-2 mt-2 border-t border-gray-200">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 hover:bg-red-50/80 text-red-600 hover:scale-[1.01] hover:shadow-sm"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span className="font-medium">Гарах</span>
+                    </button>
+                  </div>
                 </nav>
               </CardContent>
             </Card>
           </div>
 
           {/* Right Content Area */}
-          <div className="lg:col-span-3">{renderContent()}</div>
+          <div className="lg:col-span-3">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {renderContent()}
+            </div>
+          </div>
         </div>
       </div>
     </div>

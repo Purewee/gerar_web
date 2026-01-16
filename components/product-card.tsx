@@ -18,6 +18,7 @@ export interface ProductCardProps {
   imageUrl?: string;
   featured?: boolean;
   className?: string;
+  inGrid?: boolean; // If true, card will fill grid cell instead of using fixed width
 }
 
 export function ProductCard({
@@ -29,6 +30,7 @@ export function ProductCard({
   imageUrl,
   featured = false,
   className = "",
+  inGrid = false,
 }: ProductCardProps) {
   const { toast } = useToast();
   const addToCartMutation = useCartAdd();
@@ -120,8 +122,12 @@ export function ProductCard({
     ? Math.round(((original - price) / original) * 100)
     : 0;
 
+  const wrapperClass = inGrid 
+    ? `w-full ${className}` 
+    : `shrink-0 w-40 sm:w-44 md:w-48 lg:w-52 ${className}`;
+
   return (
-    <div className={`shrink-0 w-44 sm:w-48 md:w-56 lg:w-64 ${className}`}>
+    <div className={wrapperClass}>
       <Card
         className={`group cursor-pointer hover:shadow-xl transition-all duration-300 h-full border-gray-200 overflow-hidden ${
           featured ? "ring-2 ring-primary/20" : ""
@@ -136,12 +142,12 @@ export function ProductCard({
                   src={imageUrl}
                   alt={name}
                   fill
-                  sizes="(max-width: 640px) 176px, (max-width: 768px) 192px, (max-width: 1024px) 224px, 256px"
+                  sizes="(max-width: 640px) 160px, (max-width: 768px) 176px, (max-width: 1024px) 192px, 208px"
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   unoptimized
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl">
+                <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl">
                   {displayImage}
                 </div>
               )}
@@ -150,11 +156,11 @@ export function ProductCard({
               <button
                 onClick={handleToggleFavorite}
                 disabled={isProcessingFavorite}
-                className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
+                className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
                 aria-label={isFavorited ? "Дурсамжаас хасах" : "Дурсамжид нэмэх"}
               >
                 <Heart
-                  className={`w-4 h-4 transition-colors ${
+                  className={`w-3.5 h-3.5 transition-colors ${
                     isFavorited
                       ? "fill-red-500 text-red-500"
                       : "text-gray-600 group-hover:text-red-500"
@@ -171,15 +177,15 @@ export function ProductCard({
             </div>
 
             {/* Content Section */}
-            <div className="flex flex-col flex-1 p-4">
-              <h3 className="font-medium text-xs sm:text-sm md:text-base line-clamp-2 mb-3 group-hover:text-primary transition-colors">
+            <div className="flex flex-col flex-1 p-3">
+              <h3 className="font-medium text-xs sm:text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
                 {name}
               </h3>
 
               {/* Price Section */}
-              <div className="flex flex-col gap-1 mb-3">
+              <div className="flex flex-col gap-1 mb-2">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-base sm:text-lg md:text-xl font-bold text-primary">
+                  <span className="text-sm sm:text-base font-bold text-primary">
                     {price.toLocaleString()}₮
                   </span>
                   {hasDiscount && (
@@ -195,10 +201,10 @@ export function ProductCard({
                 <Button
                   onClick={handleAddToCart}
                   disabled={isProcessingCart}
-                  className="flex-1 h-9 text-xs sm:text-sm font-medium"
+                  className="flex-1 h-8 text-xs sm:text-sm font-medium"
                   size="sm"
                 >
-                  <ShoppingCart className="w-4 h-4 mr-1.5" />
+                  <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
                   Сагслах
                 </Button>
               </div>
