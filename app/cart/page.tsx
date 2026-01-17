@@ -463,7 +463,7 @@ export default function CartPage() {
                       className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 transition-all h-11"
                       disabled={clearCartMutation.isPending}
                     >
-                      {clearCartMutation.isPending ? "Цэвэрлэж байна..." : "Сагс цэвэрлэх"}
+                      {clearCartMutation.isPending ? "Цэвэрлэж байна..." : "Сагс хоослох"}
                     </Button>
                   )}
 

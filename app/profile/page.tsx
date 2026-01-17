@@ -34,6 +34,8 @@ import {
   useAddressUpdate,
   useAddressDelete,
   useAddressSetDefault,
+  useDistricts,
+  useKhoroo,
   authApi,
   type CreateAddressRequest,
 } from "@/lib/api";
@@ -200,6 +202,16 @@ function AddressesContent() {
   const setDefaultAddressMutation = useAddressSetDefault();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  
+  // Districts and khoroo
+  const { data: districtsResponse } = useDistricts();
+  const districts = Array.isArray(districtsResponse?.data) ? districtsResponse.data : [];
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const { data: khorooResponse, isLoading: khorooLoading } = useKhoroo(selectedDistrict || null);
+  const khorooOptions = (khorooResponse?.data && typeof khorooResponse.data === 'object' && 'khorooOptions' in khorooResponse.data && Array.isArray(khorooResponse.data.khorooOptions))
+    ? khorooResponse.data.khorooOptions 
+    : (Array.isArray(khorooResponse?.data) ? khorooResponse.data : []);
+  
   const [formData, setFormData] = useState<CreateAddressRequest>({
     fullName: "",
     phoneNumber: "",
@@ -232,9 +244,19 @@ function AddressesContent() {
       addressNote: undefined,
       isDefault: false,
     });
+    setSelectedDistrict("");
     setShowAddForm(false);
     setEditingId(null);
   };
+
+  // Reset khoroo when district changes
+  useEffect(() => {
+    if (selectedDistrict) {
+      setFormData(prev => ({ ...prev, khorooOrSoum: "" }));
+    } else {
+      setFormData(prev => ({ ...prev, provinceOrDistrict: "" }));
+    }
+  }, [selectedDistrict]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,6 +289,7 @@ function AddressesContent() {
 
   const handleEdit = (address: any) => {
     setEditingId(address.id);
+    setSelectedDistrict(address.provinceOrDistrict || "");
     setFormData({
       label: address.label || undefined,
       fullName: address.fullName,
@@ -390,17 +413,31 @@ function AddressesContent() {
             </CardHeader>
             <CardContent className="p-6 lg:p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Label dropdown at the top */}
+                <div>
+                  <select
+                    id="label"
+                    value={formData.label || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, label: e.target.value })
+                    }
+                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Хаягийн шошго сонгох (заавал биш)</option>
+                    <option value="Орон сууц">Орон сууц</option>
+                    <option value="Оффис">Оффис</option>
+                  </select>
+                </div>
+
                 {/* Basic Information Section */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2 pb-2 border-b border-gray-200">
                     <User className="w-4 h-4" />
-                    Үндсэн мэдээлэл
+                    Хэрэглэгчийн мэдээлэл
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="fullName" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Бүтэн нэр *
-                      </Label>
                       <Input
                         id="fullName"
                         value={formData.fullName}
@@ -408,36 +445,20 @@ function AddressesContent() {
                           setFormData({ ...formData, fullName: e.target.value })
                         }
                         required
-                        placeholder="Бүтэн нэр"
+                        placeholder="Бүтэн нэр *"
                         disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phoneNumber" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Утасны дугаар *
-                      </Label>
                       <Input
                         id="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={(e) =>
-                          setFormData({ ...formData, phoneNumber: e.target.value })
+                          setFormData({ ...formData, phoneNumber: e.target.value.replace(/\D/g, "").slice(0, 8) })
                         }
                         required
-                        placeholder="Утасны дугаар"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <Label htmlFor="label" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Хаягийн нэр <span className="text-gray-400 font-normal">(сонголттой)</span>
-                      </Label>
-                      <Input
-                        id="label"
-                        value={formData.label || ""}
-                        onChange={(e) =>
-                          setFormData({ ...formData, label: e.target.value })
-                        }
-                        placeholder="Жишээ: Гэр, Ажлын байр"
+                        placeholder="Утасны дугаар *"
+                        maxLength={8}
                         disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                       />
                     </div>
@@ -446,34 +467,33 @@ function AddressesContent() {
 
                 {/* Location Section */}
                 <div className="space-y-4 pt-4">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <MapPin className="w-4 h-4" />
-                    Байршил
-                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="provinceOrDistrict" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Аймаг/Дүүрэг *
-                      </Label>
-                      <Input
+                      <select
                         id="provinceOrDistrict"
-                        value={formData.provinceOrDistrict}
-                        onChange={(e) =>
+                        value={selectedDistrict}
+                        onChange={(e) => {
+                          const district = e.target.value;
+                          setSelectedDistrict(district);
                           setFormData({
                             ...formData,
-                            provinceOrDistrict: e.target.value,
-                          })
-                        }
+                            provinceOrDistrict: district,
+                          });
+                        }}
                         required
-                        placeholder="Аймаг эсвэл дүүрэг"
                         disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
-                      />
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Аймаг/Дүүрэг сонгох *</option>
+                        {districts.map((district) => (
+                          <option key={district} value={district}>
+                            {district}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
-                      <Label htmlFor="khorooOrSoum" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Хороо/Сум *
-                      </Label>
-                      <Input
+                      <select
                         id="khorooOrSoum"
                         value={formData.khorooOrSoum}
                         onChange={(e) =>
@@ -483,28 +503,31 @@ function AddressesContent() {
                           })
                         }
                         required
-                        placeholder="Хороо эсвэл сум"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
-                      />
+                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending || !selectedDistrict || khorooLoading}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">
+                          {khorooLoading ? "Ачаалж байна..." : selectedDistrict ? "Хороо/Сум сонгох *" : "Эхлээд дүүрэг сонгоно уу"}
+                        </option>
+                        {Array.isArray(khorooOptions) && khorooOptions.length > 0 && khorooOptions.map((khoroo) => (
+                          <option key={khoroo} value={khoroo}>
+                            {khoroo}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
-                      <Label htmlFor="street" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Гудамж <span className="text-gray-400 font-normal">(сонголттой)</span>
-                      </Label>
                       <Input
                         id="street"
                         value={formData.street || ""}
                         onChange={(e) =>
                           setFormData({ ...formData, street: e.target.value })
                         }
-                        placeholder="Гудамж"
+                        placeholder="Гудамж (заавал биш)"
                         disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="neighborhood" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Хороолол <span className="text-gray-400 font-normal">(сонголттой)</span>
-                      </Label>
                       <Input
                         id="neighborhood"
                         value={formData.neighborhood || ""}
@@ -514,7 +537,7 @@ function AddressesContent() {
                             neighborhood: e.target.value,
                           })
                         }
-                        placeholder="Хороолол"
+                        placeholder="Хороолол (заавал биш)"
                         disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                       />
                     </div>
@@ -523,14 +546,8 @@ function AddressesContent() {
 
                 {/* Building Details Section */}
                 <div className="space-y-4 pt-4">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2 pb-2 border-b border-gray-200">
-                    Барилгын мэдээлэл <span className="text-gray-400 font-normal text-xs normal-case">(сонголттой)</span>
-                  </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="residentialComplex" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Орон сууцны цогцолбор
-                      </Label>
                       <Input
                         id="residentialComplex"
                         value={formData.residentialComplex || ""}
@@ -545,9 +562,6 @@ function AddressesContent() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="building" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Барилга
-                      </Label>
                       <Input
                         id="building"
                         value={formData.building || ""}
@@ -559,9 +573,6 @@ function AddressesContent() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="entrance" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Орц
-                      </Label>
                       <Input
                         id="entrance"
                         value={formData.entrance || ""}
@@ -573,9 +584,6 @@ function AddressesContent() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="apartmentNumber" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                        Орон сууцны дугаар
-                      </Label>
                       <Input
                         id="apartmentNumber"
                         value={formData.apartmentNumber || ""}
@@ -585,7 +593,7 @@ function AddressesContent() {
                             apartmentNumber: e.target.value,
                           })
                         }
-                        placeholder="Орон сууцны дугаар"
+                        placeholder="Тоот оруулна уу"
                         disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                       />
                     </div>
@@ -594,9 +602,6 @@ function AddressesContent() {
 
                 {/* Additional Notes */}
                 <div className="pt-4">
-                  <Label htmlFor="addressNote" className="text-sm font-semibold text-gray-700 mb-2.5 block">
-                    Нэмэлт тэмдэглэл <span className="text-gray-400 font-normal">(сонголттой)</span>
-                  </Label>
                   <Textarea
                     id="addressNote"
                     value={formData.addressNote || ""}
@@ -608,7 +613,7 @@ function AddressesContent() {
                     }
                     maxLength={500}
                     rows={3}
-                    placeholder="Нэмэлт тэмдэглэл (500 тэмдэгт хүртэл)"
+                    placeholder="Хүргэлттэй холбоотой нэмэлт мэдээлэл. (Жишээ: их дэлгүүрийн хажуу байр, орцны код...)"
                     disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                   />
                   <p className="mt-1 text-xs text-gray-500">

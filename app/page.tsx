@@ -3,29 +3,31 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
-import { useProducts, useCategories, useCategoryProducts, type Product, type Category } from "@/lib/api";
+import { useProducts, useCategories, type Product, type Category } from "@/lib/api";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Sparkles, TrendingUp } from "lucide-react";
 import { ProductSliderSkeleton, CategorySkeleton, Spinner } from "@/components/skeleton";
 
-// Component to display products from a category
-function CategoryProductsSection({ category }: { category: Category }) {
-  const categoryScrollRef = useRef<HTMLDivElement>(null);
-  const { data: categoryProductsResponse, isLoading: categoryProductsLoading } = useCategoryProducts(
-    category.id,
-    true // include subcategories
-  );
+// Component to display products from a subcategory
+function SubcategoryProductsSection({ 
+  subcategory, 
+  parentCategoryName, 
+  products 
+}: { 
+  subcategory: Category; 
+  parentCategoryName?: string;
+  products: Product[];
+}) {
+  const subcategoryScrollRef = useRef<HTMLDivElement>(null);
   
-  const categoryProducts = categoryProductsResponse?.data || [];
-  
-  const scrollCategoryProducts = (direction: 'left' | 'right') => {
-    if (categoryScrollRef.current) {
+  const scrollSubcategoryProducts = (direction: 'left' | 'right') => {
+    if (subcategoryScrollRef.current) {
       const scrollAmount = 300;
-      const currentScroll = categoryScrollRef.current.scrollLeft;
+      const currentScroll = subcategoryScrollRef.current.scrollLeft;
       const newScroll = direction === 'left' 
         ? currentScroll - scrollAmount 
         : currentScroll + scrollAmount;
-      categoryScrollRef.current.scrollTo({
+      subcategoryScrollRef.current.scrollTo({
         left: newScroll,
         behavior: 'smooth'
       });
@@ -33,22 +35,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
   };
   
   // Only show section if there are products
-  if (categoryProductsLoading) {
-    return (
-      <section className="py-12 lg:py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 mb-8">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-              {category.name}
-            </h2>
-          </div>
-          <ProductSliderSkeleton count={6} />
-        </div>
-      </section>
-    );
-  }
-  
-  if (categoryProducts.length === 0) {
+  if (products.length === 0) {
     return null;
   }
   
@@ -58,14 +45,19 @@ function CategoryProductsSection({ category }: { category: Category }) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 lg:mb-12 gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-              {category.name}
+              {subcategory.name}
             </h2>
+            {parentCategoryName && (
+              <p className="text-gray-500 text-sm sm:text-base mb-1">
+                {parentCategoryName}
+              </p>
+            )}
             <p className="text-gray-600 text-sm sm:text-base">
-              {category.description || `${category.name} ангиллын бараа`}
+              {subcategory.description || `${subcategory.name} дэд ангиллын бараа`}
             </p>
           </div>
           <Link
-            href={`/category?categoryId=${category.id}`}
+            href={`/category?categoryId=${subcategory.id}`}
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold text-sm sm:text-base group transition-colors"
           >
             Бүгдийг харах
@@ -76,21 +68,21 @@ function CategoryProductsSection({ category }: { category: Category }) {
         <div className="relative group">
           {/* Navigation Buttons - Desktop Only */}
           <button
-            onClick={() => scrollCategoryProducts('left')}
+            onClick={() => scrollSubcategoryProducts('left')}
             className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-            aria-label={`${category.name} - Өмнөх бараа`}
+            aria-label={`${subcategory.name} - Өмнөх бараа`}
           >
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
           <button
-            onClick={() => scrollCategoryProducts('right')}
+            onClick={() => scrollSubcategoryProducts('right')}
             className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-            aria-label={`${category.name} - Дараагийн бараа`}
+            aria-label={`${subcategory.name} - Дараагийн бараа`}
           >
             <ChevronRight className="w-5 h-5 text-gray-700" />
           </button>
           <div 
-            ref={categoryScrollRef}
+            ref={subcategoryScrollRef}
             className="product-slider overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 scroll-smooth"
             style={{ 
               scrollbarWidth: 'thin',
@@ -98,7 +90,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
             }}
           >
             <div className="flex gap-4 lg:gap-6 pb-4 min-w-max">
-              {categoryProducts.slice(0, 12).map((product) => (
+              {products.slice(0, 12).map((product) => (
                 <ProductCard
                   key={product.id}
                   id={product.id}
@@ -128,11 +120,11 @@ export default function Home() {
   const productsScrollRef = useRef<HTMLDivElement>(null);
   const offersScrollRef = useRef<HTMLDivElement>(null);
 
-  // Fetch products sorted by newest first
+  // Fetch products sorted by newest first - fetch more to have enough for subcategory grouping
   const { data: productsResponse, isLoading: productsLoading } = useProducts({
     sortBy: "createdAt",
     sortOrder: "desc",
-    limit: 12,
+    limit: 100, // Fetch more products to group by subcategory
   });
 
   // Fetch categories
@@ -153,7 +145,7 @@ export default function Home() {
         title: product.name.toUpperCase(),
         subtitle: product.description?.slice(0, 50) || "Шинэ бараа",
         discount: product.hasDiscount && product.discountPercentage
-          ? `${product.discountPercentage}% ХЯРТ ХЯМДРАЛТАЙ`
+          ? `${product.discountPercentage}% ХЯМДАРСАН`
           : "Онцгой санал",
         link: `/product/${product.id}`,
         imageUrl: product.firstImage || product.images?.[0],
@@ -165,7 +157,7 @@ export default function Home() {
       title: product.name.toUpperCase(),
       subtitle: product.description?.slice(0, 50) || "Шинэ бараа",
       discount: product.discountPercentage
-        ? `${product.discountPercentage}% ХЯРТ ХЯМДРАЛТАЙ`
+        ? `${product.discountPercentage}% ХЯМДАРСАН`
         : "Онцгой санал",
       link: `/product/${product.id}`,
       imageUrl: product.firstImage || product.images?.[0],
@@ -244,8 +236,72 @@ export default function Home() {
   // Get top-level categories only
   const topCategories = categories.filter((cat) => !cat.parentId).slice(0, 8);
   
-  // Get categories with products for display (first 4-6 categories)
-  const featuredCategories = topCategories.slice(0, 6);
+  // Get subcategories (categories with parentId)
+  const subcategories = categories.filter((cat) => cat.parentId !== null);
+  
+  // Create a map of category ID to category for quick lookup
+  const categoryMap = useMemo(() => {
+    const map = new Map<number, Category>();
+    categories.forEach((cat) => {
+      map.set(cat.id, cat);
+    });
+    return map;
+  }, [categories]);
+  
+  // Group products by subcategory
+  const productsBySubcategory = useMemo(() => {
+    const grouped = new Map<number, { subcategory: Category; products: Product[]; parentName?: string }>();
+    
+    products.forEach((product) => {
+      // Check all categories associated with the product
+      if (product.categories && product.categories.length > 0) {
+        product.categories.forEach((productCategory) => {
+          // Find if this category is a subcategory
+          const fullCategory = categoryMap.get(productCategory.id);
+          if (fullCategory && fullCategory.parentId !== null) {
+            // This is a subcategory
+            if (!grouped.has(fullCategory.id)) {
+              const parentCategory = categoryMap.get(fullCategory.parentId);
+              grouped.set(fullCategory.id, {
+                subcategory: fullCategory,
+                products: [],
+                parentName: parentCategory?.name,
+              });
+            }
+            const group = grouped.get(fullCategory.id)!;
+            // Avoid duplicate products
+            if (!group.products.find((p) => p.id === product.id)) {
+              group.products.push(product);
+            }
+          }
+        });
+      }
+      // Also check categoryId if categories array is empty
+      else if (product.categoryId) {
+        const fullCategory = categoryMap.get(product.categoryId);
+        if (fullCategory && fullCategory.parentId !== null) {
+          if (!grouped.has(fullCategory.id)) {
+            const parentCategory = categoryMap.get(fullCategory.parentId);
+            grouped.set(fullCategory.id, {
+              subcategory: fullCategory,
+              products: [],
+              parentName: parentCategory?.name,
+            });
+          }
+          const group = grouped.get(fullCategory.id)!;
+          if (!group.products.find((p) => p.id === product.id)) {
+            group.products.push(product);
+          }
+        }
+      }
+    });
+    
+    // Convert to array and sort by number of products (descending)
+    return Array.from(grouped.values())
+      .filter((group) => group.products.length > 0)
+      .sort((a, b) => b.products.length - a.products.length)
+      .slice(0, 8); // Limit to top 8 subcategories with most products
+  }, [products, categoryMap]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -488,7 +544,7 @@ export default function Home() {
               <div className="flex items-center gap-3 mb-8">
                 <Sparkles className="w-6 h-6 text-primary" />
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-                  Хямдруулсан бараа
+                  Хямдралтай бараа
                 </h2>
               </div>
               <div className="relative group">
@@ -541,10 +597,23 @@ export default function Home() {
           </section>
         )}
 
-        {/* Category-based Product Sections */}
-        {featuredCategories.map((category, index) => (
-          <CategoryProductsSection key={category.id} category={category} />
-        ))}
+        {/* Subcategory-based Product Sections */}
+        {productsBySubcategory.length > 0 ? (
+          productsBySubcategory.map((group, index) => (
+            <SubcategoryProductsSection
+              key={group.subcategory.id}
+              subcategory={group.subcategory}
+              parentCategoryName={group.parentName}
+              products={group.products}
+            />
+          ))
+        ) : productsLoading ? (
+          <section className="py-12 lg:py-16 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <ProductSliderSkeleton count={6} />
+            </div>
+          </section>
+        ) : null}
       </main>
     </div>
   );

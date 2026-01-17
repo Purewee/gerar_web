@@ -107,7 +107,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
           <div className="absolute top-4 right-4">
             <button
@@ -160,7 +160,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
                     setMobile(e.target.value.replace(/\D/g, "").slice(0, 8))
                   }
                   placeholder="8 оронтой утасны дугаар"
-                  className="pl-14 h-12 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                  className="pl-14 h-12 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
                   required
                   maxLength={8}
                 />
@@ -186,7 +186,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
                       handlePasswordChange(index, e.target.value)
                     }
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
                   />
                 ))}
               </div>
