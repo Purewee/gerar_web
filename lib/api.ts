@@ -69,11 +69,25 @@ export const removeSessionToken = (): void => {
   localStorage.removeItem(GUEST_SESSION_KEY);
 };
 
+// Helper function to check if authentication is required
+function requireAuth(): void {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required. Please log in.");
+  }
+}
+
 // Base fetch function with error handling
 async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  requireAuthentication: boolean = false
 ): Promise<ApiResponse<T>> {
+  // Check authentication requirement before making request
+  if (requireAuthentication) {
+    requireAuth();
+  }
+
   const token = getAuthToken();
   const sessionToken = getSessionToken();
   const headers: HeadersInit = {
@@ -539,6 +553,12 @@ export interface CartItem {
 // Cart API functions
 const cartApiFunctions = {
   get: async (): Promise<ApiResponse<CartItem[]>> => {
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    // Cart get requires either auth token or session token
+    if (!token && !sessionToken) {
+      throw new Error("Authentication or session required to view cart.");
+    }
     return apiFetch<CartItem[]>("/cart");
   },
 
@@ -613,6 +633,8 @@ const cartApiFunctions = {
   },
 
   merge: async (sessionToken: string): Promise<ApiResponse<{ mergedCount: number; skippedCount: number }>> => {
+    // Merge requires authentication token
+    requireAuth();
     return apiFetch<{ mergedCount: number; skippedCount: number }>("/cart/merge", {
       method: "POST",
       body: JSON.stringify({ sessionToken }),
@@ -622,9 +644,12 @@ const cartApiFunctions = {
 
 // Cart hooks
 export const useCart = () => {
+  const token = getAuthToken();
+  const sessionToken = getSessionToken();
   return useQuery({
     queryKey: queryKeys.cart.items(),
     queryFn: () => cartApiFunctions.get(),
+    enabled: !!token || !!sessionToken, // Only enable if authenticated or has session token
   });
 };
 
@@ -702,41 +727,49 @@ const favoritesApiFunctions = {
     page?: number,
     limit?: number
   ): Promise<ApiResponse<Product[]>> => {
+    requireAuth();
     const params = new URLSearchParams();
     if (page) params.append("page", page.toString());
     if (limit) params.append("limit", limit.toString());
     const query = params.toString();
-    return apiFetch<Product[]>(`/favorites${query ? `?${query}` : ""}`);
+    return apiFetch<Product[]>(`/favorites${query ? `?${query}` : ""}`, {}, true);
   },
 
   add: async (productId: number): Promise<ApiResponse<Product>> => {
+    requireAuth();
     return apiFetch<Product>("/favorites", {
       method: "POST",
       body: JSON.stringify({ productId }),
-    });
+    }, true);
   },
 
   remove: async (productId: number): Promise<ApiResponse<Product>> => {
+    requireAuth();
     return apiFetch<Product>(`/favorites/${productId}/remove`, {
       method: "POST",
       body: JSON.stringify({}),
-    });
+    }, true);
   },
 
   checkStatus: async (
     productId: number
   ): Promise<ApiResponse<{ productId: number; isFavorited: boolean }>> => {
+    requireAuth();
     return apiFetch<{ productId: number; isFavorited: boolean }>(
-      `/favorites/${productId}/status`
+      `/favorites/${productId}/status`,
+      {},
+      true
     );
   },
 };
 
 // Favorites hooks
 export const useFavorites = (params?: { page?: number; limit?: number }) => {
+  const token = getAuthToken();
   return useQuery({
     queryKey: queryKeys.favorites.list(params),
     queryFn: () => favoritesApiFunctions.get(params?.page, params?.limit),
+    enabled: !!token, // Only enable if authenticated
   });
 };
 
@@ -813,41 +846,47 @@ export interface CreateAddressRequest {
 // Addresses API functions
 const addressesApiFunctions = {
   getAll: async (): Promise<ApiResponse<Address[]>> => {
-    return apiFetch<Address[]>("/addresses");
+    requireAuth();
+    return apiFetch<Address[]>("/addresses", {}, true);
   },
 
   getById: async (id: number): Promise<ApiResponse<Address>> => {
-    return apiFetch<Address>(`/addresses/${id}`);
+    requireAuth();
+    return apiFetch<Address>(`/addresses/${id}`, {}, true);
   },
 
   create: async (data: CreateAddressRequest): Promise<ApiResponse<Address>> => {
+    requireAuth();
     return apiFetch<Address>("/addresses", {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, true);
   },
 
   update: async (
     id: number,
     data: Partial<CreateAddressRequest>
   ): Promise<ApiResponse<Address>> => {
+    requireAuth();
     return apiFetch<Address>(`/addresses/${id}/update`, {
       method: "POST",
       body: JSON.stringify(data),
-    });
+    }, true);
   },
 
   delete: async (id: number): Promise<ApiResponse<Address>> => {
+    requireAuth();
     return apiFetch<Address>(`/addresses/${id}/delete`, {
       method: "POST",
       body: JSON.stringify({}),
-    });
+    }, true);
   },
 
   setDefault: async (id: number): Promise<ApiResponse<Address>> => {
+    requireAuth();
     return apiFetch<Address>(`/addresses/${id}/set-default`, {
       method: "PATCH",
-    });
+    }, true);
   },
 
   getDistricts: async (): Promise<ApiResponse<string[]>> => {
@@ -861,17 +900,20 @@ const addressesApiFunctions = {
 
 // Addresses hooks
 export const useAddresses = () => {
+  const token = getAuthToken();
   return useQuery({
     queryKey: queryKeys.addresses.lists(),
     queryFn: () => addressesApiFunctions.getAll(),
+    enabled: !!token, // Only enable if authenticated
   });
 };
 
 export const useAddress = (id: number) => {
+  const token = getAuthToken();
   return useQuery({
     queryKey: queryKeys.addresses.detail(id),
     queryFn: () => addressesApiFunctions.getById(id),
-    enabled: !!id,
+    enabled: !!id && !!token, // Only enable if authenticated and id exists
   });
 };
 
@@ -1001,16 +1043,24 @@ export interface CreateOrderRequest {
 // Orders API functions
 const ordersApiFunctions = {
   getAll: async (): Promise<ApiResponse<Order[]>> => {
-    return apiFetch<Order[]>("/orders");
+    requireAuth();
+    return apiFetch<Order[]>("/orders", {}, true);
   },
 
   getById: async (id: number): Promise<ApiResponse<Order>> => {
-    return apiFetch<Order>(`/orders/${id}`);
+    requireAuth();
+    return apiFetch<Order>(`/orders/${id}`, {}, true);
   },
 
   create: async (data: CreateOrderRequest): Promise<ApiResponse<Order>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
+    
+    // Order creation requires either auth token or session token
+    if (!token && !sessionToken) {
+      throw new Error("Authentication or session required to create order.");
+    }
+    
     const body: any = { ...data };
 
     // For guest users, ensure session token is included
@@ -1018,26 +1068,30 @@ const ordersApiFunctions = {
       body.sessionToken = sessionToken;
     }
 
+    // If authenticated, require auth in apiFetch
     return apiFetch<Order>("/orders", {
       method: "POST",
       body: JSON.stringify(body),
-    });
+    }, !!token); // Require auth only if token exists
   },
 };
 
 // Orders hooks
 export const useOrders = () => {
+  const token = getAuthToken();
   return useQuery({
     queryKey: queryKeys.orders.lists(),
     queryFn: () => ordersApiFunctions.getAll(),
+    enabled: !!token, // Only enable if authenticated
   });
 };
 
 export const useOrder = (id: number) => {
+  const token = getAuthToken();
   return useQuery({
     queryKey: queryKeys.orders.detail(id),
     queryFn: () => ordersApiFunctions.getById(id),
-    enabled: !!id,
+    enabled: !!id && !!token, // Only enable if authenticated and id exists
   });
 };
 

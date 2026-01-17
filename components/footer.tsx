@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, MessageCircle, Mail, MapPin } from 'lucide-react';
+import { Phone, Instagram, Facebook } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -43,30 +43,45 @@ export function Footer() {
             
             <div className="space-y-3">
               <a 
-                href="https://wa.me/12029182132" 
+                href="https://www.instagram.com/gerarhousehold/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
+                className="flex items-center gap-3 p-3.5 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
               >
-                <div className="bg-green-500 p-2 rounded-lg group-hover:bg-green-600 transition-colors flex-shrink-0">
-                  <MessageCircle className="w-4 h-4 text-white" />
+                <div className="bg-linear-to-br from-purple-600 via-pink-600 to-orange-500 p-2 rounded-lg group-hover:opacity-90 transition-opacity shrink-0">
+                  <Instagram className="w-4 h-4 text-white" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs text-gray-500 font-medium">WhatsApp</div>
-                  <div className="text-sm font-semibold text-gray-900">+1 202-918-2132</div>
+                  <div className="text-xs text-gray-500 font-medium">Instagram</div>
+                  <div className="text-sm font-semibold text-gray-900">@gerar.mn</div>
                 </div>
               </a>
               
               <a 
-                href="tel:+12029182132"
+                href="https://www.facebook.com/profile.php?id=100064687573143" 
+                target="_blank" 
+                rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
               >
-                <div className="bg-blue-500 p-2 rounded-lg group-hover:bg-blue-600 transition-colors flex-shrink-0">
+                <div className="bg-blue-600 p-2 rounded-lg group-hover:bg-blue-700 transition-colors shrink-0">
+                  <Facebook className="w-4 h-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs text-gray-500 font-medium">Facebook</div>
+                  <div className="text-sm font-semibold text-gray-900">Gerar.mn</div>
+                </div>
+              </a>
+              
+              <a 
+                href="tel:+97672227410"
+                className="flex items-center gap-3 p-3.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
+              >
+                <div className="bg-green-500 p-2 rounded-lg group-hover:bg-green-600 transition-colors shrink-0">
                   <Phone className="w-4 h-4 text-white" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs text-gray-500 font-medium">Дуудлага</div>
-                  <div className="text-sm font-semibold text-gray-900">+1 202-918-2132</div>
+                  <div className="text-sm font-semibold text-gray-900">+976 7222-7410</div>
                 </div>
               </a>
             </div>
@@ -84,7 +99,7 @@ export function Footer() {
                     href="#" 
                     className="text-gray-600 hover:text-blue-600 text-sm transition-colors duration-200 flex items-center gap-2 group"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-blue-600 transition-colors flex-shrink-0"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-blue-600 transition-colors shrink-0"></span>
                     <span className="hover:underline">{category}</span>
                   </a>
                 </li>
@@ -104,7 +119,7 @@ export function Footer() {
                     href="#" 
                     className="text-gray-600 hover:text-blue-600 text-sm transition-colors duration-200 flex items-center gap-2 group"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-blue-600 transition-colors flex-shrink-0"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-blue-600 transition-colors shrink-0"></span>
                     <span className="hover:underline">{service}</span>
                   </a>
                 </li>

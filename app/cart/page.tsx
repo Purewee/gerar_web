@@ -9,13 +9,7 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Sparkles, ArrowRight, Tren
 import { useCart, useCartUpdate, useCartRemove, useCartClear, useOrderCreate, useCategories, useProducts } from "@/lib/api";
 import { ProductCard } from "@/components/product-card";
 import Image from "next/image";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { CardSkeleton, Spinner } from "@/components/skeleton";
+import { CardSkeleton } from "@/components/skeleton";
 
 export default function CartPage() {
   const router = useRouter();
@@ -28,6 +22,7 @@ export default function CartPage() {
     error: cartError,
     refetch: refetchCart,
   } = useCart();
+  
   const cartItems = cartResponse?.data || [];
   
   // Treat certain errors (like 401/403) as empty cart for better UX

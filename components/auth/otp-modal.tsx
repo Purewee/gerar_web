@@ -221,7 +221,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
           <div className="text-center space-y-3">
             <div className="inline-block">
               <Image
-                src="/logo_white.jpg"
+                src="/logo3.svg"
                 alt="Gerar"
                 width={120}
                 height={40}

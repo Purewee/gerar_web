@@ -3,11 +3,11 @@
 
 @theme {
   /* Primary color */
-  --color-primary: #2563eb;
+  --color-primary: #0a714e;
   --color-primary-foreground: #ffffff;
 
   /* Secondary color */
-  --color-secondary: #f1f5f9;
+  --color-secondary: #F2B705;
   --color-secondary-foreground: #0f172a;
 
   /* Background colors */
@@ -39,7 +39,7 @@
   --color-input: #e2e8f0;
 
   /* Ring (focus) color */
-  --color-ring: #2563eb;
+  --color-ring: #0a714e;
 
   /* Font family */
   --font-roboto: "Roboto", sans-serif;

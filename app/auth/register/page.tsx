@@ -160,7 +160,7 @@ export default function RegisterPage() {
         <CardHeader className="text-center">
           <a href="/" className="inline-block mb-2">
             <Image
-              src="/logo_white.jpg"
+              src="/logo3.svg"
               alt="Gerar"
               width={120}
               height={40}
