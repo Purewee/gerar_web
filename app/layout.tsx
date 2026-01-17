@@ -16,11 +16,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Set target date for countdown (example: 3 months from now)
-  // Convert to ISO string for serialization between server and client
-  const targetDate = new Date();
-  targetDate.setMonth(targetDate.getMonth() + 3);
-  const targetDateISO = targetDate.toISOString();
 
   return (
     <html lang="mn">
@@ -28,7 +23,6 @@ export default function RootLayout({
         <Providers>
           {/* <ConditionalNavigation> */}
             <CountdownTimer
-              targetDate={targetDateISO}
               title="Таны хэрэгцээнд тохируулан бүтээв"
               subtitle="Тун удахгүй"
             />
