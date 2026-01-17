@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -927,7 +927,6 @@ export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false);
   const [activeMenu, setActiveMenu] = useState<MenuItem>("profile");
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -951,11 +950,13 @@ export default function ProfilePage() {
 
   // Handle tab query parameter
   useEffect(() => {
-    const tab = searchParams.get("tab");
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
     if (tab && ["profile", "orders", "favorites", "addresses"].includes(tab)) {
       setActiveMenu(tab as MenuItem);
     }
-  }, [searchParams]);
+  }, []);
 
   const handleSave = () => {
     localStorage.setItem("profile_name", name);

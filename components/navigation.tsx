@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {  Search, ShoppingCart, User, ChevronDown } from "lucide-react";
+import { Search, ShoppingCart, User, ChevronDown } from "lucide-react";
 import { useCart, authApi } from "@/lib/api";
 import { useCategoriesStore } from "@/lib/stores/categories";
 import { LoginModal } from "@/components/auth/login-modal";
@@ -34,7 +34,6 @@ export function Navigation() {
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // Fetch cart data from API
   const { data: cartResponse } = useCart();
@@ -82,10 +81,12 @@ export function Navigation() {
   useEffect(() => {
     if (!pathname) return;
     if (!pathname.startsWith("/products")) return;
-    const searchValue = searchParams.get("search") || "";
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const searchValue = params.get("search") || "";
     setSearchQuery(searchValue);
     setMobileSearchQuery(searchValue);
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   const handleLogout = async () => {
     try {
