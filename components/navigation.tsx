@@ -208,7 +208,7 @@ export function Navigation() {
                         Профайл харах
                       </a>
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={handleLogout}
                       className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                     >
@@ -217,18 +217,18 @@ export function Navigation() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onClick={() => setLoginModalOpen(true)}
                   className="hidden sm:flex hover:bg-gray-100 rounded-lg transition-all duration-200 text-sm sm:text-base whitespace-nowrap font-medium"
                 >
                   Нэвтрэх
                 </Button>
               )}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="relative hover:bg-gray-100 rounded-lg transition-all duration-200" 
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover:bg-gray-100 rounded-lg transition-all duration-200"
                 asChild
               >
                 <a href="/cart">
@@ -259,7 +259,7 @@ export function Navigation() {
                     return (
                       <DropdownMenu key={category.id}>
                         <DropdownMenuTrigger asChild>
-                          <button 
+                          <button
                             className="text-sm font-semibold text-gray-700 hover:text-primary whitespace-nowrap py-2.5 px-4 bg-white border border-gray-200 hover:border-primary/30 data-[state=open]:bg-gradient-to-r data-[state=open]:from-primary/10 data-[state=open]:to-primary/5 data-[state=open]:text-primary data-[state=open]:border-primary/30 shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 flex items-center gap-1.5 shrink-0 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 relative group outline-none focus:outline-none focus-visible:outline-none"
                             onBlur={(e) => {
                               // Remove any lingering focus styles
@@ -355,18 +355,16 @@ export function Navigation() {
                         e.currentTarget.style.outline = 'none';
                         e.currentTarget.style.boxShadow = 'none';
                       }}
-                      className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-4 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
-                        isExpanded
-                          ? "text-primary bg-gradient-to-r from-primary/15 to-primary/5 shadow-sm"
-                          : "text-gray-700 hover:text-primary hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5"
-                      }`}
+                      className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-4 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${isExpanded
+                        ? "text-primary bg-gradient-to-r from-primary/15 to-primary/5 shadow-sm"
+                        : "text-gray-700 hover:text-primary hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5"
+                        }`}
                     >
                       <span className="relative z-10">{category.name}</span>
                       {hasChildren && (
                         <ChevronDown
-                          className={`w-3.5 h-3.5 text-gray-700 group-hover:text-primary transition-all duration-300 relative z-10 ${
-                            isExpanded ? "rotate-180 text-primary" : "group-hover:translate-y-0.5"
-                          }`}
+                          className={`w-3.5 h-3.5 text-gray-700 group-hover:text-primary transition-all duration-300 relative z-10 ${isExpanded ? "rotate-180 text-primary" : "group-hover:translate-y-0.5"
+                            }`}
                         />
                       )}
                       {!isExpanded && (
@@ -411,9 +409,8 @@ export function Navigation() {
 
       {/* Mobile Profile Drawer - Slides from left */}
       <div
-        className={`lg:hidden fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white z-101 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          mobileProfileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`lg:hidden fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white z-101 shadow-2xl transform transition-transform duration-300 ease-in-out ${mobileProfileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Drawer Header */}

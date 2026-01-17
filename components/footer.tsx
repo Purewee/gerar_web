@@ -37,7 +37,7 @@ export function Footer() {
                 Бидэнтэй холбогдох
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Бид танд туслахдаа баяртай байна. Асуулт эсвэл санал хүсэлт байвал бидэнтэй холбогдоорой.
+                Асуулт эсвэл санал хүсэлт байвал бидэнтэй холбогдоорой. Бид танд туслахдаа баяртай байна.
               </p>
             </div>
             
@@ -89,8 +89,8 @@ export function Footer() {
           
           {/* Middle Column - Categories */}
           <div className="lg:col-span-1">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">
-              Хамгийн алдартай ангиллууд
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              Их хайлттай ангиллууд
             </h3>
             <ul className="space-y-3">
               {categories.map((category, index) => (
@@ -109,7 +109,7 @@ export function Footer() {
           
           {/* Right Column - Services */}
           <div className="lg:col-span-1">
-            <h3 className="text-lg font-bold text-gray-900 mb-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
               Үйлчлүүлэгчийн үйлчилгээ
             </h3>
             <ul className="space-y-3">
@@ -130,7 +130,7 @@ export function Footer() {
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Gerar.mn</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Gerar.mn</h2>
               <p className="text-sm text-gray-600 leading-relaxed">
                 Таны гэрийн хэрэгцээнд зориулсан бүх зүйл нэг дороос.
               </p>
