@@ -293,7 +293,7 @@ export function Navigation() {
                             <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-56 min-w-[14rem]">
+                        <DropdownMenuContent align="start" className="w-56 min-w-56">
                           {category.children?.map((child) => (
                             <DropdownMenuItem key={child.id} asChild>
                               <a

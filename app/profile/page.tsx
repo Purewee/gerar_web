@@ -142,15 +142,14 @@ function OrdersContent() {
                           Захиалга #{order.id}
                         </h3>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            order.status === "PENDING"
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${order.status === "PENDING"
                               ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
                               : order.status === "COMPLETED"
-                              ? "bg-green-100 text-green-800 border border-green-200"
-                              : order.status === "CANCELLED"
-                              ? "bg-red-100 text-red-800 border border-red-200"
-                              : "bg-gray-100 text-gray-800 border border-gray-200"
-                          }`}
+                                ? "bg-green-100 text-green-800 border border-green-200"
+                                : order.status === "CANCELLED"
+                                  ? "bg-red-100 text-red-800 border border-red-200"
+                                  : "bg-gray-100 text-gray-800 border border-gray-200"
+                            }`}
                         >
                           {order.status}
                         </span>
@@ -202,16 +201,16 @@ function AddressesContent() {
   const setDefaultAddressMutation = useAddressSetDefault();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  
+
   // Districts and khoroo
   const { data: districtsResponse } = useDistricts();
   const districts = Array.isArray(districtsResponse?.data) ? districtsResponse.data : [];
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const { data: khorooResponse, isLoading: khorooLoading } = useKhoroo(selectedDistrict || null);
   const khorooOptions = (khorooResponse?.data && typeof khorooResponse.data === 'object' && 'khorooOptions' in khorooResponse.data && Array.isArray(khorooResponse.data.khorooOptions))
-    ? khorooResponse.data.khorooOptions 
+    ? khorooResponse.data.khorooOptions
     : (Array.isArray(khorooResponse?.data) ? khorooResponse.data : []);
-  
+
   const [formData, setFormData] = useState<CreateAddressRequest>({
     fullName: "",
     phoneNumber: "",
@@ -390,7 +389,7 @@ function AddressesContent() {
             </CardDescription>
           </div>
           {!showAddForm && (
-            <Button 
+            <Button
               onClick={() => setShowAddForm(true)}
               className="shadow-md hover:shadow-lg transition-all duration-200"
             >
@@ -651,12 +650,12 @@ function AddressesContent() {
                         ? "Хадгалж байна..."
                         : "Хадгалах"
                       : createAddressMutation.isPending
-                      ? "Нэмж байна..."
-                      : "Нэмэх"}
+                        ? "Нэмж байна..."
+                        : "Нэмэх"}
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={resetForm}
                     disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                     className="shadow-sm"
@@ -681,7 +680,7 @@ function AddressesContent() {
               Захиалга үүсгэхийн тулд хаяг нэмэх шаардлагатай
             </p>
             {!showAddForm && (
-              <Button 
+              <Button
                 onClick={() => setShowAddForm(true)}
                 className="shadow-md hover:shadow-lg transition-all duration-200"
               >
@@ -693,11 +692,10 @@ function AddressesContent() {
         ) : (
           <div className="space-y-4">
             {addresses.map((address) => (
-              <Card 
+              <Card
                 key={address.id}
-                className={`transition-all duration-200 hover:shadow-lg ${
-                  address.isDefault ? "border-2 border-primary/30 bg-linear-to-br from-primary/5 to-transparent" : "border border-gray-200"
-                }`}
+                className={`transition-all duration-200 hover:shadow-lg ${address.isDefault ? "border-2 border-primary/30 bg-linear-to-br from-primary/5 to-transparent" : "border border-gray-200"
+                  }`}
               >
                 <CardContent className="p-5 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -722,7 +720,7 @@ function AddressesContent() {
                         </p>
                       </div>
                       <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                         <p className="text-sm text-gray-700 leading-relaxed">
                           {address.provinceOrDistrict}, {address.khorooOrSoum}
                           {address.street && `, ${address.street}`}
@@ -1019,7 +1017,7 @@ export default function ProfilePage() {
                   </CardDescription>
                 </div>
                 {!editMode ? (
-                  <Button 
+                  <Button
                     onClick={() => setEditMode(true)}
                     className="shadow-md hover:shadow-lg transition-all duration-200"
                   >
@@ -1047,7 +1045,7 @@ export default function ProfilePage() {
                     >
                       Цуцлах
                     </Button>
-                    <Button 
+                    <Button
                       onClick={handleSave}
                       className="shadow-md hover:shadow-lg transition-all duration-200"
                     >
@@ -1197,11 +1195,10 @@ export default function ProfilePage() {
                       <button
                         key={item.id}
                         onClick={() => setActiveMenu(item.id)}
-                        className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 ${
-                          activeMenu === item.id
+                        className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 ${activeMenu === item.id
                             ? "bg-linear-to-r from-primary to-primary/90 text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
                             : "hover:bg-gray-100/80 text-gray-700 hover:scale-[1.01] hover:shadow-sm"
-                        }`}
+                          }`}
                       >
                         <Icon className={`w-5 h-5 ${activeMenu === item.id ? "text-primary-foreground" : ""}`} />
                         <span className="font-medium">{item.label}</span>
