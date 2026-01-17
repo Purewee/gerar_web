@@ -209,7 +209,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
-        <div className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
+        <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
           <div className="absolute top-4 right-4">
             <button
               onClick={handleClose}
@@ -242,7 +242,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
           </div>
         </div>
 
-        <div className="px-6 py-6 space-y-6">
+        <div className="px-6 pb-6 space-y-6">
           {showMobileInput ? (
             <form onSubmit={handleMobileSubmit} className="space-y-5">
               <div className="space-y-2">
@@ -281,7 +281,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
                 disabled={
                   forgotPasswordMutation.isPending || mobileInput.length !== 8
                 }
-                className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 {forgotPasswordMutation.isPending ? (
                   <span className="flex items-center gap-2">
@@ -344,7 +344,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
                 <Button
                   onClick={handleVerify}
                   disabled={otp.join("").length !== 4}
-                  className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   OTP баталгаажуулах
                 </Button>
@@ -353,7 +353,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
                   {timer > 0 ? (
                     <p className="text-sm text-gray-600">
                       OTP дахин илгээх{" "}
-                      <span className="font-semibold text-primary">{timer}с</span>
+                      <span className="font-semibold text-primary">{timer}</span>
                     </p>
                   ) : (
                     <Button

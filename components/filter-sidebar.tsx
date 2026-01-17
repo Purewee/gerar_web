@@ -2,18 +2,17 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCategories, type Category } from "@/lib/api";
+import { type Category } from "@/lib/api";
+import { useCategoriesStore } from "@/lib/stores/categories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Filter,
   X,
   ChevronDown,
   ChevronRight,
   SlidersHorizontal,
-  DollarSign,
   Package,
   ArrowUpDown,
 } from "lucide-react";
@@ -32,7 +31,7 @@ function buildCategoryTree(categories: Category[]): Category[] {
 
   // First pass: create map
   categories.forEach((cat) => {
-    categoryMap.set(cat.id, { ...cat, children: [] });
+    categoryMap.set(cat.id, { children: [], ...cat  });
   });
 
   // Second pass: build tree
@@ -82,10 +81,10 @@ function CategoryTreeItem({
   }, []); // Only run once on mount
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <div
         className={cn(
-          "relative flex items-center gap-2.5 py-2.5 px-3 rounded-lg cursor-pointer transition-all duration-200 group",
+          "relative flex w-full items-center gap-2.5 py-2 px-3 rounded-lg cursor-pointer transition-all duration-200 group",
           isParent
             ? cn(
                 "mb-1",
@@ -93,69 +92,14 @@ function CategoryTreeItem({
                   ? "bg-primary/10 border-2 border-primary/30 shadow-sm"
                   : "bg-gray-50/50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300"
               )
-            : cn(
-                "ml-8 mb-0.5 relative",
-                isSelected
-                  ? "bg-primary/5 border border-primary/20 shadow-sm"
-                  : "bg-white border border-gray-100 hover:bg-gray-50 hover:border-gray-200"
-              )
+            : " mb-1 relative w-full bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-200"
+
         )}
-        style={{
-          paddingLeft: isSubcategory ? "2.75rem" : "0.75rem",
-        }}
+        
       >
-        {/* Tree connector line for subcategories */}
-        {isSubcategory && (
-          <>
-            {/* Horizontal line */}
-            <div
-              className={cn(
-                "absolute left-0 top-1/2 w-6 h-0.5 -translate-y-1/2",
-                isSelected ? "bg-primary/30" : "bg-gray-300"
-              )}
-            />
-            {/* Vertical line (if not last) */}
-            {!isLast && (
-              <div
-                className={cn(
-                  "absolute left-0 top-1/2 w-0.5 h-full",
-                  isSelected ? "bg-primary/20" : "bg-gray-200"
-                )}
-                style={{ height: "calc(100% + 0.125rem)" }}
-              />
-            )}
-          </>
-        )}
-        {/* Expand/Collapse button */}
-        {hasChildren ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsExpanded(!isExpanded);
-            }}
-            className={cn(
-              "p-1 rounded transition-all duration-200 flex-shrink-0",
-              isParent
-                ? "hover:bg-primary/20 text-primary"
-                : "hover:bg-gray-200 text-gray-600"
-            )}
-          >
-            {isExpanded ? (
-              <ChevronDown className={cn("w-4 h-4", isParent && "w-5 h-5")} />
-            ) : (
-              <ChevronRight className={cn("w-4 h-4", isParent && "w-5 h-5")} />
-            )}
-          </button>
-        ) : (
-          <div className="w-6 flex-shrink-0 flex items-center justify-center">
-            {isSubcategory && (
-              <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-primary/40 transition-colors" />
-            )}
-          </div>
-        )}
 
         {/* Checkbox */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <Checkbox
             id={`category-${category.id}`}
             checked={isSelected}
@@ -167,7 +111,7 @@ function CategoryTreeItem({
         <label
           htmlFor={`category-${category.id}`}
           className={cn(
-            "flex-1 cursor-pointer select-none transition-colors",
+            "flex-1 cursor-pointer w-full select-none transition-colors",
             isParent
               ? cn(
                   "text-sm font-semibold",
@@ -183,58 +127,57 @@ function CategoryTreeItem({
         >
           {category.name}
         </label>
-
-        {/* Children count badge for parent categories */}
-        {hasChildren && isParent && (
-          <span
+       
+        {/* Expand/Collapse button */}
+        {hasChildren && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsExpanded(!isExpanded);
+            }}
             className={cn(
-              "px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0",
-              isSelected
-                ? "bg-primary/20 text-primary"
-                : "bg-gray-200 text-gray-600 group-hover:bg-gray-300"
+              "p-1 rounded transition-all duration-200 shrink-0",
+              isParent
+                ? "hover:bg-primary/20 text-primary"
+                : "hover:bg-gray-200 text-gray-600"
             )}
           >
-            {category.children!.length}
-          </span>
+            {isExpanded ? (
+              <ChevronDown className={cn("w-4 h-4", isParent && "w-5 h-5")} />
+            ) : (
+              <ChevronRight className={cn("w-4 h-4", isParent && "w-5 h-5")} />
+            )}
+          </button>
         )}
       </div>
 
       {/* Subcategories container with visual connection */}
       {hasChildren && isExpanded && (
-        <div className="relative">
-          {/* Vertical line connecting parent to children */}
-          {isParent && (
-            <div className="absolute left-[1.125rem] top-0 bottom-0 w-0.5 bg-gray-200" />
-          )}
-          
-          {/* Subcategories list */}
-          <div className={cn("space-y-0.5", isParent && "mt-1 ml-0", isSubcategory && "ml-8")}>
-            {category.children!.map((child, index) => {
-              const isLastChild = index === category.children!.length - 1;
-              return (
-                <CategoryTreeItem
-                  key={child.id}
-                  category={child}
-                  selectedCategories={selectedCategories}
-                  onToggleCategory={onToggleCategory}
-                  level={level + 1}
-                  isLast={isLastChild}
-                  parentPath={[...parentPath, isLast]}
-                />
-              );
-            })}
-          </div>
-        </div>
+       <div className="ml-4 flex flex-col space-y-1">
+        {category.children!.map((child, index) => {
+          const isLastChild = index === category.children!.length - 1;
+          return (
+            <CategoryTreeItem
+              key={child.id}
+              category={child}
+              selectedCategories={selectedCategories}
+              onToggleCategory={onToggleCategory}
+              level={level + 1}
+              isLast={isLastChild}
+              parentPath={[...parentPath, isLast]}
+            />
+          );
+        })}
+      </div>
       )}
-    </div>
+      </div>
   );
 }
 
 export function FilterSidebar({ className, productsCount, isLoading }: FilterSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: categoriesResponse } = useCategories();
-  const allCategories = categoriesResponse?.data || [];
+  const allCategories = useCategoriesStore((state) => state.categories);
   const [isMounted, setIsMounted] = useState(false);
 
   // Ensure component is mounted to avoid hydration mismatch
@@ -327,7 +270,7 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   return (
     <div
       className={cn(
-        "space-y-5 sticky top-24 backdrop-blur-md bg-white/80 rounded-2xl p-4 shadow-lg",
+        "space-y-5 sticky w-full top-24 backdrop-blur-md bg-white border border-gray-200 rounded-2xl p-4 shadow-lg",
         className
       )}
     >
@@ -377,7 +320,7 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   
       {/* Categories */}
       <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-        <CardHeader className="pb-3 border-b border-gray-100">
+        <CardHeader className="border-b border-gray-100 p-3">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <div className="p-1.5 bg-primary/10 rounded-md">
               <Package className="w-4 h-4 text-primary" />
@@ -386,23 +329,25 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
           </CardTitle>
         </CardHeader>
   
-        <CardContent className="pt-4">
-          <div className="max-h-[400px] overflow-y-auto pr-2 space-y-1">
+        <CardContent className="p-3 w-full">
+          <div className="max-h-[400px] overflow-y-auto pr-2 space-y-1 w-full">
             {categoryTree.length === 0 ? (
               <p className="text-sm text-gray-500 text-center py-6">
                 {isMounted ? "Ангилал олдсонгүй" : "Ачааллаж байна..."}
               </p>
             ) : (
-              categoryTree.map((category, index) => (
-                <CategoryTreeItem
-                  key={category.id}
-                  category={category}
-                  selectedCategories={selectedCategoryIds}
-                  onToggleCategory={handleCategoryToggle}
-                  isLast={index === categoryTree.length - 1}
-                  parentPath={[]}
-                />
-              ))
+              categoryTree.map((category, index) => {
+                return (
+                  <CategoryTreeItem
+                    key={category.id}
+                    category={category}
+                    selectedCategories={selectedCategoryIds}
+                    onToggleCategory={handleCategoryToggle}
+                    isLast={index === categoryTree.length - 1}
+                    parentPath={[]}
+                  />
+                )
+              })
             )}
           </div>
         </CardContent>
@@ -410,16 +355,16 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   
       {/* Price */}
       <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-        <CardHeader className="pb-3 border-b border-gray-100">
+        <CardHeader className="p-3 border-b border-gray-100">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <div className="p-1.5 bg-primary/10 rounded-md">
-              <DollarSign className="w-4 h-4 text-primary" />
+            <div className="size-6 flex items-center justify-center bg-primary/10 rounded-md">
+              ₮
             </div>
             Үнэ
           </CardTitle>
         </CardHeader>
   
-        <CardContent className="pt-4 space-y-3">
+        <CardContent className="p-3 space-y-3">
           <div className="flex items-center gap-3">
             <Input
               type="number"
@@ -455,13 +400,13 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   
       {/* Stock */}
       <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-        <CardHeader className="pb-3 border-b border-gray-100">
+        <CardHeader className="p-3 border-b border-gray-100">
           <CardTitle className="text-base font-semibold">
             Барааны нөөц
           </CardTitle>
         </CardHeader>
   
-        <CardContent className="pt-4">
+        <CardContent className="p-3">
           <Button
             variant={inStock === "true" ? "default" : "outline"}
             className="w-full justify-start gap-2"
@@ -480,7 +425,7 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   
       {/* Sort */}
       <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-        <CardHeader className="pb-3 border-b border-gray-100">
+        <CardHeader className="p-3 border-b border-gray-100">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <div className="p-1.5 bg-primary/10 rounded-md">
               <ArrowUpDown className="w-4 h-4 text-primary" />
@@ -489,7 +434,7 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
           </CardTitle>
         </CardHeader>
   
-        <CardContent className="pt-4">
+        <CardContent className="p-3">
           <select
             value={`${sortBy}-${sortOrder}`}
             onChange={(e) => {
@@ -517,7 +462,7 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
       {/* Active Filters */}
       {hasActiveFilters && (
         <Card className="rounded-2xl border-2 border-primary/30 bg-primary/5 shadow-md">
-          <CardContent className="pt-4">
+          <CardContent className="p-4">
             <p className="text-xs font-semibold text-primary mb-3">
               Идэвхтэй шүүлтүүд
             </p>
@@ -543,7 +488,9 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
                   }
                   className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-primary/20 text-xs font-semibold hover:bg-red-50 hover:text-red-600 transition"
                 >
-                  <DollarSign className="w-3 h-3" />
+                   <div className="size-6 flex items-center justify-center bg-primary/10 rounded-md">
+              ₮
+            </div>
                   {minPrice || "0"} – {maxPrice || "∞"}
                   <X className="w-3 h-3" />
                 </span>

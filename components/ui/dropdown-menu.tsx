@@ -24,7 +24,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-sm outline-none transition-all duration-200 focus:bg-gradient-to-r focus:from-primary/10 focus:to-primary/5 focus:text-primary data-[state=open]:bg-gradient-to-r data-[state=open]:from-primary/10 data-[state=open]:to-primary/5 data-[state=open]:text-primary hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary",
+      "flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-sm outline-none transition-all duration-200 focus:bg-linear-to-r focus:from-primary/10 focus:to-primary/5 focus:text-primary data-[state=open]:bg-linear-to-r data-[state=open]:from-primary/10 data-[state=open]:to-primary/5 data-[state=open]:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary",
       inset && "pl-8",
       className
     )}
@@ -92,7 +92,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-sm outline-none transition-all duration-200 focus:bg-gradient-to-r focus:from-primary/10 focus:to-primary/5 focus:text-primary data-disabled:pointer-events-none data-disabled:opacity-50 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary",
+      "relative flex cursor-pointer select-none items-center rounded-lg px-3 py-2 text-sm outline-none transition-all duration-200 focus:bg-linear-to-r focus:from-primary/10 focus:to-primary/5 focus:text-primary data-disabled:pointer-events-none data-disabled:opacity-50 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary",
       inset && "pl-8",
       className
     )}

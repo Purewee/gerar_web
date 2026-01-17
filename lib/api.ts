@@ -508,11 +508,12 @@ const categoriesApiFunctions = {
 };
 
 // Categories hooks
-export const useCategories = () => {
+export const useCategories = (options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: queryKeys.categories.list(),
     queryFn: () => categoriesApiFunctions.getAll(),
     staleTime: 1.5 * 60 * 60 * 1000, // 1.5 hours
+    enabled: options?.enabled ?? true,
   });
 };
 

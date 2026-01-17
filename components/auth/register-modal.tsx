@@ -173,7 +173,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
-        <div className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
+        <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
           <div className="absolute top-4 right-4">
             <button
               onClick={handleClose}
@@ -197,14 +197,11 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
               <DialogTitle className="text-2xl font-bold text-white">
                 Бүртгэл үүсгэх
               </DialogTitle>
-              <DialogDescription className="text-white/90 text-sm">
-                4 оронтой PIN үүсгэнэ үү. PIN-ээ хоёр удаа оруулна уу.
-              </DialogDescription>
             </DialogHeader>
           </div>
         </div>
 
-        <div className="px-6 py-6 space-y-5">
+        <div className="px-6 pb-6 space-y-5">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label
@@ -306,7 +303,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                 password.join("").length !== 4 ||
                 confirmPassword.join("").length !== 4
               }
-              className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {registerMutation.isPending ? (
                 <span className="flex items-center gap-2">

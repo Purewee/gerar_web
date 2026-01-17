@@ -41,7 +41,7 @@ NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
 
 const navigationMenuTriggerStyle = cva(
-  "group inline-flex h-11 w-max items-center justify-center rounded-lg bg-transparent px-4 py-2.5 text-sm font-semibold transition-all duration-300 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary focus:bg-gradient-to-r focus:from-primary/10 focus:to-primary/5 focus:text-primary focus:outline-none focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-gradient-to-r data-[active]:from-primary/10 data-[active]:to-primary/5 data-[active]:text-primary data-[state=open]:bg-gradient-to-r data-[state=open]:from-primary/10 data-[state=open]:to-primary/5 data-[state=open]:text-primary relative overflow-hidden"
+  "group inline-flex h-11 w-max items-center justify-center rounded-lg bg-transparent px-4 py-2.5 text-sm font-semibold transition-all duration-300 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary focus:bg-linear-to-r focus:from-primary/10 focus:to-primary/5 focus:text-primary focus:outline-none focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-linear-to-r data-[active]:from-primary/10 data-[active]:to-primary/5 data-[active]:text-primary data-[state=open]:bg-linear-to-r data-[state=open]:from-primary/10 data-[state=open]:to-primary/5 data-[state=open]:text-primary relative overflow-hidden"
 );
 
 const NavigationMenuTrigger = React.forwardRef<
@@ -60,7 +60,7 @@ const NavigationMenuTrigger = React.forwardRef<
         aria-hidden="true"
       />
     </span>
-    <span className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
   </NavigationMenuPrimitive.Trigger>
 ));
 NavigationMenuTrigger.displayName = NavigationMenuPrimitive.Trigger.displayName;

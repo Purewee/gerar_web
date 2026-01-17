@@ -27,7 +27,7 @@ export function Footer() {
   return (
     <footer className="bg-gray-50 border-t border-gray-200">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-6 py-16 lg:py-20">
+      <div className="max-w-7xl mx-auto px-6 py-6 sm:py-14 lg:py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
           
           {/* Left Column - Contact */}
@@ -58,7 +58,7 @@ export function Footer() {
               </a>
               
               <a 
-                href="https://www.facebook.com/profile.php?id=100064687573143" 
+                href="https://www.facebook.com/profile.php?id=61586772028189" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
@@ -73,7 +73,7 @@ export function Footer() {
               </a>
               
               <a 
-                href="tel:+97672227410"
+                href="tel:+97688860134"
                 className="flex items-center gap-3 p-3.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
               >
                 <div className="bg-green-500 p-2 rounded-lg group-hover:bg-green-600 transition-colors shrink-0">
@@ -81,7 +81,7 @@ export function Footer() {
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs text-gray-500 font-medium">Дуудлага</div>
-                  <div className="text-sm font-semibold text-gray-900">+976 7222-7410</div>
+                  <div className="text-sm font-semibold text-gray-900">+976 8886-0134</div>
                 </div>
               </a>
             </div>

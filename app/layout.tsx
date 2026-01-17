@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ConditionalNavigation } from "@/components/conditional-navigation";
 import { Providers } from "@/lib/providers";
+import { CategoriesProvider } from "@/components/categories-provider";
 
 export const metadata: Metadata = {
   title: "Gerar",
@@ -19,9 +20,11 @@ export default function RootLayout({
     <html lang="mn">
       <body className="font-roboto">
         <Providers>
-          <ConditionalNavigation>
-            {children}
-          </ConditionalNavigation>
+          <CategoriesProvider>
+            <ConditionalNavigation>
+              {children}
+            </ConditionalNavigation>
+          </CategoriesProvider>
           <Toaster />
         </Providers>
       </body>

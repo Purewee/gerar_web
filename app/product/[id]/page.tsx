@@ -34,16 +34,12 @@ export default function ProductDetailPage() {
 
   const addToCartMutation = useCartAdd();
   const addFavoriteMutation = useFavoriteAdd();
-  const removeFavoriteMutation = useFavoriteRemove();
-  const { data: favoriteStatusResponse } = useFavoriteStatus(
-    isNaN(productId) ? 0 : productId
-  );
-  const isFavorited = favoriteStatusResponse?.data?.isFavorited || false;
+  const removeFavoriteMutation = useFavoriteRemove()
 
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-525px)] bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6  py-4">
           <div className="h-10 w-24 bg-gray-200 rounded animate-pulse mb-6" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             <div className="space-y-4">
@@ -69,7 +65,7 @@ export default function ProductDetailPage() {
 
   if (productError || !product) {
     return (
-      <div className="bg-gray-50 flex items-center justify-center">
+      <div className="bg-gray-50 flex items-center justify-center min-h-[calc(100vh-525px)]">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Бүтээгдэхүүн олдсонгүй</p>
           <Button onClick={() => router.push("/")}>
@@ -143,19 +139,19 @@ export default function ProductDetailPage() {
     }
 
     try {
-      if (isFavorited) {
-        await removeFavoriteMutation.mutateAsync(product.id);
-        toast({
-          title: "Дуртай жагсаалтаас устгагдсан",
-          description: `${product.name} дуртай жагсаалтаас устгагдлаа`,
-        });
-      } else {
-        await addFavoriteMutation.mutateAsync(product.id);
-        toast({
-          title: "Дуртай жагсаалтад нэмэгдсэн",
-          description: `${product.name} дуртай жагсаалтад нэмэгдлээ`,
-        });
-      }
+      // if (isFavorited) {
+      //   await removeFavoriteMutation.mutateAsync(product.id);
+      //   toast({
+      //     title: "Дуртай жагсаалтаас устгагдсан",
+      //     description: `${product.name} дуртай жагсаалтаас устгагдлаа`,
+      //   });
+      // } else {
+      //   await addFavoriteMutation.mutateAsync(product.id);
+      //   toast({
+      //     title: "Дуртай жагсаалтад нэмэгдсэн",
+      //     description: `${product.name} дуртай жагсаалтад нэмэгдлээ`,
+      //   });
+      // }
     } catch (error: any) {
       toast({
         title: "Алдаа гарлаа",
@@ -166,9 +162,9 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="h-full bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <Button onClick={() => router.back()} variant="ghost" className="mb-6">
+    <div className="h-full bg-white pb-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+        <Button onClick={() => router.back()} variant="ghost" className="mb-2 md:mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Буцах
         </Button>
@@ -176,12 +172,12 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Images */}
           <div>
-            <Card className="mb-4 border-none">
+            <Card className=" border border-gray-200">
               <CardContent className="p-0">
                 <div className="rounded-lg h-64 sm:h-80 lg:h-96 flex items-center justify-center overflow-hidden">
                   {product.images[selectedImage] &&
-                  (product.images[selectedImage].startsWith("http") ||
-                    product.images[selectedImage].startsWith("/")) ? (
+                    (product.images[selectedImage].startsWith("http") ||
+                      product.images[selectedImage].startsWith("/")) ? (
                     <Image
                       src={product.images[selectedImage]}
                       alt={product.name}
@@ -226,63 +222,81 @@ export default function ProductDetailPage() {
 
           {/* Product Info */}
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
               {product.name}
             </h1>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="text-3xl sm:text-4xl font-bold text-gray-900">
-                {parseFloat(product.price).toLocaleString()}₮
-              </div>
-              {product.originalPrice &&
-                parseFloat(product.originalPrice) >
+            <div className="flex flex-col-reverse items-start sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2 md:mb-6">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
+                  {parseFloat(product.price).toLocaleString()}₮
+                </div>
+                {product.originalPrice &&
+                  parseFloat(product.originalPrice) >
                   parseFloat(product.price) && (
-                  <div className="text-xl text-gray-500 line-through">
-                    {parseFloat(product.originalPrice).toLocaleString()}₮
-                  </div>
-                )}
+                    <div className="text-xl text-gray-500 line-through">
+                      {parseFloat(product.originalPrice).toLocaleString()}₮
+                    </div>
+                  )}
+              </div>
               {product.discountPercentage && (
-                <div className="bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-full">
+                <div className="bg-primary text-primary-foreground text-sm font-medium sm:font-semibold lg:font-bold px-3 py-1 rounded-full">
                   {product.discountPercentage}% ХЯМДРАЛТАЙ
                 </div>
               )}
             </div>
 
             {product.stock > 0 && (
-              <div className="mb-4">
+              <div className="mb-2 md:mb-4">
                 <span className="text-sm text-green-600 font-medium">
                   Барааны үлдэгдэл: {product.stock} ширхэг
                 </span>
               </div>
             )}
 
-            <div className="mb-6">
+            <div className="mb-2 md:mb-6">
               <h2 className="text-lg font-semibold mb-2">Тайлбар</h2>
               <p className="text-gray-600">{product.description}</p>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">
-                Тоо ширхэг
-              </label>
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  variant="outline"
-                  size="icon"
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <span className="text-lg font-semibold w-12 text-center">
-                  {quantity}
-                </span>
-                <Button
-                  onClick={() => setQuantity(quantity + 1)}
-                  variant="outline"
-                  size="icon"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
+            <div className="mb-2 md:mb-6 flex items-end gap-20">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Тоо ширхэг
+                </label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    variant="outline"
+                    size="icon"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <span className="text-lg font-semibold w-12 text-center">
+                    {quantity}
+                  </span>
+                  <Button
+                    onClick={() => setQuantity(quantity + 1)}
+                    variant="outline"
+                    size="icon"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
+              <Button
+                onClick={handleToggleFavorite}
+                variant="outline"
+                size="icon"
+                disabled={
+                  addFavoriteMutation.isPending ||
+                  removeFavoriteMutation.isPending
+                }
+              >
+                <Heart
+                  className={`w-5 h-5 
+                    }`}
+                />
+              </Button>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -303,21 +317,6 @@ export default function ProductDetailPage() {
                 disabled={product.stock === 0}
               >
                 Одоо худалдаж авах
-              </Button>
-              <Button
-                onClick={handleToggleFavorite}
-                variant="outline"
-                size="icon"
-                disabled={
-                  addFavoriteMutation.isPending ||
-                  removeFavoriteMutation.isPending
-                }
-              >
-                <Heart
-                  className={`w-5 h-5 ${
-                    isFavorited ? "fill-red-600 text-red-600" : ""
-                  }`}
-                />
               </Button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Search, ShoppingCart, User, ChevronDown } from "lucide-react";
-import { useCategories, useCart, authApi, type Category } from "@/lib/api";
+import {  Search, ShoppingCart, User, ChevronDown } from "lucide-react";
+import { useCart, authApi } from "@/lib/api";
+import { useCategoriesStore } from "@/lib/stores/categories";
 import { LoginModal } from "@/components/auth/login-modal";
 import { RegisterModal } from "@/components/auth/register-modal";
 import { OTPModal } from "@/components/auth/otp-modal";
@@ -32,6 +33,8 @@ export function Navigation() {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Fetch cart data from API
   const { data: cartResponse } = useCart();
@@ -76,6 +79,14 @@ export function Navigation() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!pathname) return;
+    if (!pathname.startsWith("/products")) return;
+    const searchValue = searchParams.get("search") || "";
+    setSearchQuery(searchValue);
+    setMobileSearchQuery(searchValue);
+  }, [pathname, searchParams]);
+
   const handleLogout = async () => {
     try {
       await authApi.logout();
@@ -93,6 +104,7 @@ export function Navigation() {
       localStorage.removeItem("profile_name");
       localStorage.removeItem("profile_email");
       localStorage.removeItem("profile_address");
+      localStorage.removeItem("user_id");
       setIsAuthenticated(false);
       setUserName("");
       setMobileProfileMenuOpen(false);
@@ -110,10 +122,9 @@ export function Navigation() {
     }
   };
 
-  // Fetch categories from API
-  const { data: categoriesResponse, isLoading: categoriesLoading } =
-    useCategories();
-  const allCategories = categoriesResponse?.data || [];
+  // Get categories from store (hydrated by CategoriesProvider)
+  const allCategories = useCategoriesStore((state) => state.categories);
+  const categoriesLoading = useCategoriesStore((state) => state.isLoading);
   // Filter to show only parent categories (parentId === null)
   const categories = allCategories.filter((cat) => cat.parentId === null);
 
@@ -129,8 +140,8 @@ export function Navigation() {
 
   return (
     <>
-      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
           <div className="flex items-center justify-between py-3 md:py-5 gap-4">
             {/* Profile Icon - Mobile/Small Screens (Left Side) */}
             <button
@@ -170,7 +181,11 @@ export function Navigation() {
                   placeholder="Тавилга, чимэглэл, гэрийн хэрэгсэл хайх...."
                   className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) =>
+                    setSearchQuery(
+                      e.target.value.replace(/[^\p{L}\p{N}\s]/gu, "")
+                    )
+                  }
                 />
                 <button
                   type="submit"
@@ -190,7 +205,7 @@ export function Navigation() {
                       variant="ghost"
                       className="hidden sm:flex text-sm sm:text-base whitespace-nowrap hover:bg-gray-100 rounded-lg px-3 py-2 transition-all duration-200"
                     >
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-xs mr-2.5 shadow-sm">
+                      <div className="w-7 h-7 rounded-full bg-linear-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-xs mr-2.5 shadow-sm">
                         {userName ? getUserInitials(userName) : <User className="w-4 h-4" />}
                       </div>
                       <span className="font-medium text-gray-700">
@@ -244,13 +259,13 @@ export function Navigation() {
           </div>
 
           {/* Category Navigation - Desktop */}
-          <nav className="hidden lg:flex items-center gap-2 py-3 border-t border-gray-200/80 relative z-100">
+          <nav className="hidden lg:flex items-center gap-2 py-3 border-t border-gray-200/80 relative z-40">
             {categoriesLoading ? (
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Spinner size="sm" />
               </div>
             ) : categories.length > 0 ? (
-              <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide w-full">
+              <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide w-full">
                 {categories.map((category) => {
                   const hasChildren =
                     category.children && category.children.length > 0;
@@ -260,7 +275,7 @@ export function Navigation() {
                       <DropdownMenu key={category.id}>
                         <DropdownMenuTrigger asChild>
                           <button
-                            className="text-sm font-semibold text-gray-700 hover:text-primary whitespace-nowrap py-2.5 px-4 bg-white border border-gray-200 hover:border-primary/30 data-[state=open]:bg-gradient-to-r data-[state=open]:from-primary/10 data-[state=open]:to-primary/5 data-[state=open]:text-primary data-[state=open]:border-primary/30 shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 flex items-center gap-1.5 shrink-0 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 relative group outline-none focus:outline-none focus-visible:outline-none"
+                            className="text-sm font-semibold text-gray-700 hover:text-primary whitespace-nowrap py-2.5 px-4 bg-white border border-gray-200 hover:border-primary/30 data-[state=open]:bg-linear-to-r data-[state=open]:from-primary/10 data-[state=open]:to-primary/5 data-[state=open]:text-primary data-[state=open]:border-primary/30 shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 flex items-center gap-1.5 shrink-0 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5 relative group outline-none focus:outline-none focus-visible:outline-none"
                             onBlur={(e) => {
                               // Remove any lingering focus styles
                               e.currentTarget.style.outline = 'none';
@@ -274,7 +289,7 @@ export function Navigation() {
                           >
                             <span className="relative z-10 text-gray-700 group-hover:text-primary data-[state=open]:text-primary">{category.name}</span>
                             <ChevronDown className="w-3.5 h-3.5 text-gray-700 group-hover:text-primary transition-transform duration-300 data-[state=open]:rotate-180 data-[state=open]:text-primary relative z-10" />
-                            <span className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-56 min-w-[14rem]">
@@ -299,10 +314,10 @@ export function Navigation() {
                     <a
                       key={category.id}
                       href={`/products?categoryId=${encodeURIComponent(category.id)}`}
-                      className="text-sm font-semibold text-gray-700 hover:text-primary whitespace-nowrap py-2.5 px-4 bg-white border border-gray-200 hover:border-primary/30 shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 shrink-0 relative group"
+                      className="text-sm font-semibold text-gray-700 hover:text-primary whitespace-nowrap py-2.5 px-4 bg-white border border-gray-200 hover:border-primary/30 shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5 shrink-0 relative group"
                     >
                       <span className="relative z-10">{category.name}</span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                      <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                     </a>
                   );
                 })}
@@ -316,10 +331,10 @@ export function Navigation() {
 
       {/* Mobile Category Menu - Always visible, sticky */}
       <nav className="lg:hidden bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-[65px] z-30 overflow-x-auto shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
           <div className="flex flex-col">
             {/* Categories Row */}
-            <div className="flex items-center gap-4 py-3 overflow-x-auto">
+            <div className="flex items-center gap-2 py-3 overflow-x-auto">
               {categoriesLoading ? (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Spinner size="sm" />
@@ -356,8 +371,8 @@ export function Navigation() {
                         e.currentTarget.style.boxShadow = 'none';
                       }}
                       className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-4 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${isExpanded
-                        ? "text-primary bg-gradient-to-r from-primary/15 to-primary/5 shadow-sm"
-                        : "text-gray-700 hover:text-primary hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5"
+                        ? "text-primary bg-linear-to-r from-primary/15 to-primary/5 shadow-sm"
+                        : "text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5"
                         }`}
                     >
                       <span className="relative z-10">{category.name}</span>
@@ -368,7 +383,7 @@ export function Navigation() {
                         />
                       )}
                       {!isExpanded && (
-                        <span className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                        <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
                       )}
                     </button>
                   );
@@ -380,7 +395,7 @@ export function Navigation() {
 
             {/* Children Categories Row - Show when parent is expanded */}
             {expandedCategoryId !== null && (
-              <div className="flex items-center gap-2 py-2.5 px-4 bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-t border-gray-200/60 overflow-x-auto">
+              <div className="flex items-center gap-2 py-2.5 px-4 bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-t border-gray-200/60 overflow-x-auto">
                 {categories
                   .find((cat) => cat.id === expandedCategoryId)
                   ?.children?.map((child) => (

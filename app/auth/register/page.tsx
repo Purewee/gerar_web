@@ -134,16 +134,13 @@ export default function RegisterPage() {
       });
 
       if (response.data) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("mobile", mobile);
-        localStorage.setItem("user_name", response.data.user.name);
-        localStorage.setItem("user_id", response.data.user.id.toString());
-        window.dispatchEvent(new CustomEvent("authStateChanged"));
+        // Save mobile for OTP flow and navigate to OTP layout
+        sessionStorage.setItem("mobile", mobile);
         toast({
           title: "Бүртгэл үүсгэгдсэн",
-          description: "Таны бүртгэл амжилттай үүслээ!",
+          description: "OTP баталгаажуулалт руу шилжиж байна.",
         });
-        router.push("/profile");
+        router.push("/auth/otp");
       }
     } catch (error: any) {
       toast({
@@ -169,9 +166,6 @@ export default function RegisterPage() {
             />
           </a>
           <CardTitle>Бүртгэл үүсгэх</CardTitle>
-          <CardDescription>
-            Бүртгэлдээ 4 оронтой PIN үүсгэнэ үү. PIN-ээ хоёр удаа оруулна уу.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">

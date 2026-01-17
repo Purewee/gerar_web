@@ -324,7 +324,7 @@ export default function OrderCreatePage() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f7]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6  py-6">
         {/* Breadcrumbs */}
         <div className="mb-6 text-sm text-gray-600">
           <div className="flex items-center gap-2">

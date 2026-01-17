@@ -81,16 +81,29 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
         localStorage.setItem("user_name", response.data.user.name);
         localStorage.setItem("user_id", response.data.user.id.toString());
         window.dispatchEvent(new CustomEvent("authStateChanged"));
+        
+        // Show success toast
         toast({
           title: "Амжилттай нэвтэрлээ",
-          description: "Таны бүртгэлд амжилттай нэвтэрлээ",
+          description: `Тавтай морил, ${response.data.user.name}!`,
         });
-        // Reset form
-        setMobile("");
-        setPassword(["", "", "", ""]);
-        onOpenChange(false);
+        
+        // Reset form and close modal after a short delay to ensure toast is visible
+        setTimeout(() => {
+          setMobile("");
+          setPassword(["", "", "", ""]);
+          onOpenChange(false);
+        }, 500);
+      } else {
+        // Handle case where response doesn't have data
+        toast({
+          title: "Нэвтрэхэд алдаа гарлаа",
+          description: "Хариу буцаахгүй байна. Дахин оролдоно уу.",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
+      // Show error toast
       toast({
         title: "Нэвтрэхэд алдаа гарлаа",
         description: error.message || "Утасны дугаар эсвэл PIN буруу байна",
@@ -108,7 +121,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
-        <div className="relative bg-gradient-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
+        <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
           <div className="absolute top-4 right-4">
             <button
               onClick={handleClose}
@@ -139,7 +152,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
           </div>
         </div>
 
-        <div className="px-6 py-6 space-y-6">
+        <div className="px-6 pb-6 space-y-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label
@@ -199,7 +212,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
                 mobile.length !== 8 ||
                 password.join("").length !== 4
               }
-              className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {loginMutation.isPending ? (
                 <span className="flex items-center gap-2">

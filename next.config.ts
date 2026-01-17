@@ -12,6 +12,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Optimize build size
+  compress: true,
+  // Reduce bundle size
+  experimental: {
+    optimizePackageImports: [
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-navigation-menu",
+      "@radix-ui/react-toast",
+      "lucide-react",
+    ],
+  },
+  // Exclude source maps from production build
 };
 
 export default nextConfig;

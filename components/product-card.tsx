@@ -36,7 +36,6 @@ export function ProductCard({
   const addToCartMutation = useCartAdd();
   const addFavoriteMutation = useFavoriteAdd();
   const removeFavoriteMutation = useFavoriteRemove();
-  const { data: favoriteStatusResponse } = useFavoriteStatus(id);
   const [isFavorited, setIsFavorited] = useState(false);
   const [isProcessingCart, setIsProcessingCart] = useState(false);
   const [isProcessingFavorite, setIsProcessingFavorite] = useState(false);
@@ -45,13 +44,7 @@ export function ProductCard({
   const isImageUrl =
     imageUrl && (imageUrl.startsWith("http") || imageUrl.startsWith("/"));
 
-  // Update favorite status from API response
-  useEffect(() => {
-    if (favoriteStatusResponse?.data?.isFavorited !== undefined) {
-      setIsFavorited(favoriteStatusResponse.data.isFavorited);
-    }
-  }, [favoriteStatusResponse]);
-
+ 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();

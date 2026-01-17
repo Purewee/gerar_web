@@ -64,7 +64,7 @@ export function CardSkeleton() {
 
 export function CategorySkeleton() {
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 p-6">
+    <div className="rounded-2xl bg-linear-to-br from-gray-100 to-gray-200 p-6">
       <div className="text-center space-y-3">
         <Skeleton className="w-16 h-16 mx-auto rounded-full" />
         <Skeleton className="h-5 w-24 mx-auto" />

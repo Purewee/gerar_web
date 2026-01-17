@@ -280,7 +280,7 @@ export default function OTPPage() {
                   {timer > 0 ? (
                     <p className="text-sm text-muted-foreground">
                       OTP дахин илгээх{" "}
-                      <span className="font-semibold">{timer}с</span>
+                      <span className="font-semibold">{timer}</span>
                     </p>
                   ) : (
                     <Button

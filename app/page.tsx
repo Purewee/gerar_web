@@ -3,14 +3,18 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
-import { useProducts, useCategories, useCategoryProducts, type Product, type Category } from "@/lib/api";
+import { useProducts, useCategoryProducts, type Product, type Category } from "@/lib/api";
+import { useCategoriesStore } from "@/lib/stores/categories";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Sparkles, TrendingUp } from "lucide-react";
 import { ProductSliderSkeleton, CategorySkeleton, Spinner } from "@/components/skeleton";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
 
 // Component to display products from a category
 function CategoryProductsSection({ category }: { category: Category }) {
-  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const { data: categoryProductsResponse, isLoading: categoryProductsLoading } = useCategoryProducts(
     category.id,
     true // include subcategories
@@ -18,25 +22,11 @@ function CategoryProductsSection({ category }: { category: Category }) {
   
   const categoryProducts = categoryProductsResponse?.data || [];
   
-  const scrollCategoryProducts = (direction: 'left' | 'right') => {
-    if (categoryScrollRef.current) {
-      const scrollAmount = 300;
-      const currentScroll = categoryScrollRef.current.scrollLeft;
-      const newScroll = direction === 'left' 
-        ? currentScroll - scrollAmount 
-        : currentScroll + scrollAmount;
-      categoryScrollRef.current.scrollTo({
-        left: newScroll,
-        behavior: 'smooth'
-      });
-    }
-  };
-  
   // Only show section if there are products
   if (categoryProductsLoading) {
     return (
       <section className="py-12 lg:py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
           <div className="flex items-center gap-3 mb-8">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
               {category.name}
@@ -54,7 +44,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
   
   return (
     <section className="py-12 lg:py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 lg:mb-12 gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
@@ -65,7 +55,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
             </p>
           </div>
           <Link
-            href={`/category?categoryId=${category.id}`}
+            href={`/products?categoryId=${category.id}`}
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold text-sm sm:text-base group transition-colors"
           >
             Бүгдийг харах
@@ -76,31 +66,36 @@ function CategoryProductsSection({ category }: { category: Category }) {
         <div className="relative group">
           {/* Navigation Buttons - Desktop Only */}
           <button
-            onClick={() => scrollCategoryProducts('left')}
-            className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+            className={`category-swiper-prev-${category.id} hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110`}
             aria-label={`${category.name} - Өмнөх бараа`}
           >
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
           <button
-            onClick={() => scrollCategoryProducts('right')}
-            className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+            className={`category-swiper-next-${category.id} hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110`}
             aria-label={`${category.name} - Дараагийн бараа`}
           >
             <ChevronRight className="w-5 h-5 text-gray-700" />
           </button>
-          <div 
-            ref={categoryScrollRef}
-            className="product-slider overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 scroll-smooth"
-            style={{ 
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
+          <Swiper
+            modules={[Navigation]}
+            navigation={{
+              prevEl: `.category-swiper-prev-${category.id}`,
+              nextEl: `.category-swiper-next-${category.id}`,
             }}
+            spaceBetween={16}
+            slidesPerView={2}
+            breakpoints={{
+              640: { slidesPerView: 3, spaceBetween: 16 },
+              768: { slidesPerView: 4, spaceBetween: 16 },
+              1024: { slidesPerView: 5, spaceBetween: 24 },
+              1280: { slidesPerView: 5, spaceBetween: 24 },
+            }}
+            className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4"
           >
-            <div className="flex gap-4 lg:gap-6 pb-4 min-w-max">
-              {categoryProducts.slice(0, 12).map((product) => (
+            {categoryProducts.slice(0, 12).map((product) => (
+              <SwiperSlide key={product.id}>
                 <ProductCard
-                  key={product.id}
                   id={product.id}
                   name={product.name}
                   price={parseFloat(product.price)}
@@ -111,9 +106,9 @@ function CategoryProductsSection({ category }: { category: Category }) {
                   }
                   imageUrl={product.firstImage || product.images?.[0]}
                 />
-              ))}
-            </div>
-          </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
         </div>
       </div>
     </section>
@@ -125,8 +120,6 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const productsScrollRef = useRef<HTMLDivElement>(null);
-  const offersScrollRef = useRef<HTMLDivElement>(null);
 
   // Fetch products sorted by newest first
   const { data: productsResponse, isLoading: productsLoading } = useProducts({
@@ -135,11 +128,11 @@ export default function Home() {
     limit: 12,
   });
 
-  // Fetch categories
-  const { data: categoriesResponse, isLoading: categoriesLoading } = useCategories();
+  // Get categories from store (hydrated by CategoriesProvider)
+  const categories = useCategoriesStore((state) => state.categories);
+  const categoriesLoading = useCategoriesStore((state) => state.isLoading);
 
   const products = productsResponse?.data || [];
-  const categories = categoriesResponse?.data || [];
 
   // Create carousel items from products with discounts
   const carouselItems = useMemo(() => {
@@ -213,34 +206,6 @@ export default function Home() {
     router.push(link);
   };
 
-  const scrollProducts = (direction: 'left' | 'right') => {
-    if (productsScrollRef.current) {
-      const scrollAmount = 300;
-      const currentScroll = productsScrollRef.current.scrollLeft;
-      const newScroll = direction === 'left' 
-        ? currentScroll - scrollAmount 
-        : currentScroll + scrollAmount;
-      productsScrollRef.current.scrollTo({
-        left: newScroll,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const scrollOffers = (direction: 'left' | 'right') => {
-    if (offersScrollRef.current) {
-      const scrollAmount = 300;
-      const currentScroll = offersScrollRef.current.scrollLeft;
-      const newScroll = direction === 'left' 
-        ? currentScroll - scrollAmount 
-        : currentScroll + scrollAmount;
-      offersScrollRef.current.scrollTo({
-        left: newScroll,
-        behavior: 'smooth'
-      });
-    }
-  };
-
   // Get top-level categories only
   const topCategories = categories.filter((cat) => !cat.parentId).slice(0, 8);
   
@@ -248,20 +213,20 @@ export default function Home() {
   const featuredCategories = topCategories.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
       <main>
         {/* Hero Carousel */}
         <section
-          className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground"
+          className="relative overflow-hidden bg-linear-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
           {/* Animated background pattern */}
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] [background-size:20px_20px]"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] bg-size-[20px_20px]"></div>
           </div>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6  py-4 sm:py-6 lg:py-8 relative z-10">
             {carouselItems.length > 0 ? (
               <>
                 <div className="relative min-h-[150px] sm:min-h-[180px] lg:min-h-[200px]">
@@ -270,7 +235,7 @@ export default function Home() {
                     <>
                       <button
                         onClick={goToPrevious}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 z-30 border border-white/30"
+                        className="absolute left-0 top-[150px] -translate-y-1/2 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 z-30 border border-white/30"
                         aria-label="Өмнөх слайд"
                         style={{ transform: 'translateY(-150%) translateX(-150%)' }}
                       >
@@ -278,7 +243,7 @@ export default function Home() {
                       </button>
                       <button
                         onClick={goToNext}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 z-30 border border-white/30"
+                        className="absolute right-0 top-[150px] -translate-y-1/2 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 z-30 border border-white/30"
                         aria-label="Дараагийн слайд"
                         style={{ transform: 'translateY(-150%) translateX(150%)' }}
                       >
@@ -336,7 +301,7 @@ export default function Home() {
                               )}
                             </div>
                           </div>
-                        </div>
+                      </div>
                       </div>
                     ))}
                   </div>
@@ -368,48 +333,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Categories Section */}
-        {topCategories.length > 0 && (
-          <section className="py-12 lg:py-16 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-3 mb-8">
-                <TrendingUp className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-                  Ангилалууд
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 lg:gap-6">
-                {categoriesLoading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <CategorySkeleton key={i} />
-                  ))
-                ) : (
-                  topCategories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/category?categoryId=${category.id}`}
-                    className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20 p-6 transition-all duration-300 hover:shadow-xl hover:scale-105 border border-gray-200 hover:border-primary/30"
-                  >
-                    <div className="text-center space-y-3">
-                      <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
-                        🛋️
-                      </div>
-                      <h3 className="font-semibold text-base lg:text-lg text-gray-900 group-hover:text-primary transition-colors">
-                        {category.name}
-                      </h3>
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </Link>
-                  ))
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* Featured Products Section */}
-        <section className="py-12 lg:py-16 bg-gradient-to-b from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="py-12 lg:py-16 bg-linear-to-b from-white to-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 lg:mb-12 gap-4">
               <div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
@@ -420,7 +346,7 @@ export default function Home() {
                 </p>
               </div>
               <Link
-                href="/category"
+                href="/products"
                 className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold text-sm sm:text-base group transition-colors"
               >
                 Бүгдийг харах
@@ -438,31 +364,36 @@ export default function Home() {
               <div className="relative group">
                 {/* Navigation Buttons - Desktop Only */}
                 <button
-                  onClick={() => scrollProducts('left')}
-                  className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+                  className="products-swiper-prev hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
                   aria-label="Өмнөх бараа"
                 >
                   <ChevronLeft className="w-5 h-5 text-gray-700" />
                 </button>
                 <button
-                  onClick={() => scrollProducts('right')}
-                  className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
+                  className="products-swiper-next hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
                   aria-label="Дараагийн бараа"
                 >
                   <ChevronRight className="w-5 h-5 text-gray-700" />
                 </button>
-                <div 
-                  ref={productsScrollRef}
-                  className="product-slider overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 scroll-smooth"
-                  style={{ 
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
+                <Swiper
+                  modules={[Navigation]}
+                  navigation={{
+                    prevEl: ".products-swiper-prev",
+                    nextEl: ".products-swiper-next",
                   }}
+                  spaceBetween={16}
+                  slidesPerView={2}
+                  breakpoints={{
+                    640: { slidesPerView: 3, spaceBetween: 16 },
+                    768: { slidesPerView: 4, spaceBetween: 16 },
+                    1024: { slidesPerView: 5, spaceBetween: 24 },
+                    1280: { slidesPerView: 5, spaceBetween: 24 },
+                  }}
+                  className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4"
                 >
-                  <div className="flex gap-4 lg:gap-6 pb-4 min-w-max">
-                    {products.slice(0, 12).map((product) => (
+                  {products.slice(0, 12).map((product) => (
+                    <SwiperSlide key={product.id}>
                       <ProductCard
-                        key={product.id}
                         id={product.id}
                         name={product.name}
                         price={parseFloat(product.price)}
@@ -473,73 +404,13 @@ export default function Home() {
                         }
                         imageUrl={product.firstImage || product.images?.[0]}
                       />
-                    ))}
-                  </div>
-                </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               </div>
             )}
           </div>
         </section>
-
-        {/* Special Offers Section */}
-        {products.filter((p) => p.hasDiscount).length > 0 && (
-          <section className="py-12 lg:py-16 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-3 mb-8">
-                <Sparkles className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-                  Хямдруулсан бараа
-                </h2>
-              </div>
-              <div className="relative group">
-                {/* Navigation Buttons - Desktop Only */}
-                <button
-                  onClick={() => scrollOffers('left')}
-                  className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-                  aria-label="Өмнөх санал"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-700" />
-                </button>
-                <button
-                  onClick={() => scrollOffers('right')}
-                  className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-                  aria-label="Дараагийн санал"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-700" />
-                </button>
-                <div 
-                  ref={offersScrollRef}
-                  className="product-slider overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 scroll-smooth"
-                  style={{ 
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent'
-                  }}
-                >
-                  <div className="flex gap-4 lg:gap-6 pb-4 min-w-max">
-                    {products
-                      .filter((p) => p.hasDiscount && p.discountPercentage && p.discountPercentage >= 20)
-                      .slice(0, 8)
-                      .map((product) => (
-                        <ProductCard
-                          key={product.id}
-                          id={product.id}
-                          name={product.name}
-                          price={parseFloat(product.price)}
-                          original={
-                            product.originalPrice
-                              ? parseFloat(product.originalPrice)
-                              : undefined
-                          }
-                          imageUrl={product.firstImage || product.images?.[0]}
-                          featured={true}
-                        />
-                      ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* Category-based Product Sections */}
         {featuredCategories.map((category, index) => (

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,12 @@ function ProductsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering dynamic content after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Build query params from URL
   const queryParams: ProductsQueryParams = useMemo(() => {
@@ -120,8 +126,8 @@ function ProductsContent() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 via-white to-gray-50">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-8 sm:mb-10">
           {/* Top Row: Back Button and Title */}
@@ -136,7 +142,7 @@ function ProductsContent() {
             </Button>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
-                {searchQuery ? (
+                {mounted && searchQuery ? (
                   <>
                     Хайлтын үр дүн:{" "}
                     <span className="text-primary bg-primary/10 px-2 py-1 rounded-lg">"{searchQuery}"</span>
@@ -150,7 +156,7 @@ function ProductsContent() {
           
           {/* Bottom Row: Active Filters and Mobile Filter Button */}
           <div className="flex items-center justify-between gap-4">
-            {activeFiltersCount > 0 && !loading && (
+            {mounted && activeFiltersCount > 0 && !loading && (
               <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
                 {activeFiltersCount} шүүлт идэвхтэй
               </span>
@@ -165,8 +171,8 @@ function ProductsContent() {
                 >
                   <Filter className="w-4 h-4 mr-2" />
                   Шүүлт
-                  {activeFiltersCount > 0 && (
-                    <span className="ml-2 bg-primary text-primary-foreground rounded-full px-2.5 py-1 text-xs font-bold shadow-sm">
+                  {mounted && activeFiltersCount > 0 && (
+                    <span className="ml-2 bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center text-[14px] leading-[14px] font-bold shadow-sm">
                       {activeFiltersCount}
                     </span>
                   )}
@@ -187,7 +193,7 @@ function ProductsContent() {
         {/* Main Content with Sidebar */}
         <div className="flex gap-6 lg:gap-8">
           {/* Desktop Sidebar */}
-          <aside className="hidden lg:block w-80 flex-shrink-0">
+          <aside className="hidden lg:block shrink-0 max-w-[350px] w-full">
             <div className="sticky top-6">
               <FilterSidebar productsCount={products.length} isLoading={loading} />
             </div>
@@ -195,7 +201,7 @@ function ProductsContent() {
 
           {/* Products Section */}
           <main className="flex-1 min-w-0">
-            {loading ? (
+            {!mounted || loading ? (
               <ProductGridSkeleton count={8} />
             ) : productsError ? (
               <Card className="border-2 border-red-200 bg-red-50/50 shadow-lg">
@@ -216,14 +222,14 @@ function ProductsContent() {
                 </CardContent>
               </Card>
             ) : products.length === 0 ? (
-              <Card className="border-2 border-gray-200 bg-gradient-to-br from-gray-50 to-white shadow-lg">
+              <Card className="border-2 border-gray-200 bg-linear-to-br from-gray-50 to-white shadow-lg">
                 <CardContent className="flex flex-col items-center justify-center py-16 sm:py-24">
                   <div className="text-7xl mb-6 animate-pulse">🔍</div>
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3">
                     Бараа олдсонгүй
                   </h2>
                   <p className="text-gray-600 mb-8 text-center max-w-md">
-                    {searchQuery
+                    {mounted && searchQuery
                       ? `"${searchQuery}" хайлтад тохирох бараа олдсонгүй`
                       : "Одоогоор бараа байхгүй байна"}
                   </p>
@@ -236,7 +242,7 @@ function ProductsContent() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-4 sm:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
                 {products.map((product, index) => (
                   <div
                     key={product.id}
@@ -264,6 +270,13 @@ function ProductsContent() {
 }
 
 export default function ProductsPage() {
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering dynamic content after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
   return (
     <Suspense
       fallback={

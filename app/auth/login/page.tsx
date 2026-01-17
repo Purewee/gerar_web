@@ -75,13 +75,27 @@ export default function LoginPage() {
         localStorage.setItem("user_name", response.data.user.name);
         localStorage.setItem("user_id", response.data.user.id.toString());
         window.dispatchEvent(new CustomEvent("authStateChanged"));
+        
+        // Show success toast
         toast({
           title: "Амжилттай нэвтэрлээ",
-          description: "Таны бүртгэлд амжилттай нэвтэрлээ",
+          description: `Тавтай морил, ${response.data.user.name}!`,
         });
-        router.push("/profile");
+        
+        // Navigate after a short delay to ensure toast is visible
+        setTimeout(() => {
+          router.push("/profile");
+        }, 500);
+      } else {
+        // Handle case where response doesn't have data
+        toast({
+          title: "Нэвтрэхэд алдаа гарлаа",
+          description: "Хариу буцаахгүй байна. Дахин оролдоно уу.",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
+      // Show error toast
       toast({
         title: "Нэвтрэхэд алдаа гарлаа",
         description: error.message || "Утасны дугаар эсвэл PIN буруу байна",

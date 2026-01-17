@@ -1,12 +1,14 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Sparkles, ArrowRight, TrendingUp } from "lucide-react";
-import { useCart, useCartUpdate, useCartRemove, useCartClear, useOrderCreate, useCategories, useProducts } from "@/lib/api";
+import { useCart, useCartUpdate, useCartRemove, useCartClear, useOrderCreate, useProducts } from "@/lib/api";
+import { useCategoriesStore } from "@/lib/stores/categories";
 import { ProductCard } from "@/components/product-card";
 import Image from "next/image";
 import { CardSkeleton } from "@/components/skeleton";
@@ -14,6 +16,12 @@ import { CardSkeleton } from "@/components/skeleton";
 export default function CartPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering dynamic content after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch cart using hook
   const {
@@ -34,9 +42,8 @@ export default function CartPage() {
   );
 
   // Fetch categories and products for suggestions
-  const { data: categoriesResponse } = useCategories();
+  const categories = useCategoriesStore((state) => state.categories);
   const { data: productsResponse } = useProducts({ limit: 6, sortBy: "createdAt", sortOrder: "desc" });
-  const categories = categoriesResponse?.data || [];
   const suggestedProducts = productsResponse?.data || [];
 
   const updateCartMutation = useCartUpdate();
@@ -112,7 +119,7 @@ export default function CartPage() {
     },
     0
   );
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = mounted ? cartItems.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
@@ -128,8 +135,8 @@ export default function CartPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6  py-6 sm:py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8 sm:mb-10">
           <div className="flex items-center gap-4">
@@ -142,14 +149,14 @@ export default function CartPage() {
               Буцах
             </Button>
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl">
+              <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-xl">
                 <ShoppingBag className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                <h1 className="text-3xl sm:text-4xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                   Сагс
                 </h1>
-                {totalItems > 0 && (
+                {mounted && totalItems > 0 && (
                   <p className="text-sm text-gray-500 mt-1">
                     {totalItems} {totalItems === 1 ? "зүйл" : "зүйл"} сагсанд байна
                   </p>
@@ -159,7 +166,7 @@ export default function CartPage() {
           </div>
         </div>
 
-        {loading ? (
+        {!mounted || loading ? (
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
               <CardSkeleton key={i} />
@@ -171,19 +178,19 @@ export default function CartPage() {
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
               <CardContent className="flex flex-col items-center justify-center py-16 sm:py-20 px-6">
                 <div className="relative mb-8">
-                  <div className="w-28 h-28 sm:w-36 sm:h-36 bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 rounded-3xl flex items-center justify-center shadow-lg shadow-primary/10">
+                  <div className="w-28 h-28 sm:w-36 sm:h-36 bg-linear-to-br from-primary/20 via-primary/10 to-primary/5 rounded-3xl flex items-center justify-center shadow-lg shadow-primary/10">
                     <ShoppingBag className="w-14 h-14 sm:w-18 sm:h-18 text-primary" />
                   </div>
                   <div className="absolute -top-3 -right-3 animate-bounce">
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/60 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 bg-linear-to-br from-primary to-primary/60 rounded-full flex items-center justify-center shadow-lg">
                       <Sparkles className="w-6 h-6 text-white" />
                     </div>
                   </div>
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4 text-center">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4 text-center">
                   {cartError ? "Сагс ачаалахад алдаа гарлаа" : "Таны сагс хоосон байна"}
                 </h2>
-                <p className="text-gray-600 mb-2 text-center max-w-lg text-lg">
+                <p className="text-gray-600 mb-2 text-center max-w-lg text-lg leading-5">
                   {cartError 
                     ? "Сагс ачаалахад алдаа гарлаа. Дахин оролдох эсвэл дэлгүүрт үргэлжлүүлэх боломжтой."
                     : "Сагсанд зүйл нэмэхийн тулд дэлгүүрт орно уу"
@@ -206,10 +213,10 @@ export default function CartPage() {
                   <Button 
                     onClick={() => router.push("/")}
                     size="lg"
-                    className="px-10 py-6 text-base bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    className="px-10 py-6 text-base bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                   >
-                    <ArrowRight className="w-5 h-5 mr-2" />
                     Дэлгүүрт үргэлжлүүлэх
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </div>
               </CardContent>
@@ -219,7 +226,7 @@ export default function CartPage() {
             {categories.length > 0 && (
               <div>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg">
+                  <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
                     <TrendingUp className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900">
@@ -231,17 +238,17 @@ export default function CartPage() {
                     <Link
                       key={category.id}
                       href={`/category?categoryId=${category.id}`}
-                      className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:border-primary/40 p-5 sm:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
+                      className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:border-primary/40 p-4 sm:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
                     >
                       <div className="text-center space-y-3">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-sm">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-linear-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-sm">
                           🛍️
                         </div>
                         <h4 className="font-semibold text-sm sm:text-base text-gray-900 group-hover:text-primary transition-colors line-clamp-2">
                           {category.name}
                         </h4>
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-transparent transition-all duration-300 rounded-2xl" />
+                      <div className="absolute inset-0 bg-linear-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-transparent transition-all duration-300 rounded-2xl" />
                     </Link>
                   ))}
                 </div>
@@ -253,7 +260,7 @@ export default function CartPage() {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg">
+                    <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
                       <Sparkles className="w-5 h-5 text-primary" />
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">
@@ -289,12 +296,12 @@ export default function CartPage() {
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4 sm:space-y-5">
               {cartItems.map((item) => (
-                <Card key={item.id} className="border-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden bg-white">
-                  <CardContent className="p-5 sm:p-6">
+                <Card key={item.id} className="border border-gray-200 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden bg-white">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row gap-5">
                       {/* Product Image */}
                       <div className="shrink-0">
-                        <div className="w-full sm:w-28 h-28 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow">
+                        <div className="w-full sm:w-28 h-28 bg-linear-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow">
                           {item.product?.firstImage || item.product?.images?.[0] ? (
                             <Image
                               src={item.product.firstImage || item.product.images[0]}
@@ -316,7 +323,7 @@ export default function CartPage() {
                             {item.product?.name || "Бүтээгдэхүүн"}
                           </h3>
                           <div className="flex flex-wrap items-center gap-3 mb-3">
-                            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                            <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                               {parseFloat(item.product?.price || "0").toLocaleString()}₮
                             </span>
                             {item.product?.originalPrice &&
@@ -325,7 +332,7 @@ export default function CartPage() {
                                   <span className="text-sm text-gray-400 line-through">
                                     {parseFloat(item.product.originalPrice).toLocaleString()}₮
                                   </span>
-                                  <span className="text-xs sm:text-sm text-white bg-gradient-to-r from-green-500 to-green-600 font-semibold px-2.5 py-1 rounded-full">
+                                  <span className="text-xs sm:text-sm text-white bg-linear-to-r from-green-500 to-green-600 font-semibold px-2.5 py-1 rounded-full">
                                     {(
                                       (parseFloat(item.product.originalPrice) - parseFloat(item.product.price || "0")) *
                                       item.quantity
@@ -380,7 +387,7 @@ export default function CartPage() {
                     <div className="mt-5 pt-5 border-t border-gray-100 flex justify-end">
                       <div className="text-right">
                         <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Нийт дүн</p>
-                        <p className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                        <p className="text-xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                           {(parseFloat(item.product?.price || "0") * item.quantity).toLocaleString()}₮
                         </p>
                       </div>
@@ -392,10 +399,10 @@ export default function CartPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <Card className="sticky top-24 border-0 shadow-xl bg-gradient-to-br from-white to-gray-50/50 backdrop-blur-sm">
-                <CardContent className="p-6 sm:p-7">
+              <Card className="sticky top-24 shadow-xl bg-linear-to-br from-white to-gray-50/50 backdrop-blur-sm border border-gray-200">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg">
+                    <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
                       <ShoppingBag className="w-5 h-5 text-primary" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900">
@@ -427,7 +434,7 @@ export default function CartPage() {
                     <div className="border-t-2 border-gray-200 pt-4 mt-4">
                       <div className="flex justify-between items-center">
                         <span className="text-lg font-bold text-gray-900">Нийт</span>
-                        <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                        <span className="text-2xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                           {subtotal.toLocaleString()}₮
                         </span>
                       </div>
@@ -436,7 +443,7 @@ export default function CartPage() {
 
                   <Button
                     onClick={handleCheckout}
-                    className="w-full mb-3 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-base h-12 font-semibold"
+                    className="w-full mb-3 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-base h-12 font-semibold"
                     size="lg"
                     disabled={createOrderMutation.isPending || cartItems.length === 0}
                   >
@@ -463,7 +470,7 @@ export default function CartPage() {
                   )}
 
                   <div className="mt-6 pt-6 border-t border-gray-200">
-                    <div className="flex items-start gap-3 bg-gradient-to-br from-green-50 to-green-50/50 rounded-xl p-4 border border-green-100">
+                    <div className="flex items-start gap-3 bg-linear-to-br from-green-50 to-green-50/50 rounded-lg p-4 border border-green-100">
                       <div className="p-1.5 bg-green-100 rounded-lg shrink-0">
                         <svg
                           className="w-5 h-5 text-green-600"
@@ -484,7 +491,7 @@ export default function CartPage() {
                           Аюулгүй төлбөр
                         </p>
                         <p className="text-xs text-gray-600 leading-relaxed">
-                          Хялбар буцаах • 100% Жинхэнэ бүтээгдэхүүн
+                          100% Жинхэнэ бүтээгдэхүүн
                         </p>
                       </div>
                     </div>

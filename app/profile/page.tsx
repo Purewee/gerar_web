@@ -92,8 +92,8 @@ function OrdersContent() {
   if (orders.length === 0) {
     return (
       <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
-          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+        <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
             Миний захиалгууд
           </CardTitle>
         </CardHeader>
@@ -119,8 +119,8 @@ function OrdersContent() {
 
   return (
     <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
-        <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+      <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+        <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
           Миний захиалгууд ({orders.length})
         </CardTitle>
         <CardDescription className="mt-2">
@@ -356,10 +356,10 @@ function AddressesContent() {
 
   return (
     <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+      <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
               Хаягууд ({addresses.length})
             </CardTitle>
             <CardDescription className="mt-2">
@@ -379,8 +379,8 @@ function AddressesContent() {
       </CardHeader>
       <CardContent className="p-6 lg:p-8">
         {showAddForm && (
-          <Card className="mb-8 border-2 border-primary/20 shadow-lg bg-gradient-to-br from-white to-primary/5">
-            <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b border-primary/10">
+          <Card className="mb-8 border-2 border-primary/20 shadow-lg bg-linear-to-br from-white to-primary/5">
+            <CardHeader className="bg-linear-to-r from-primary/10 to-transparent border-b border-primary/10">
               <CardTitle className="text-xl font-bold">
                 {editingId ? "Хаяг засах" : "Шинэ хаяг нэмэх"}
               </CardTitle>
@@ -691,7 +691,7 @@ function AddressesContent() {
               <Card 
                 key={address.id}
                 className={`transition-all duration-200 hover:shadow-lg ${
-                  address.isDefault ? "border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent" : "border border-gray-200"
+                  address.isDefault ? "border-2 border-primary/30 bg-linear-to-br from-primary/5 to-transparent" : "border border-gray-200"
                 }`}
               >
                 <CardContent className="p-5 sm:p-6">
@@ -819,8 +819,8 @@ function FavoritesContent() {
   if (error) {
     return (
       <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
-          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+        <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
             Миний дуртай
           </CardTitle>
         </CardHeader>
@@ -847,8 +847,8 @@ function FavoritesContent() {
   if (favorites.length === 0) {
     return (
       <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-        <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
-          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+        <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
             Миний дуртай
           </CardTitle>
         </CardHeader>
@@ -874,8 +874,8 @@ function FavoritesContent() {
 
   return (
     <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-      <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
-        <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+      <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+        <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
           Миний дуртай ({favorites.length})
         </CardTitle>
         <CardDescription className="mt-2">
@@ -980,6 +980,7 @@ export default function ProfilePage() {
       localStorage.removeItem("profile_name");
       localStorage.removeItem("profile_email");
       localStorage.removeItem("profile_address");
+      localStorage.removeItem("user_id");
       window.dispatchEvent(new CustomEvent("authStateChanged"));
       router.push("/");
     }
@@ -1001,10 +1002,10 @@ export default function ProfilePage() {
       case "profile":
         return (
           <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-            <CardHeader className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
+            <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                     Миний профайл
                   </CardTitle>
                   <CardDescription className="mt-2">
@@ -1055,7 +1056,7 @@ export default function ProfilePage() {
                 {/* Profile Picture */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 pb-6 border-b border-gray-100">
                   <div className="relative group">
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center shadow-lg ring-4 ring-primary/10">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-linear-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center shadow-lg ring-4 ring-primary/10">
                       {name ? (
                         <span className="text-2xl sm:text-3xl font-bold text-primary">
                           {name
@@ -1176,8 +1177,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6  py-8 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Left Sidebar Menu */}
           <div className="lg:col-span-1">
@@ -1190,9 +1191,9 @@ export default function ProfilePage() {
                       <button
                         key={item.id}
                         onClick={() => setActiveMenu(item.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 ${
+                        className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 ${
                           activeMenu === item.id
-                            ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
+                            ? "bg-linear-to-r from-primary to-primary/90 text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
                             : "hover:bg-gray-100/80 text-gray-700 hover:scale-[1.01] hover:shadow-sm"
                         }`}
                       >
@@ -1204,7 +1205,7 @@ export default function ProfilePage() {
                   <div className="pt-2 mt-2 border-t border-gray-200">
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 hover:bg-red-50/80 text-red-600 hover:scale-[1.01] hover:shadow-sm"
+                      className="w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 hover:bg-red-50/80 text-red-600 hover:scale-[1.01] hover:shadow-sm"
                     >
                       <LogOut className="w-5 h-5" />
                       <span className="font-medium">Гарах</span>
