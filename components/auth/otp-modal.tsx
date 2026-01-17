@@ -11,92 +11,92 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/toast";
-import { useAuthForgotPassword } from "@/lib/api";
+import { useOTPSend, useOTPVerify, type OTPPurpose } from "@/lib/api";
 import { X } from "lucide-react";
+import { InlineNotification } from "./inline-notification";
+import { FieldError } from "./field-error";
 
 interface OTPModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSwitchToLogin?: () => void;
-  onOTPVerified?: () => void;
+  onOTPVerified?: (phoneNumber: string, otpCode: string) => void;
+  purpose?: OTPPurpose;
 }
 
-export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }: OTPModalProps) {
-  const [otp, setOtp] = useState(["", "", "", ""]);
+export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified, purpose = "PASSWORD_RESET" }: OTPModalProps) {
+  // OTP length: 4 digits for REGISTRATION, 6 digits for others
+  const getOtpLength = (purpose: OTPPurpose) => purpose === "REGISTRATION" ? 4 : 6;
+  const otpLength = getOtpLength(purpose);
+  const [otp, setOtp] = useState<string[]>(() => Array(getOtpLength(purpose)).fill(""));
   const [mobile, setMobile] = useState("");
   const [mobileInput, setMobileInput] = useState("");
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [showMobileInput, setShowMobileInput] = useState(true);
-  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [errors, setErrors] = useState<{ mobile?: string; otp?: string }>({});
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { toast } = useToast();
-  const forgotPasswordMutation = useAuthForgotPassword();
+  const sendOTPMutation = useOTPSend();
+  const verifyOTPMutation = useOTPVerify();
 
-  // Reset state when modal opens/closes
+  // Reset state when modal opens/closes or purpose changes
   useEffect(() => {
+    const newOtpLength = purpose === "REGISTRATION" ? 4 : 6;
     if (open) {
       const storedMobile = sessionStorage.getItem("mobile");
       if (storedMobile) {
         setMobile(storedMobile);
         setShowMobileInput(false);
-        const storedResetToken = sessionStorage.getItem("resetToken");
-        if (storedResetToken) {
-          setResetToken(storedResetToken);
-        }
       } else {
         setShowMobileInput(true);
         setMobile("");
       }
-      setOtp(["", "", "", ""]);
+      setOtp(Array(newOtpLength).fill(""));
       setMobileInput("");
       setTimer(60);
       setCanResend(false);
+      setNotification(null);
+      setErrors({});
     } else {
       // Clean up when closing
-      setOtp(["", "", "", ""]);
+      setOtp(Array(newOtpLength).fill(""));
       setMobileInput("");
       setShowMobileInput(true);
       setMobile("");
-      setResetToken(null);
+      setNotification(null);
+      setErrors({});
     }
-  }, [open]);
+  }, [open, purpose]);
 
   const handleMobileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setNotification(null);
+    setErrors({});
+    
     if (mobileInput.length !== 8) {
-      toast({
-        title: "Буруу утасны дугаар",
-        description: "Зөв 8 оронтой утасны дугаар оруулна уу",
-        variant: "destructive",
-      });
+      setErrors({ mobile: "Зөв 8 оронтой утасны дугаар оруулна уу" });
       return;
     }
 
     try {
-      const response = await forgotPasswordMutation.mutateAsync(mobileInput);
+      const response = await sendOTPMutation.mutateAsync({
+        phoneNumber: mobileInput,
+        purpose: purpose,
+      });
       if (response.data) {
         sessionStorage.setItem("mobile", mobileInput);
-        if (response.data.resetToken) {
-          sessionStorage.setItem("resetToken", response.data.resetToken);
-        }
         setMobile(mobileInput);
-        setResetToken(response.data.resetToken || null);
         setShowMobileInput(false);
         setTimer(60);
         setCanResend(false);
-        toast({
-          title: "OTP илгээгдсэн",
-          description: `OTP код: ${response.data.resetCode}. Таны утасны дугаарт илгээгдлээ`,
+        setNotification({
+          type: "success",
+          message: `Таны утасны дугаарт ${otpLength} оронтой OTP код илгээгдлээ`,
         });
       }
     } catch (error: any) {
-      toast({
-        title: "OTP илгээхэд алдаа гарлаа",
-        description: error.message || "Алдаа гарлаа. Дахин оролдоно уу",
-        variant: "destructive",
-      });
+      setErrors({ mobile: error.message || "Алдаа гарлаа. Дахин оролдоно уу" });
     }
   };
 
@@ -121,7 +121,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
     newOtp[index] = value.replace(/\D/g, "");
     setOtp(newOtp);
 
-    if (value && index < 3) {
+    if (value && index < otpLength - 1) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -140,69 +140,89 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
     const pastedData = e.clipboardData
       .getData("text")
       .replace(/\D/g, "")
-      .slice(0, 4);
+      .slice(0, otpLength);
     const newOtp = [...otp];
     pastedData.split("").forEach((char, index) => {
-      if (index < 4) {
+      if (index < otpLength) {
         newOtp[index] = char;
       }
     });
     setOtp(newOtp);
-    inputRefs.current[Math.min(pastedData.length, 3)]?.focus();
+    inputRefs.current[Math.min(pastedData.length, otpLength - 1)]?.focus();
   };
 
   const handleVerify = async () => {
+    setNotification(null);
+    setErrors({});
     const otpString = otp.join("");
-    if (otpString.length !== 4) {
-      toast({
-        title: "Бүрэн бус OTP",
-        description: "Бүтэн 4 оронтой OTP оруулна уу",
-        variant: "destructive",
-      });
+    
+    if (otpString.length !== otpLength) {
+      setErrors({ otp: `Бүтэн ${otpLength} оронтой OTP оруулна уу` });
       return;
     }
 
-    // Store OTP verification state and navigate to reset password
-    sessionStorage.setItem("otpVerified", "true");
-    onOTPVerified?.();
-    onOpenChange(false);
-    // Navigate to reset password page
-    window.location.href = "/auth/reset-password";
+    if (!mobile) {
+      setErrors({ otp: "Утасны дугаар олдсонгүй" });
+      return;
+    }
+
+    try {
+      const response = await verifyOTPMutation.mutateAsync({
+        phoneNumber: mobile,
+        code: otpString,
+        purpose: purpose,
+      });
+      
+      if (response.data?.verified) {
+        // Store OTP verification state
+        sessionStorage.setItem("otpVerified", "true");
+        setNotification({
+          type: "success",
+          message: "OTP код амжилттай баталгаажлаа",
+        });
+        
+        // Pass phone number and OTP code to callback after a short delay
+        setTimeout(() => {
+          onOTPVerified?.(mobile, otpString);
+          onOpenChange(false);
+        }, 1500);
+      }
+    } catch (error: any) {
+      setErrors({ otp: error.message || "Буруу эсвэл хугацаа дууссан OTP код" });
+    }
   };
 
   const handleResend = async () => {
     if (!mobile) return;
+    setNotification(null);
+    setErrors({});
 
     try {
-      const response = await forgotPasswordMutation.mutateAsync(mobile);
+      const response = await sendOTPMutation.mutateAsync({
+        phoneNumber: mobile,
+        purpose: purpose,
+      });
       if (response.data) {
-        if (response.data.resetToken) {
-          sessionStorage.setItem("resetToken", response.data.resetToken);
-        }
-        setResetToken(response.data.resetToken || null);
         setTimer(60);
         setCanResend(false);
-        setOtp(["", "", "", ""]);
-        toast({
-          title: "OTP дахин илгээгдсэн",
-          description: `OTP код: ${response.data.resetCode}. Таны утасны дугаарт илгээгдлээ`,
+        setOtp(Array(otpLength).fill(""));
+        setNotification({
+          type: "success",
+          message: `Таны утасны дугаарт ${otpLength} оронтой OTP код дахин илгээгдлээ`,
         });
       }
     } catch (error: any) {
-      toast({
-        title: "OTP дахин илгээхэд алдаа гарлаа",
-        description: error.message || "Алдаа гарлаа. Дахин оролдоно уу",
-        variant: "destructive",
-      });
+      setErrors({ otp: error.message || "Алдаа гарлаа. Дахин оролдоно уу" });
     }
   };
 
   const handleClose = () => {
-    setOtp(["", "", "", ""]);
+    setOtp(Array(otpLength).fill(""));
     setMobileInput("");
     setShowMobileInput(true);
     setMobile("");
-    setResetToken(null);
+    setNotification(null);
+    setErrors({});
     onOpenChange(false);
   };
 
@@ -231,18 +251,31 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
             </div>
             <DialogHeader className="space-y-2">
               <DialogTitle className="text-2xl font-bold text-white">
-                Нууц үг солих
+                {purpose === "PASSWORD_RESET"
+                  ? "Нууц үг солих"
+                  : purpose === "REGISTRATION"
+                  ? "Бүртгэл баталгаажуулах"
+                  : purpose === "LOGIN"
+                  ? "Нэвтрэх"
+                  : "OTP баталгаажуулах"}
               </DialogTitle>
               <DialogDescription className="text-white/90 text-sm">
                 {showMobileInput
                   ? "Утасны дугаараа оруулаад OTP код аваарай"
-                  : "OTP кодыг оруулна уу"}
+                  : `${otpLength} оронтой OTP кодыг оруулна уу`}
               </DialogDescription>
             </DialogHeader>
           </div>
         </div>
 
         <div className="px-6 pb-6 space-y-6">
+          {notification && (
+            <InlineNotification
+              type={notification.type}
+              message={notification.message}
+              onClose={() => setNotification(null)}
+            />
+          )}
           {showMobileInput ? (
             <form onSubmit={handleMobileSubmit} className="space-y-5">
               <div className="space-y-2">
@@ -260,30 +293,37 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
                     type="tel"
                     id="otp-mobile"
                     value={mobileInput}
-                    onChange={(e) =>
-                      setMobileInput(
-                        e.target.value.replace(/\D/g, "").slice(0, 8)
-                      )
-                    }
+                    onChange={(e) => {
+                      setMobileInput(e.target.value.replace(/\D/g, "").slice(0, 8));
+                      if (errors.mobile) setErrors({ ...errors, mobile: undefined });
+                    }}
                     placeholder="8 оронтой утасны дугаар"
-                    className="pl-14 h-12 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
+                    className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                      errors.mobile
+                        ? "border-red-300 focus:border-red-400"
+                        : "border-gray-300 focus:border-primary"
+                    }`}
                     required
                     maxLength={8}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Бид таны дугаарыг баталгаажуулахын тулд OTP илгээх болно
-                </p>
+                {errors.mobile ? (
+                  <FieldError message={errors.mobile} />
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Бид таны дугаарыг баталгаажуулахын тулд OTP илгээх болно
+                  </p>
+                )}
               </div>
 
               <Button
                 type="submit"
                 disabled={
-                  forgotPasswordMutation.isPending || mobileInput.length !== 8
+                  sendOTPMutation.isPending || mobileInput.length !== 8
                 }
                 className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
               >
-                {forgotPasswordMutation.isPending ? (
+                {sendOTPMutation.isPending ? (
                   <span className="flex items-center gap-2">
                     <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
                     OTP илгээж байна...
@@ -319,9 +359,9 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
               <div className="space-y-5">
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-700 text-center">
-                    OTP код оруулна уу
+                    {otpLength} оронтой OTP код оруулна уу
                   </label>
-                  <div className="flex justify-center gap-3">
+                  <div className={`flex justify-center gap-2 ${otpLength === 4 ? 'gap-3' : ''}`}>
                     {otp.map((digit, index) => (
                       <Input
                         key={index}
@@ -332,21 +372,40 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
                         inputMode="numeric"
                         maxLength={1}
                         value={digit}
-                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onChange={(e) => {
+                          handleOtpChange(index, e.target.value);
+                          if (errors.otp) setErrors({ ...errors, otp: undefined });
+                        }}
                         onKeyDown={(e) => handleKeyDown(index, e)}
                         onPaste={handlePaste}
-                        className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
+                        className={`${otpLength === 4 ? 'w-16 h-16' : 'w-14 h-14'} text-center text-xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                          errors.otp
+                            ? "border-2 border-red-300 focus:border-red-400"
+                            : "border-2 border-gray-300 focus:border-primary"
+                        }`}
                       />
                     ))}
                   </div>
+                  {errors.otp && (
+                    <div className="flex justify-center">
+                      <FieldError message={errors.otp} />
+                    </div>
+                  )}
                 </div>
 
                 <Button
                   onClick={handleVerify}
-                  disabled={otp.join("").length !== 4}
+                  disabled={otp.join("").length !== otpLength || verifyOTPMutation.isPending}
                   className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  OTP баталгаажуулах
+                  {verifyOTPMutation.isPending ? (
+                    <span className="flex items-center gap-2">
+                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                      Баталгаажуулж байна...
+                    </span>
+                  ) : (
+                    "OTP баталгаажуулах"
+                  )}
                 </Button>
 
                 <div className="text-center space-y-2">
@@ -372,10 +431,9 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
                   type="button"
                   onClick={() => {
                     sessionStorage.removeItem("mobile");
-                    sessionStorage.removeItem("resetToken");
                     setMobile("");
                     setShowMobileInput(true);
-                    setOtp(["", "", "", ""]);
+                    setOtp(Array(otpLength).fill(""));
                   }}
                   className="text-sm text-primary hover:text-primary/80 font-medium w-full text-center transition-colors"
                 >
