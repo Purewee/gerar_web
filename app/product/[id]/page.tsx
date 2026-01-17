@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,13 +11,11 @@ import {
   useCartAdd,
   useFavoriteAdd,
   useFavoriteRemove,
-  useOrderBuyNow,
-  useAddresses,
+  useFavoriteStatus,
   getAuthToken,
-  queryKeys,
 } from "@/lib/api";
-import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
+import { CardSkeleton, Spinner } from "@/components/skeleton";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -25,7 +23,6 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const productId = parseInt(params.id as string);
   const {
@@ -35,33 +32,36 @@ export default function ProductDetailPage() {
   } = useProduct(isNaN(productId) ? 0 : productId);
   const product = productResponse?.data;
 
-  // Local state for favorite status to enable optimistic updates
-  const [isFavorited, setIsFavorited] = useState(product?.isFavorite || false);
-
-  // Sync local state with product data when it changes
-  useEffect(() => {
-    if (product?.isFavorite !== undefined) {
-      setIsFavorited(product.isFavorite);
-    }
-  }, [product?.isFavorite]);
-
   const addToCartMutation = useCartAdd();
   const addFavoriteMutation = useFavoriteAdd();
   const removeFavoriteMutation = useFavoriteRemove();
-  const buyNowMutation = useOrderBuyNow();
-
-  // Fetch user addresses to check if we can do instant checkout
-  const { data: addressesResponse } = useAddresses();
-  const addresses = addressesResponse?.data || [];
-  const defaultAddress =
-    addresses.find((addr) => addr.isDefault) || addresses[0];
+  const { data: favoriteStatusResponse } = useFavoriteStatus(
+    isNaN(productId) ? 0 : productId
+  );
+  const isFavorited = favoriteStatusResponse?.data?.isFavorited || false;
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-525px)] bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Бүтээгдэхүүн ачаалж байна...</p>
+      <div className="min-h-[calc(100vh-525px)] bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="h-10 w-24 bg-gray-200 rounded animate-pulse mb-6" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            <div className="space-y-4">
+              <div className="h-96 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="flex gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-20 w-20 bg-gray-200 rounded animate-pulse" />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-10 w-3/4 bg-gray-200 rounded animate-pulse" />
+              <div className="h-12 w-1/3 bg-gray-200 rounded animate-pulse" />
+              <div className="h-32 w-full bg-gray-200 rounded animate-pulse" />
+              <div className="h-12 w-1/4 bg-gray-200 rounded animate-pulse" />
+              <div className="h-12 w-full bg-gray-200 rounded animate-pulse" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -69,7 +69,7 @@ export default function ProductDetailPage() {
 
   if (productError || !product) {
     return (
-      <div className="min-h-[calc(100vh-525px)] bg-gray-50 flex items-center justify-center">
+      <div className="bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Бүтээгдэхүүн олдсонгүй</p>
           <Button onClick={() => router.push("/")}>
@@ -110,9 +110,7 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleBuyNow = async () => {
-    if (!product) return;
-
+  const handleBuyNow = () => {
     const token = getAuthToken();
     if (!token) {
       toast({
@@ -124,18 +122,10 @@ export default function ProductDetailPage() {
       return;
     }
 
-    // Store buyNow product info and redirect to order create page
-    // User will choose address and delivery time, then confirm to call buyNow API
-    sessionStorage.setItem(
-      "buyNowProduct",
-      JSON.stringify({
-        productId: product.id,
-        quantity: quantity,
-        productName: product.name,
-        productPrice: product.price,
-      })
-    );
-    router.push("/orders/create");
+    toast({
+      title: "Төлбөр төлөх рүү шилжиж байна",
+      description: "Төлбөр төлөх хуудас руу шилжиж байна...",
+    });
   };
 
   const handleToggleFavorite = async () => {
@@ -152,70 +142,24 @@ export default function ProductDetailPage() {
       return;
     }
 
-    // Optimistically update UI immediately
-    const newFavoriteStatus = !isFavorited;
-    setIsFavorited(newFavoriteStatus);
-
-    // Optimistically update query cache
-    const queryKey = queryKeys.products.detail(productId);
-    queryClient.setQueryData(queryKey, (oldData: any) => {
-      if (!oldData?.data) return oldData;
-      return {
-        ...oldData,
-        data: {
-          ...oldData.data,
-          isFavorite: newFavoriteStatus,
-        },
-      };
-    });
-
     try {
-      let response;
       if (isFavorited) {
-        // Remove from favorites
-        response = await removeFavoriteMutation.mutateAsync(product.id);
+        await removeFavoriteMutation.mutateAsync(product.id);
         toast({
           title: "Дуртай жагсаалтаас устгагдсан",
           description: `${product.name} дуртай жагсаалтаас устгагдлаа`,
         });
       } else {
-        // Add to favorites
-        response = await addFavoriteMutation.mutateAsync(product.id);
+        await addFavoriteMutation.mutateAsync(product.id);
         toast({
           title: "Дуртай жагсаалтад нэмэгдсэн",
           description: `${product.name} дуртай жагсаалтад нэмэгдлээ`,
         });
       }
-
-      // Update query cache with actual API response data
-      if (response?.data) {
-        queryClient.setQueryData(queryKey, (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            data: {
-              ...response.data,
-              isFavorite: newFavoriteStatus,
-            },
-          };
-        });
-      }
     } catch (error: any) {
-      // Revert optimistic update on error
-      setIsFavorited(!newFavoriteStatus);
-      queryClient.setQueryData(queryKey, (oldData: any) => {
-        if (!oldData?.data) return oldData;
-        return {
-          ...oldData,
-          data: {
-            ...oldData.data,
-            isFavorite: !newFavoriteStatus,
-          },
-        };
-      });
       toast({
         title: "Алдаа гарлаа",
-        description: error.message || "Шинэчлэхэд алдаа гарлаа",
+        description: error.message || "Дуртай жагсаалт шинэчлэхэд алдаа гарлаа",
         variant: "destructive",
       });
     }
@@ -296,18 +240,20 @@ export default function ProductDetailPage() {
                     {parseFloat(product.originalPrice).toLocaleString()}₮
                   </div>
                 )}
+              {product.discountPercentage && (
+                <div className="bg-primary text-primary-foreground text-sm font-bold px-3 py-1 rounded-full">
+                  {product.discountPercentage}% ХЯМДРАЛТАЙ
+                </div>
+              )}
             </div>
 
-            <div className="mb-4">
-              <span
-                className={`text-sm font-medium ${
-                  product.stock > 0 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                Барааны үлдэгдэл: {product.stock} ширхэг
-                {product.stock === 0 && " (Дууссан)"}
-              </span>
-            </div>
+            {product.stock > 0 && (
+              <div className="mb-4">
+                <span className="text-sm text-green-600 font-medium">
+                  Барааны үлдэгдэл: {product.stock} ширхэг
+                </span>
+              </div>
+            )}
 
             <div className="mb-6">
               <h2 className="text-lg font-semibold mb-2">Тайлбар</h2>
@@ -354,11 +300,9 @@ export default function ProductDetailPage() {
               <Button
                 onClick={handleBuyNow}
                 className="flex-1"
-                disabled={product.stock === 0 || buyNowMutation.isPending}
+                disabled={product.stock === 0}
               >
-                {buyNowMutation.isPending
-                  ? "Бэлдэж байна..."
-                  : "Одоо худалдаж авах"}
+                Одоо худалдаж авах
               </Button>
               <Button
                 onClick={handleToggleFavorite}

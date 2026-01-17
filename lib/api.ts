@@ -1,26 +1,6 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type {
-  ApiResponse,
-  Pagination,
-  RegisterRequest,
-  LoginRequest,
-  User,
-  AuthResponse,
-  Category,
-  Product,
-  ProductsQueryParams,
-  CartItem,
-  FavoriteStatus,
-  Address,
-  CreateAddressRequest,
-  Order,
-  OrderItem,
-  CreateOrderRequest,
-  BuyNowRequest,
-  FinalizeOrderRequest,
-} from "./types";
 
 /**
  * Note: All queries default to refetchOnWindowFocus: false (configured in lib/providers.tsx).
@@ -30,27 +10,24 @@ import type {
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
-// Re-export types for convenience
-export type {
-  ApiResponse,
-  Pagination,
-  RegisterRequest,
-  LoginRequest,
-  User,
-  AuthResponse,
-  Category,
-  Product,
-  ProductsQueryParams,
-  CartItem,
-  FavoriteStatus,
-  Address,
-  CreateAddressRequest,
-  Order,
-  OrderItem,
-  CreateOrderRequest,
-  BuyNowRequest,
-  FinalizeOrderRequest,
-};
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    details?: any;
+  };
+  timestamp?: string;
+}
+
+export interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 // Get auth token from localStorage
 export const getAuthToken = (): string | null => {
@@ -70,19 +47,48 @@ export const removeAuthToken = (): void => {
   localStorage.removeItem("token");
 };
 
+// ==================== SESSION TOKEN (GUEST) ====================
+
+const GUEST_SESSION_KEY = "guest_session_token";
+
+// Get session token from localStorage
+export const getSessionToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(GUEST_SESSION_KEY);
+};
+
+// Set session token
+export const setSessionToken = (token: string): void => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(GUEST_SESSION_KEY, token);
+};
+
+// Remove session token
+export const removeSessionToken = (): void => {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(GUEST_SESSION_KEY);
+};
+
 // Base fetch function with error handling
 async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
+  const sessionToken = getSessionToken();
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...options.headers,
   };
 
+  // Add authentication token if available
   if (token) {
     (headers as Record<string, string>).Authorization = `Bearer ${token}`;
+  }
+
+  // Add session token for guest users (only if not authenticated)
+  if (sessionToken && !token) {
+    (headers as Record<string, string>)["X-Session-Token"] = sessionToken;
   }
 
   try {
@@ -97,6 +103,11 @@ async function apiFetch<T>(
       throw new Error(
         data.error?.message || data.message || "API request failed"
       );
+    }
+
+    // Save session token if returned in response (for guest users)
+    if ((data as any).sessionToken && (data as any).isGuest) {
+      setSessionToken((data as any).sessionToken);
     }
 
     return data;
@@ -117,20 +128,15 @@ export const queryKeys = {
   categories: {
     all: ["categories"] as const,
     lists: () => [...queryKeys.categories.all, "list"] as const,
-    list: (includeSubcategories?: boolean) =>
-      [...queryKeys.categories.lists(), { includeSubcategories }] as const,
+    list: (filters?: string) =>
+      [...queryKeys.categories.lists(), { filters }] as const,
     details: () => [...queryKeys.categories.all, "detail"] as const,
     detail: (id: number) => [...queryKeys.categories.details(), id] as const,
-    products: (
-      id: number,
-      includeSubcategories?: boolean,
-      page?: number,
-      limit?: number
-    ) =>
+    products: (id: number, includeSubcategories?: boolean) =>
       [
         ...queryKeys.categories.detail(id),
         "products",
-        { includeSubcategories, page, limit },
+        { includeSubcategories },
       ] as const,
   },
 
@@ -179,6 +185,31 @@ export const queryKeys = {
 
 // ==================== AUTHENTICATION ====================
 
+export interface RegisterRequest {
+  phoneNumber: string;
+  pin: string;
+  name: string;
+}
+
+export interface LoginRequest {
+  phoneNumber: string;
+  pin: string;
+}
+
+export interface User {
+  id: number;
+  phoneNumber: string;
+  name: string;
+  role: "USER" | "ADMIN";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}
+
 // Auth API functions (for mutations)
 const authApiFunctions = {
   register: async (
@@ -190,6 +221,17 @@ const authApiFunctions = {
     });
     if (response.data?.token) {
       setAuthToken(response.data.token);
+      // Merge guest cart if session token exists
+      const sessionToken = getSessionToken();
+      if (sessionToken) {
+        try {
+          await cartApiFunctions.merge(sessionToken);
+          removeSessionToken();
+        } catch (error) {
+          // Don't block registration if merge fails
+          console.error("Failed to merge cart:", error);
+        }
+      }
     }
     return response;
   },
@@ -201,6 +243,17 @@ const authApiFunctions = {
     });
     if (response.data?.token) {
       setAuthToken(response.data.token);
+      // Merge guest cart if session token exists
+      const sessionToken = getSessionToken();
+      if (sessionToken) {
+        try {
+          await cartApiFunctions.merge(sessionToken);
+          removeSessionToken();
+        } catch (error) {
+          // Don't block login if merge fails
+          console.error("Failed to merge cart:", error);
+        }
+      }
     }
     return response;
   },
@@ -224,12 +277,35 @@ const authApiFunctions = {
     });
     if (response.data?.token) {
       setAuthToken(response.data.token);
+      // Merge guest cart if session token exists
+      const sessionToken = getSessionToken();
+      if (sessionToken) {
+        try {
+          await cartApiFunctions.merge(sessionToken);
+          removeSessionToken();
+        } catch (error) {
+          // Don't block password reset if merge fails
+          console.error("Failed to merge cart:", error);
+        }
+      }
     }
     return response;
   },
 
-  logout: (): void => {
+  logout: async (): Promise<void> => {
+    // Clear cart before logging out
+    try {
+      await cartApiFunctions.clear();
+      // Dispatch cart update event so UI updates immediately
+      window.dispatchEvent(new Event("cartUpdated"));
+    } catch (error) {
+      // Don't block logout if cart clear fails
+      console.error("Failed to clear cart on logout:", error);
+    }
+    
     removeAuthToken();
+    // Remove session token to clear guest cart
+    removeSessionToken();
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("mobile");
     localStorage.removeItem("profile_name");
@@ -268,6 +344,43 @@ export const authApi = authApiFunctions;
 
 // ==================== PRODUCTS ====================
 
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: string;
+  originalPrice: string | null;
+  images: string[];
+  firstImage: string | null;
+  hasDiscount: boolean;
+  discountAmount: string | null;
+  discountPercentage: number | null;
+  isFavorite?: boolean;
+  stock: number;
+  categories: Category[];
+  categoryId: number | null;
+  category?: Category;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductsQueryParams {
+  categoryId?: number;
+  categoryIds?: number[];
+  search?: string;
+  inStock?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  minStock?: number;
+  maxStock?: number;
+  createdAfter?: string;
+  createdBefore?: string;
+  sortBy?: "name" | "price" | "stock" | "createdAt" | "updatedAt";
+  sortOrder?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+}
+
 // Products API functions
 const productsApiFunctions = {
   getAll: async (
@@ -275,17 +388,37 @@ const productsApiFunctions = {
   ): Promise<ApiResponse<Product[]>> => {
     const queryParams = new URLSearchParams();
 
-    if (params?.category) {
-      queryParams.append("category", params.category.toString());
+    if (params?.categoryId) {
+      queryParams.append("categoryId", params.categoryId.toString());
+    }
+    if (params?.categoryIds && params.categoryIds.length > 0) {
+      params.categoryIds.forEach((id) => {
+        queryParams.append("categoryIds[]", id.toString());
+      });
     }
     if (params?.search) {
       queryParams.append("search", params.search);
+    }
+    if (params?.inStock !== undefined) {
+      queryParams.append("inStock", params.inStock.toString());
     }
     if (params?.minPrice) {
       queryParams.append("minPrice", params.minPrice.toString());
     }
     if (params?.maxPrice) {
       queryParams.append("maxPrice", params.maxPrice.toString());
+    }
+    if (params?.minStock) {
+      queryParams.append("minStock", params.minStock.toString());
+    }
+    if (params?.maxStock) {
+      queryParams.append("maxStock", params.maxStock.toString());
+    }
+    if (params?.createdAfter) {
+      queryParams.append("createdAfter", params.createdAfter);
+    }
+    if (params?.createdBefore) {
+      queryParams.append("createdBefore", params.createdBefore);
     }
     if (params?.sortBy) {
       queryParams.append("sortBy", params.sortBy);
@@ -331,22 +464,20 @@ export const productsApi = productsApiFunctions;
 
 // ==================== CATEGORIES ====================
 
+export interface Category {
+  id: number;
+  name: string;
+  description: string | null;
+  parentId: number | null;
+  createdAt: string;
+  updatedAt: string;
+  children?: Category[];
+}
+
 // Categories API functions
 const categoriesApiFunctions = {
-  getAll: async (
-    includeSubcategories?: boolean
-  ): Promise<ApiResponse<Category[]>> => {
-    const queryParams = new URLSearchParams();
-    if (includeSubcategories !== undefined) {
-      queryParams.append(
-        "includeSubcategories",
-        includeSubcategories.toString()
-      );
-    }
-    const queryString = queryParams.toString();
-    return apiFetch<Category[]>(
-      `/categories${queryString ? `?${queryString}` : ""}`
-    );
+  getAll: async (): Promise<ApiResponse<Category[]>> => {
+    return apiFetch<Category[]>("/categories");
   },
 
   getById: async (id: number): Promise<ApiResponse<Category>> => {
@@ -355,35 +486,18 @@ const categoriesApiFunctions = {
 
   getProducts: async (
     id: number,
-    includeSubcategories?: boolean,
-    page?: number,
-    limit?: number
+    includeSubcategories?: boolean
   ): Promise<ApiResponse<Product[]>> => {
-    const queryParams = new URLSearchParams();
-    if (includeSubcategories !== undefined) {
-      queryParams.append(
-        "includeSubcategories",
-        includeSubcategories.toString()
-      );
-    }
-    if (page) {
-      queryParams.append("page", page.toString());
-    }
-    if (limit) {
-      queryParams.append("limit", limit.toString());
-    }
-    const queryString = queryParams.toString();
-    return apiFetch<Product[]>(
-      `/categories/${id}/products${queryString ? `?${queryString}` : ""}`
-    );
+    const query = includeSubcategories ? `?includeSubcategories=true` : "";
+    return apiFetch<Product[]>(`/categories/${id}/products${query}`);
   },
 };
 
 // Categories hooks
-export const useCategories = (includeSubcategories?: boolean) => {
+export const useCategories = () => {
   return useQuery({
-    queryKey: queryKeys.categories.list(includeSubcategories),
-    queryFn: () => categoriesApiFunctions.getAll(includeSubcategories),
+    queryKey: queryKeys.categories.list(),
+    queryFn: () => categoriesApiFunctions.getAll(),
     staleTime: 1.5 * 60 * 60 * 1000, // 1.5 hours
   });
 };
@@ -398,19 +512,11 @@ export const useCategory = (id: number) => {
 
 export const useCategoryProducts = (
   id: number,
-  includeSubcategories?: boolean,
-  page?: number,
-  limit?: number
+  includeSubcategories?: boolean
 ) => {
   return useQuery({
-    queryKey: queryKeys.categories.products(
-      id,
-      includeSubcategories,
-      page,
-      limit
-    ),
-    queryFn: () =>
-      categoriesApiFunctions.getProducts(id, includeSubcategories, page, limit),
+    queryKey: queryKeys.categories.products(id, includeSubcategories),
+    queryFn: () => categoriesApiFunctions.getProducts(id, includeSubcategories),
     enabled: !!id,
   });
 };
@@ -418,6 +524,17 @@ export const useCategoryProducts = (
 export const categoriesApi = categoriesApiFunctions;
 
 // ==================== CART ====================
+
+export interface CartItem {
+  id: number;
+  userId: number | null; // null for guest users
+  sessionToken?: string; // For guest users
+  productId: number;
+  quantity: number;
+  product?: Product;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // Cart API functions
 const cartApiFunctions = {
@@ -429,9 +546,18 @@ const cartApiFunctions = {
     productId: number,
     quantity: number
   ): Promise<ApiResponse<CartItem>> => {
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    const body: any = { productId, quantity };
+
+    // Add session token for guest users
+    if (!token && sessionToken) {
+      body.sessionToken = sessionToken;
+    }
+
     return apiFetch<CartItem>("/cart", {
       method: "POST",
-      body: JSON.stringify({ productId, quantity }),
+      body: JSON.stringify(body),
     });
   },
 
@@ -439,21 +565,57 @@ const cartApiFunctions = {
     productId: number,
     quantity: number
   ): Promise<ApiResponse<CartItem>> => {
-    return apiFetch<CartItem>(`/cart/${productId}`, {
-      method: "PUT",
-      body: JSON.stringify({ quantity }),
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    const body: any = { quantity };
+
+    // Add session token for guest users
+    if (!token && sessionToken) {
+      body.sessionToken = sessionToken;
+    }
+
+    return apiFetch<CartItem>(`/cart/${productId}/update`, {
+      method: "POST",
+      body: JSON.stringify(body),
     });
   },
 
   remove: async (productId: number): Promise<ApiResponse<CartItem>> => {
-    return apiFetch<CartItem>(`/cart/${productId}`, {
-      method: "DELETE",
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    const body: any = {};
+
+    // Add session token for guest users
+    if (!token && sessionToken) {
+      body.sessionToken = sessionToken;
+    }
+
+    return apiFetch<CartItem>(`/cart/${productId}/remove`, {
+      method: "POST",
+      body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
     });
   },
 
   clear: async (): Promise<ApiResponse<{ deletedCount: number }>> => {
-    return apiFetch<{ deletedCount: number }>("/cart", {
-      method: "DELETE",
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    const body: any = {};
+
+    // Add session token for guest users
+    if (!token && sessionToken) {
+      body.sessionToken = sessionToken;
+    }
+
+    return apiFetch<{ deletedCount: number }>("/cart/clear", {
+      method: "POST",
+      body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
+    });
+  },
+
+  merge: async (sessionToken: string): Promise<ApiResponse<{ mergedCount: number; skippedCount: number }>> => {
+    return apiFetch<{ mergedCount: number; skippedCount: number }>("/cart/merge", {
+      method: "POST",
+      body: JSON.stringify({ sessionToken }),
     });
   },
 };
@@ -518,6 +680,18 @@ export const useCartClear = () => {
   });
 };
 
+export const useCartMerge = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionToken: string) => cartApiFunctions.merge(sessionToken),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
+      // Clear session token after successful merge
+      removeSessionToken();
+    },
+  });
+};
+
 export const cartApi = cartApiFunctions;
 
 // ==================== FAVORITES ====================
@@ -543,15 +717,18 @@ const favoritesApiFunctions = {
   },
 
   remove: async (productId: number): Promise<ApiResponse<Product>> => {
-    return apiFetch<Product>(`/favorites/${productId}`, {
-      method: "DELETE",
+    return apiFetch<Product>(`/favorites/${productId}/remove`, {
+      method: "POST",
+      body: JSON.stringify({}),
     });
   },
 
   checkStatus: async (
     productId: number
-  ): Promise<ApiResponse<FavoriteStatus>> => {
-    return apiFetch<FavoriteStatus>(`/favorites/${productId}/status`);
+  ): Promise<ApiResponse<{ productId: number; isFavorited: boolean }>> => {
+    return apiFetch<{ productId: number; isFavorited: boolean }>(
+      `/favorites/${productId}/status`
+    );
   },
 };
 
@@ -567,7 +744,7 @@ export const useFavoriteStatus = (productId: number) => {
   return useQuery({
     queryKey: queryKeys.favorites.status(productId),
     queryFn: () => favoritesApiFunctions.checkStatus(productId),
-    enabled: !!productId,
+    enabled: !!productId && !!getAuthToken(), // Only enable if authenticated
   });
 };
 
@@ -597,6 +774,42 @@ export const favoritesApi = favoritesApiFunctions;
 
 // ==================== ADDRESSES ====================
 
+export interface Address {
+  id: number;
+  userId: number;
+  label: string | null;
+  fullName: string;
+  phoneNumber: string;
+  provinceOrDistrict: string;
+  khorooOrSoum: string;
+  street: string | null;
+  neighborhood: string | null;
+  residentialComplex: string | null;
+  building: string | null;
+  entrance: string | null;
+  apartmentNumber: string | null;
+  addressNote: string | null;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAddressRequest {
+  label?: string;
+  fullName: string;
+  phoneNumber: string;
+  provinceOrDistrict: string;
+  khorooOrSoum: string;
+  street?: string;
+  neighborhood?: string;
+  residentialComplex?: string;
+  building?: string;
+  entrance?: string;
+  apartmentNumber?: string;
+  addressNote?: string;
+  isDefault?: boolean;
+}
+
 // Addresses API functions
 const addressesApiFunctions = {
   getAll: async (): Promise<ApiResponse<Address[]>> => {
@@ -608,29 +821,9 @@ const addressesApiFunctions = {
   },
 
   create: async (data: CreateAddressRequest): Promise<ApiResponse<Address>> => {
-    // Get fullName from localStorage (check both profile_name and user_name)
-    const fullName =
-      (typeof window !== "undefined" &&
-        (localStorage.getItem("profile_name") ||
-          localStorage.getItem("user_name"))) ||
-      null;
-
-    // Get phoneNumber from localStorage
-    const phoneNumber =
-      (typeof window !== "undefined" && localStorage.getItem("mobile")) || null;
-
-    // Prepare request body with fullName and phoneNumber if available
-    const requestBody: any = { ...data };
-    if (fullName) {
-      requestBody.fullName = fullName;
-    }
-    if (phoneNumber) {
-      requestBody.phoneNumber = phoneNumber;
-    }
-
     return apiFetch<Address>("/addresses", {
       method: "POST",
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(data),
     });
   },
 
@@ -638,15 +831,16 @@ const addressesApiFunctions = {
     id: number,
     data: Partial<CreateAddressRequest>
   ): Promise<ApiResponse<Address>> => {
-    return apiFetch<Address>(`/addresses/${id}`, {
-      method: "PUT",
+    return apiFetch<Address>(`/addresses/${id}/update`, {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   delete: async (id: number): Promise<ApiResponse<Address>> => {
-    return apiFetch<Address>(`/addresses/${id}`, {
-      method: "DELETE",
+    return apiFetch<Address>(`/addresses/${id}/delete`, {
+      method: "POST",
+      body: JSON.stringify({}),
     });
   },
 
@@ -654,6 +848,14 @@ const addressesApiFunctions = {
     return apiFetch<Address>(`/addresses/${id}/set-default`, {
       method: "PATCH",
     });
+  },
+
+  getDistricts: async (): Promise<ApiResponse<string[]>> => {
+    return apiFetch<string[]>("/addresses/districts");
+  },
+
+  getKhoroo: async (district: string): Promise<ApiResponse<{ district: string; khorooOptions: string[] }>> => {
+    return apiFetch<{ district: string; khorooOptions: string[] }>(`/addresses/khoroo?district=${encodeURIComponent(district)}`);
   },
 };
 
@@ -720,9 +922,81 @@ export const useAddressSetDefault = () => {
   });
 };
 
+export const useDistricts = () => {
+  return useQuery({
+    queryKey: [...queryKeys.addresses.all, "districts"],
+    queryFn: () => addressesApiFunctions.getDistricts(),
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours - districts don't change often
+  });
+};
+
+export const useKhoroo = (district: string | null) => {
+  return useQuery({
+    queryKey: [...queryKeys.addresses.all, "khoroo", district],
+    queryFn: () => {
+      if (!district) {
+        throw new Error("District is required");
+      }
+      return addressesApiFunctions.getKhoroo(district);
+    },
+    enabled: !!district && district.length > 0,
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+    retry: 1,
+  });
+};
+
 export const addressesApi = addressesApiFunctions;
 
 // ==================== ORDERS ====================
+
+export interface OrderItem {
+  id: number;
+  orderId: number;
+  productId: number;
+  quantity: number;
+  price: string;
+  product?: Product;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  addressId: number | null;
+  deliveryTimeSlot: string | null;
+  totalAmount: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  address?: Address;
+  items?: OrderItem[];
+}
+
+export interface GuestAddress {
+  fullName: string;
+  phoneNumber: string;
+  provinceOrDistrict: string;
+  khorooOrSoum: string;
+  street?: string;
+  neighborhood?: string;
+  residentialComplex?: string;
+  building?: string;
+  entrance?: string;
+  apartmentNumber?: string;
+  addressNote?: string;
+  label?: string;
+}
+
+export interface CreateOrderRequest {
+  // For authenticated users
+  addressId?: number;
+  // For guest users
+  sessionToken?: string;
+  address?: GuestAddress;
+  // Common
+  deliveryTimeSlot?: "10-14" | "14-18" | "18-21" | "21-00";
+}
 
 // Orders API functions
 const ordersApiFunctions = {
@@ -735,23 +1009,18 @@ const ordersApiFunctions = {
   },
 
   create: async (data: CreateOrderRequest): Promise<ApiResponse<Order>> => {
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    const body: any = { ...data };
+
+    // For guest users, ensure session token is included
+    if (!token && sessionToken && !body.sessionToken) {
+      body.sessionToken = sessionToken;
+    }
+
     return apiFetch<Order>("/orders", {
       method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  buyNow: async (data: BuyNowRequest): Promise<ApiResponse<Order | any>> => {
-    return apiFetch<Order | any>("/orders/buy-now", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  finalize: async (data: FinalizeOrderRequest): Promise<ApiResponse<Order>> => {
-    return apiFetch<Order>("/orders/finalize", {
-      method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     });
   },
 };
@@ -776,29 +1045,6 @@ export const useOrderCreate = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateOrderRequest) => ordersApiFunctions.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
-    },
-  });
-};
-
-export const useOrderBuyNow = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: BuyNowRequest) => ordersApiFunctions.buyNow(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
-    },
-  });
-};
-
-export const useOrderFinalize = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: FinalizeOrderRequest) =>
-      ordersApiFunctions.finalize(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });

@@ -16,8 +16,9 @@ import {
 } from "lucide-react";
 import { useOrder, useAddresses, useAddressUpdate } from "@/lib/api";
 import Image from "next/image";
+import { CardSkeleton, Spinner } from "@/components/skeleton";
 
-type Step = "location" | "payment";
+type Step = "location" | "profile" | "payment";
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -71,8 +72,10 @@ export default function OrderDetailPage() {
     }
 
     // Check what step we should be on
-    if (!order.addressId || !profileName || !profilePhone) {
+    if (!order.addressId) {
       setCurrentStep("location");
+    } else if (!profileName || !profilePhone) {
+      setCurrentStep("profile");
     } else {
       setCurrentStep("payment");
     }
@@ -80,24 +83,17 @@ export default function OrderDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100vh-525px)] bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Захиалга ачаалж байна...</p>
+      <div className="min-h-[calc(100vh-525px)] bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="h-10 w-24 bg-gray-200 rounded animate-pulse mb-6" />
+          <CardSkeleton />
         </div>
       </div>
     );
   }
 
   const handleLocationNext = () => {
-    // For pending orders, if address exists, just navigate to payment
-    if (order && order.addressId && profileName && profilePhone) {
-      setCurrentStep("payment");
-      return;
-    }
-
-    // Validate address selection if no order address
-    if (!order?.addressId && !selectedAddressId) {
+    if (!selectedAddressId) {
       toast({
         title: "Хаяг сонгоно уу",
         description: "Хүргэлтийн хаяг сонгох шаардлагатай",
@@ -106,7 +102,16 @@ export default function OrderDetailPage() {
       return;
     }
 
-    // Validate profile info
+    // Update order address if different
+    if (order && order.addressId !== selectedAddressId) {
+      // In a real app, you'd update the order's address here
+      // For now, we'll just proceed to next step
+    }
+
+    setCurrentStep("profile");
+  };
+
+  const handleProfileNext = () => {
     if (!profileName.trim() || !profilePhone.trim()) {
       toast({
         title: "Мэдээлэл дутуу",
@@ -120,12 +125,6 @@ export default function OrderDetailPage() {
     localStorage.setItem("user_name", profileName);
     localStorage.setItem("profile_name", profileName);
     localStorage.setItem("mobile", profilePhone);
-
-    // Update order address if different
-    if (order && order.addressId !== selectedAddressId && selectedAddressId) {
-      // In a real app, you'd update the order's address here
-      // For now, we'll just proceed to next step
-    }
 
     setCurrentStep("payment");
   };
@@ -229,41 +228,25 @@ export default function OrderDetailPage() {
           {order.address && (
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Хүргэлтийн хаяг
-                </CardTitle>
+                <CardTitle>Хүргэлтийн хаяг</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-primary" />
-                      <p className="font-semibold text-lg">
-                        {order.address.fullName || "Хаяг"}
-                      </p>
-                    </div>
-                    {order.address.phoneNumber && (
-                      <p className="text-sm text-gray-700">
-                        📞 {order.address.phoneNumber}
-                      </p>
-                    )}
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        Байршил:
-                      </p>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {[
-                          order.address.provinceOrDistrict,
-                          order.address.khorooOrSoum,
-                          order.address.street,
-                        ]
-                          .filter(Boolean)
-                          .join(", ")}
-                      </p>
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <p className="font-semibold">{order.address.fullName}</p>
+                  <p className="text-gray-600">{order.address.phoneNumber}</p>
+                  <p className="text-gray-600">
+                    {order.address.provinceOrDistrict},{" "}
+                    {order.address.khorooOrSoum}
+                    {order.address.street && `, ${order.address.street}`}
+                    {order.address.building && `, ${order.address.building}`}
+                    {order.address.apartmentNumber &&
+                      `, ${order.address.apartmentNumber}`}
+                  </p>
+                  {order.address.addressNote && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Тэмдэглэл: {order.address.addressNote}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -368,10 +351,7 @@ export default function OrderDetailPage() {
         <Card className="mb-6">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <button
-                onClick={() => setCurrentStep("location")}
-                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-              >
+              <div className="flex items-center gap-2">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     currentStep === "location"
@@ -379,26 +359,41 @@ export default function OrderDetailPage() {
                       : "bg-gray-200 text-gray-600"
                   }`}
                 >
-                  {currentStep === "payment" &&
-                  (order?.addressId || selectedAddressId) &&
-                  profileName ? (
+                  {currentStep !== "location" && selectedAddressId ? (
                     <Check className="w-5 h-5" />
                   ) : (
                     <MapPin className="w-5 h-5" />
                   )}
                 </div>
                 <div>
-                  <p className="font-semibold">Хаяг болон мэдээлэл</p>
-                  <p className="text-xs text-gray-500">
-                    Хүргэлтийн хаяг болон хувийн мэдээлэл
-                  </p>
+                  <p className="font-semibold">Хаяг</p>
+                  <p className="text-xs text-gray-500">Хүргэлтийн хаяг</p>
                 </div>
-              </button>
+              </div>
               <div className="flex-1 h-0.5 bg-gray-200 mx-4" />
-              <button
-                onClick={() => setCurrentStep("payment")}
-                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-              >
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    currentStep === "profile"
+                      ? "bg-primary text-white"
+                      : currentStep === "payment"
+                      ? "bg-gray-200 text-gray-600"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {currentStep === "payment" && profileName ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <User className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold">Профайл</p>
+                  <p className="text-xs text-gray-500">Хувийн мэдээлэл</p>
+                </div>
+              </div>
+              <div className="flex-1 h-0.5 bg-gray-200 mx-4" />
+              <div className="flex items-center gap-2">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     currentStep === "payment"
@@ -412,182 +407,137 @@ export default function OrderDetailPage() {
                   <p className="font-semibold">Төлбөр</p>
                   <p className="text-xs text-gray-500">Төлбөр төлөх</p>
                 </div>
-              </button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Step Content */}
         {currentStep === "location" && (
-          <>
-            {/* Location Section */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Хүргэлтийн хаяг
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {order.address ? (
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="w-4 h-4 text-primary" />
-                        <p className="font-semibold text-lg">
-                          {order.address.fullName || "Хаяг"}
-                        </p>
-                      </div>
-                      {order.address.phoneNumber && (
-                        <p className="text-sm text-gray-700">
-                          📞 {order.address.phoneNumber}
-                        </p>
-                      )}
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className="text-sm font-medium text-gray-900 mb-1">
-                          Байршил:
-                        </p>
-                        <p className="text-sm text-gray-700 leading-relaxed">
-                          {[
-                            order.address.provinceOrDistrict,
-                            order.address.khorooOrSoum,
-                            order.address.street,
-                          ]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : addresses.length === 0 ? (
-                  <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
-                    <MapPin className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-600 mb-4">Хаяг байхгүй байна</p>
-                    <Button
-                      onClick={() => router.push("/profile?tab=addresses")}
-                    >
-                      Хаяг нэмэх
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="space-y-3">
-                      {addresses.map((address) => (
-                        <div
-                          key={address.id}
-                          onClick={() => setSelectedAddressId(address.id)}
-                          className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                            selectedAddressId === address.id
-                              ? "border-primary bg-primary/5"
-                              : "border-gray-200 hover:border-gray-300"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <MapPin className="w-4 h-4 text-primary" />
-                                <p className="font-semibold">
-                                  {address.fullName || "Хаяг"}
-                                </p>
-                                {address.isDefault && (
-                                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                    Үндсэн
-                                  </span>
-                                )}
-                              </div>
-                              {address.phoneNumber && (
-                                <p className="text-sm text-gray-600 mb-2">
-                                  📞 {address.phoneNumber}
-                                </p>
-                              )}
-                              <div className="mt-2">
-                                <p className="text-sm font-medium text-gray-900 mb-1">
-                                  Байршил:
-                                </p>
-                                <p className="text-sm text-gray-700 leading-relaxed">
-                                  {[
-                                    address.provinceOrDistrict,
-                                    address.khorooOrSoum,
-                                    address.street,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(", ")}
-                                </p>
-                              </div>
-                            </div>
-                            <div
-                              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                selectedAddressId === address.id
-                                  ? "border-primary bg-primary"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {selectedAddressId === address.id && (
-                                <div className="w-2 h-2 rounded-full bg-white" />
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Хүргэлтийн хаяг сонгох
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {addresses.length === 0 ? (
+                <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
+                  <p className="text-gray-600 mb-4">Хаяг байхгүй байна</p>
+                  <Button onClick={() => router.push("/profile?tab=addresses")}>
+                    Хаяг нэмэх
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    {addresses.map((address) => (
+                      <div
+                        key={address.id}
+                        onClick={() => setSelectedAddressId(address.id)}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                          selectedAddressId === address.id
+                            ? "border-primary bg-primary/5"
+                            : "border-gray-200 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <p className="font-semibold">
+                                {address.fullName}
+                              </p>
+                              {address.isDefault && (
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                  Үндсэн
+                                </span>
                               )}
                             </div>
+                            <p className="text-sm text-gray-600">
+                              {address.phoneNumber}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {address.provinceOrDistrict},{" "}
+                              {address.khorooOrSoum}
+                              {address.street && `, ${address.street}`}
+                              {address.building && `, ${address.building}`}
+                              {address.apartmentNumber &&
+                                `, ${address.apartmentNumber}`}
+                            </p>
+                          </div>
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                              selectedAddressId === address.id
+                                ? "border-primary bg-primary"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {selectedAddressId === address.id && (
+                              <div className="w-2 h-2 rounded-full bg-white" />
+                            )}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => router.push("/profile?tab=addresses")}
-                      className="w-full"
-                    >
-                      Шинэ хаяг нэмэх
-                    </Button>
-                    <Button
-                      onClick={handleLocationNext}
-                      className="w-full"
-                      size="lg"
-                    >
-                      Үргэлжлүүлэх
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Profile Section */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Профайл мэдээлэл
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-600 mb-1 block">
-                        Нэр
-                      </label>
-                      <p className="text-base font-semibold text-gray-900">
-                        {profileName || "Мэдээлэл байхгүй"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600 mb-1 block">
-                        Утасны дугаар
-                      </label>
-                      <p className="text-base font-semibold text-gray-900">
-                        {profilePhone || "Мэдээлэл байхгүй"}
-                      </p>
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                <Button
-                  onClick={handleLocationNext}
-                  className="w-full"
-                  size="lg"
-                >
-                  Үргэлжлүүлэх
-                </Button>
-              </CardContent>
-            </Card>
-          </>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/profile?tab=addresses")}
+                    className="w-full"
+                  >
+                    Шинэ хаяг нэмэх
+                  </Button>
+                  <Button
+                    onClick={handleLocationNext}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Үргэлжлүүлэх
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {currentStep === "profile" && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Профайл мэдээлэл
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Нэр</label>
+                <Input
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  placeholder="Таны нэр"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Утасны дугаар
+                </label>
+                <Input
+                  value={profilePhone}
+                  onChange={(e) =>
+                    setProfilePhone(
+                      e.target.value.replace(/\D/g, "").slice(0, 8)
+                    )
+                  }
+                  placeholder="8 оронтой утасны дугаар"
+                  maxLength={8}
+                />
+              </div>
+              <Button onClick={handleProfileNext} className="w-full" size="lg">
+                Үргэлжлүүлэх
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         {currentStep === "payment" && (

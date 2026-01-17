@@ -1,71 +1,217 @@
+"use client";
+
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
+import { useCartAdd, useFavoriteAdd, useFavoriteRemove, useFavoriteStatus } from "@/lib/api";
 import Link from "next/link";
 import Image from "next/image";
+import { ShoppingCart, Heart } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export interface ProductCardProps {
   id: number;
   name: string;
   price: number;
-  originalPrice?: number;
+  original?: number;
   icon?: string;
   imageUrl?: string;
   featured?: boolean;
   className?: string;
+  inGrid?: boolean; // If true, card will fill grid cell instead of using fixed width
 }
 
 export function ProductCard({
   id,
   name,
   price,
-  originalPrice,
+  original,
   icon,
   imageUrl,
   featured = false,
   className = "",
+  inGrid = false,
 }: ProductCardProps) {
+  const { toast } = useToast();
+  const addToCartMutation = useCartAdd();
+  const addFavoriteMutation = useFavoriteAdd();
+  const removeFavoriteMutation = useFavoriteRemove();
+  const { data: favoriteStatusResponse } = useFavoriteStatus(id);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isProcessingCart, setIsProcessingCart] = useState(false);
+  const [isProcessingFavorite, setIsProcessingFavorite] = useState(false);
+
   const displayImage = imageUrl || icon || "📦";
   const isImageUrl =
     imageUrl && (imageUrl.startsWith("http") || imageUrl.startsWith("/"));
 
+  // Update favorite status from API response
+  useEffect(() => {
+    if (favoriteStatusResponse?.data?.isFavorited !== undefined) {
+      setIsFavorited(favoriteStatusResponse.data.isFavorited);
+    }
+  }, [favoriteStatusResponse]);
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isProcessingCart) return;
+    setIsProcessingCart(true);
+
+    try {
+      await addToCartMutation.mutateAsync({
+        productId: id,
+        quantity: 1,
+      });
+      toast({
+        title: "Амжилттай",
+        description: `${name} сагсанд нэмэгдлээ`,
+        variant: "default",
+      });
+      window.dispatchEvent(new Event("cartUpdated"));
+    } catch (error: any) {
+      toast({
+        title: "Алдаа гарлаа",
+        description: error.message || "Сагсанд нэмэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingCart(false);
+    }
+  };
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isProcessingFavorite) return;
+    setIsProcessingFavorite(true);
+
+    try {
+      if (isFavorited) {
+        await removeFavoriteMutation.mutateAsync(id);
+        setIsFavorited(false);
+        toast({
+          title: "Амжилттай",
+          description: `${name} дурсамжаас хасагдлаа`,
+          variant: "default",
+        });
+      } else {
+        await addFavoriteMutation.mutateAsync(id);
+        setIsFavorited(true);
+        toast({
+          title: "Амжилттай",
+          description: `${name} дурсамжид нэмэгдлээ`,
+          variant: "default",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Алдаа гарлаа",
+        description: error.message || "Дурсамж шинэчлэхэд алдаа гарлаа",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingFavorite(false);
+    }
+  };
+
+  const hasDiscount = original && original > price;
+  const discountPercentage = hasDiscount
+    ? Math.round(((original - price) / original) * 100)
+    : 0;
+
+  const wrapperClass = inGrid 
+    ? `w-full ${className}` 
+    : `shrink-0 w-40 sm:w-44 md:w-48 lg:w-52 ${className}`;
+
   return (
-    <Link
-      href={`/product/${id}`}
-      className={`shrink-0 w-44 sm:w-48 md:w-56 lg:w-64 block ${className}`}
-    >
+    <div className={wrapperClass}>
       <Card
-        className={`cursor-pointer hover:shadow-lg transition-shadow h-full border-gray-200`}
+        className={`group cursor-pointer hover:shadow-xl transition-all duration-300 h-full border-gray-200 overflow-hidden ${
+          featured ? "ring-2 ring-primary/20" : ""
+        }`}
       >
-        <CardContent className="flex flex-col justify-between h-full p-0">
-          <div>
-            <div className="border-b border-gray-200 h-28 sm:h-32 md:h-40 flex rounded-t-xl items-center justify-center overflow-hidden">
+        <Link href={`/product/${id}`} className="block h-full">
+          <CardContent className="flex flex-col h-full p-0">
+            {/* Image Section */}
+            <div className="relative bg-gray-100 w-full overflow-hidden" style={{ aspectRatio: '4/3' }}>
               {isImageUrl ? (
                 <Image
                   src={imageUrl}
                   alt={name}
-                  width={224}
-                  height={160}
-                  className="w-full h-full object-contain border-b"
+                  fill
+                  sizes="(max-width: 640px) 160px, (max-width: 768px) 176px, (max-width: 1024px) 192px, 208px"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  unoptimized
                 />
               ) : (
-                <div className="text-3xl sm:text-4xl">{displayImage}</div>
+                <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl">
+                  {displayImage}
+                </div>
+              )}
+              
+              {/* Favorite Button - Top Right */}
+              <button
+                onClick={handleToggleFavorite}
+                disabled={isProcessingFavorite}
+                className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
+                aria-label={isFavorited ? "Дурсамжаас хасах" : "Дурсамжид нэмэх"}
+              >
+                <Heart
+                  className={`w-3.5 h-3.5 transition-colors ${
+                    isFavorited
+                      ? "fill-red-500 text-red-500"
+                      : "text-gray-600 group-hover:text-red-500"
+                  }`}
+                />
+              </button>
+
+              {/* Discount Badge */}
+              {hasDiscount && discountPercentage > 0 && (
+                <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-md shadow-md">
+                  -{discountPercentage}%
+                </div>
               )}
             </div>
-            <h3 className="font-medium text-xs sm:text-sm md:text-base line-clamp-2 px-4 pt-3 pb-2">
-              {name}
-            </h3>
-          </div>
-          <div className="flex gap-2 shadow-md px-4 rounded-b-xl pb-3">
-            <div className="text-base sm:text-lg md:text-xl font-semibold">
-              {price.toLocaleString()}₮
-            </div>
-            {originalPrice && originalPrice > price && (
-              <div className="text-xs sm:text-sm text-muted-foreground line-through">
-                {originalPrice.toLocaleString()}₮
+
+            {/* Content Section */}
+            <div className="flex flex-col flex-1 p-3">
+              <h3 className="font-medium text-xs sm:text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                {name}
+              </h3>
+
+              {/* Price Section */}
+              <div className="flex flex-col gap-1 mb-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-sm sm:text-base font-bold text-primary">
+                    {price.toLocaleString()}₮
+                  </span>
+                  {hasDiscount && (
+                    <span className="text-xs sm:text-sm text-gray-500 line-through">
+                      {original.toLocaleString()}₮
+                    </span>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </CardContent>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 mt-auto">
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={isProcessingCart}
+                  className="flex-1 h-8 text-xs sm:text-sm font-medium"
+                  size="sm"
+                >
+                  <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+                  Сагслах
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Link>
       </Card>
-    </Link>
+    </div>
   );
 }

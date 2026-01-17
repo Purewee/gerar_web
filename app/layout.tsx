@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { Navigation } from "@/components/navigation";
-import { Footer } from "@/components/footer";
+import { ConditionalNavigation } from "@/components/conditional-navigation";
 import { Providers } from "@/lib/providers";
 
 export const metadata: Metadata = {
@@ -20,9 +19,9 @@ export default function RootLayout({
     <html lang="mn">
       <body className="font-roboto">
         <Providers>
-          <Navigation />
-          {children}
-          <Footer />
+          <ConditionalNavigation>
+            {children}
+          </ConditionalNavigation>
           <Toaster />
         </Providers>
       </body>
