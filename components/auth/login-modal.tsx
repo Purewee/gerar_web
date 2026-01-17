@@ -11,9 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/toast";
 import { useAuthLogin } from "@/lib/api";
 import { X } from "lucide-react";
+import { InlineNotification } from "./inline-notification";
+import { FieldError } from "./field-error";
 
 interface LoginModalProps {
   open: boolean;
@@ -25,8 +26,9 @@ interface LoginModalProps {
 export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToOTP }: LoginModalProps) {
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState(["", "", "", ""]);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [errors, setErrors] = useState<{ mobile?: string; password?: string }>({});
   const passwordRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { toast } = useToast();
   const loginMutation = useAuthLogin();
 
   const handlePasswordChange = (index: number, value: string) => {
@@ -50,22 +52,25 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setNotification(null);
+    setErrors({});
+    
+    const passwordString = password.join("");
+    let hasErrors = false;
+    const newErrors: { mobile?: string; password?: string } = {};
+
     if (mobile.length !== 8) {
-      toast({
-        title: "Буруу утасны дугаар",
-        description: "Зөв 8 оронтой утасны дугаар оруулна уу",
-        variant: "destructive",
-      });
-      return;
+      newErrors.mobile = "Зөв 8 оронтой утасны дугаар оруулна уу";
+      hasErrors = true;
     }
 
-    const passwordString = password.join("");
     if (passwordString.length !== 4) {
-      toast({
-        title: "Буруу нууц үг",
-        description: "4 оронтой PIN оруулна уу",
-        variant: "destructive",
-      });
+      newErrors.password = "4 оронтой PIN оруулна уу";
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      setErrors(newErrors);
       return;
     }
 
@@ -82,39 +87,32 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
         localStorage.setItem("user_id", response.data.user.id.toString());
         window.dispatchEvent(new CustomEvent("authStateChanged"));
 
-        // Show success toast
-        toast({
-          title: "Амжилттай нэвтэрлээ",
-          description: `Тавтай морил, ${response.data.user.name}!`,
+        setNotification({
+          type: "success",
+          message: `Амжилттай нэвтэрлээ! Тавтай морил, ${response.data.user.name}!`,
         });
 
-        // Reset form and close modal after a short delay to ensure toast is visible
+        // Reset form and close modal after a short delay
         setTimeout(() => {
           setMobile("");
           setPassword(["", "", "", ""]);
+          setNotification(null);
+          setErrors({});
           onOpenChange(false);
-        }, 500);
+        }, 2000);
       } else {
-        // Handle case where response doesn't have data
-        toast({
-          title: "Нэвтрэхэд алдаа гарлаа",
-          description: "Хариу буцаахгүй байна. Дахин оролдоно уу.",
-          variant: "destructive",
-        });
+        setErrors({ password: "Хариу буцаахгүй байна. Дахин оролдоно уу." });
       }
     } catch (error: any) {
-      // Show error toast
-      toast({
-        title: "Нэвтрэхэд алдаа гарлаа",
-        description: error.message || "Утасны дугаар эсвэл PIN буруу байна",
-        variant: "destructive",
-      });
+      setErrors({ password: error.message || "Утасны дугаар эсвэл PIN буруу байна" });
     }
   };
 
   const handleClose = () => {
     setMobile("");
     setPassword(["", "", "", ""]);
+    setNotification(null);
+    setErrors({});
     onOpenChange(false);
   };
 
@@ -153,6 +151,13 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
         </div>
 
         <div className="px-6 pb-6 space-y-6">
+          {notification && (
+            <InlineNotification
+              type={notification.type}
+              message={notification.message}
+              onClose={() => setNotification(null)}
+            />
+          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label
@@ -169,11 +174,16 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
                   type="tel"
                   id="login-mobile"
                   value={mobile}
-                  onChange={(e) =>
-                    setMobile(e.target.value.replace(/\D/g, "").slice(0, 8))
-                  }
+                  onChange={(e) => {
+                    setMobile(e.target.value.replace(/\D/g, "").slice(0, 8));
+                    if (errors.password) setErrors({ ...errors, password: undefined });
+                  }}
                   placeholder="8 оронтой утасны дугаар"
-                  className="pl-14 h-12 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
+                  className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                    errors.password
+                      ? "border-red-300 focus:border-red-400"
+                      : "border-gray-300 focus:border-primary"
+                  }`}
                   required
                   maxLength={8}
                 />
@@ -195,14 +205,24 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
                     inputMode="numeric"
                     maxLength={1}
                     value={digit}
-                    onChange={(e) =>
-                      handlePasswordChange(index, e.target.value)
-                    }
+                    onChange={(e) => {
+                      handlePasswordChange(index, e.target.value);
+                      if (errors.password) setErrors({ ...errors, password: undefined });
+                    }}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
+                    className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                      errors.password
+                        ? "border-2 border-red-300 focus:border-red-400"
+                        : "border-2 border-gray-300 focus:border-primary"
+                    }`}
                   />
                 ))}
               </div>
+              {errors.password && (
+                <div className="flex justify-center">
+                  <FieldError message={errors.password} />
+                </div>
+              )}
             </div>
 
             <Button

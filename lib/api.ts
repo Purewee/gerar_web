@@ -203,6 +203,8 @@ export interface RegisterRequest {
   phoneNumber: string;
   pin: string;
   name: string;
+  otpCode: string; // Required: 4-digit OTP code received via SMS
+  email?: string; // Optional
 }
 
 export interface LoginRequest {
@@ -355,6 +357,62 @@ export const useAuthResetPassword = () => {
 };
 
 export const authApi = authApiFunctions;
+
+// ==================== OTP ====================
+
+export type OTPPurpose = "REGISTRATION" | "LOGIN" | "PASSWORD_RESET" | "VERIFICATION";
+
+export interface SendOTPRequest {
+  phoneNumber: string;
+  purpose?: OTPPurpose;
+}
+
+export interface SendOTPResponse {
+  expiresAt: string;
+  expiresInMinutes: number;
+}
+
+export interface VerifyOTPRequest {
+  phoneNumber: string;
+  code: string;
+  purpose?: OTPPurpose;
+}
+
+export interface VerifyOTPResponse {
+  verified: boolean;
+}
+
+// OTP API functions
+const otpApiFunctions = {
+  send: async (data: SendOTPRequest): Promise<ApiResponse<SendOTPResponse>> => {
+    return apiFetch<SendOTPResponse>("/otp/send", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  verify: async (data: VerifyOTPRequest): Promise<ApiResponse<VerifyOTPResponse>> => {
+    return apiFetch<VerifyOTPResponse>("/otp/verify", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// OTP hooks
+export const useOTPSend = () => {
+  return useMutation({
+    mutationFn: otpApiFunctions.send,
+  });
+};
+
+export const useOTPVerify = () => {
+  return useMutation({
+    mutationFn: otpApiFunctions.verify,
+  });
+};
+
+export const otpApi = otpApiFunctions;
 
 // ==================== PRODUCTS ====================
 

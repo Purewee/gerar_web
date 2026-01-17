@@ -17,6 +17,8 @@ import { useCategoriesStore } from "@/lib/stores/categories";
 import { LoginModal } from "@/components/auth/login-modal";
 import { RegisterModal } from "@/components/auth/register-modal";
 import { OTPModal } from "@/components/auth/otp-modal";
+import { RegisterVerifyModal } from "@/components/auth/register-verify-modal";
+import { ResetPasswordModal } from "@/components/auth/reset-password-modal";
 import { Spinner } from "@/components/skeleton";
 
 export function Navigation() {
@@ -32,6 +34,17 @@ export function Navigation() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [registerVerifyModalOpen, setRegisterVerifyModalOpen] = useState(false);
+  const [registrationData, setRegistrationData] = useState<{
+    phoneNumber: string;
+    pin: string;
+    name: string;
+  } | null>(null);
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [resetPasswordData, setResetPasswordData] = useState<{
+    phoneNumber: string;
+    otpCode: string;
+  } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -602,6 +615,21 @@ export function Navigation() {
           setRegisterModalOpen(false);
           setLoginModalOpen(true);
         }}
+        onOTPSent={(phoneNumber, pin, name) => {
+          setRegistrationData({ phoneNumber, pin, name });
+          setRegisterVerifyModalOpen(true);
+        }}
+      />
+      <RegisterVerifyModal
+        open={registerVerifyModalOpen}
+        onOpenChange={setRegisterVerifyModalOpen}
+        onSwitchToLogin={() => {
+          setRegisterVerifyModalOpen(false);
+          setLoginModalOpen(true);
+        }}
+        phoneNumber={registrationData?.phoneNumber || ""}
+        pin={registrationData?.pin || ""}
+        name={registrationData?.name || ""}
       />
       <OTPModal
         open={otpModalOpen}
@@ -610,9 +638,22 @@ export function Navigation() {
           setOtpModalOpen(false);
           setLoginModalOpen(true);
         }}
-        onOTPVerified={() => {
-          // OTP verified, will navigate to reset password page
+        onOTPVerified={(phoneNumber, otpCode) => {
+          // OTP verified, open reset password modal
+          setResetPasswordData({ phoneNumber, otpCode });
+          setResetPasswordModalOpen(true);
         }}
+        purpose="PASSWORD_RESET"
+      />
+      <ResetPasswordModal
+        open={resetPasswordModalOpen}
+        onOpenChange={setResetPasswordModalOpen}
+        onSwitchToLogin={() => {
+          setResetPasswordModalOpen(false);
+          setLoginModalOpen(true);
+        }}
+        phoneNumber={resetPasswordData?.phoneNumber || ""}
+        otpCode={resetPasswordData?.otpCode || ""}
       />
     </>
   );

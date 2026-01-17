@@ -11,25 +11,28 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/toast";
-import { useAuthRegister } from "@/lib/api";
+import { useOTPSend } from "@/lib/api";
 import { X } from "lucide-react";
+import { InlineNotification } from "./inline-notification";
+import { FieldError } from "./field-error";
 
 interface RegisterModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSwitchToLogin?: () => void;
+  onOTPSent?: (phoneNumber: string, pin: string, name: string) => void;
 }
 
-export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterModalProps) {
+export function RegisterModal({ open, onOpenChange, onSwitchToLogin, onOTPSent }: RegisterModalProps) {
   const [mobile, setMobile] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState(["", "", "", ""]);
   const [confirmPassword, setConfirmPassword] = useState(["", "", "", ""]);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [errors, setErrors] = useState<{ mobile?: string; name?: string; password?: string; confirmPassword?: string }>({});
   const passwordRefs = useRef<(HTMLInputElement | null)[]>([]);
   const confirmRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { toast } = useToast();
-  const registerMutation = useAuthRegister();
+  const sendOTPMutation = useOTPSend();
 
   const handlePasswordChange = (
     index: number,
@@ -50,11 +53,9 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
         const passString = password.join("");
         if (confirmString.length === 4 && passString.length === 4) {
           if (confirmString !== passString) {
-            toast({
-              title: "Нууц үг таарахгүй байна",
-              description: "Хоёр нууц үг ижил байгаа эсэхийг шалгана уу",
-              variant: "destructive",
-            });
+            setErrors({ ...errors, confirmPassword: "Пин код ижил байгаа эсэхийг шалгана уу" });
+          } else {
+            setErrors({ ...errors, confirmPassword: undefined });
           }
         }
       }
@@ -89,76 +90,68 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (mobile.length !== 8) {
-      toast({
-        title: "Буруу утасны дугаар",
-        description: "Зөв 8 оронтой утасны дугаар оруулна уу",
-        variant: "destructive",
-      });
-      return;
-    }
+    setNotification(null);
+    setErrors({});
 
     const passString = password.join("");
     const confirmString = confirmPassword.join("");
+    let hasErrors = false;
+    const newErrors: { mobile?: string; name?: string; password?: string; confirmPassword?: string } = {};
 
-    if (passString.length !== 4 || confirmString.length !== 4) {
-      toast({
-        title: "Бүрэн бус нууц үг",
-        description: "Бүтэн 4 оронтой нууц үг оруулна уу",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (passString !== confirmString) {
-      toast({
-        title: "Нууц үг таарахгүй байна",
-        description: "Хоёр нууц үг ижил байгаа эсэхийг шалгана уу",
-        variant: "destructive",
-      });
-      return;
+    if (mobile.length !== 8) {
+      newErrors.mobile = "Зөв 8 оронтой утасны дугаар оруулна уу";
+      hasErrors = true;
     }
 
     if (!name.trim()) {
-      toast({
-        title: "Нэр шаардлагатай",
-        description: "Бүтэн нэрээ оруулна уу",
-        variant: "destructive",
-      });
+      newErrors.name = "Бүтэн нэрээ оруулна уу";
+      hasErrors = true;
+    } else if (name.length > 50) {
+      newErrors.name = "Нэр хэт урт байна. Хамгийн ихдээ 50 тэмдэгт оруулна уу";
+      hasErrors = true;
+    }
+
+    if (passString.length !== 4) {
+      newErrors.password = "Бүтэн 4 оронтой нууц үг оруулна уу";
+      hasErrors = true;
+    }
+
+    if (confirmString.length !== 4) {
+      newErrors.confirmPassword = "Бүтэн 4 оронтой нууц үг оруулна уу";
+      hasErrors = true;
+    }
+
+    if (passString !== confirmString && passString.length === 4 && confirmString.length === 4) {
+      newErrors.confirmPassword = "Пин код ижил байгаа эсэхийг шалгана уу";
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      setErrors(newErrors);
       return;
     }
 
     try {
-      const response = await registerMutation.mutateAsync({
+      // Step 1: Send OTP code
+      const otpResponse = await sendOTPMutation.mutateAsync({
         phoneNumber: mobile,
-        pin: passString,
-        name: name.trim(),
+        purpose: "REGISTRATION",
       });
 
-      if (response.data) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("mobile", mobile);
-        localStorage.setItem("user_name", response.data.user.name);
-        localStorage.setItem("user_id", response.data.user.id.toString());
-        window.dispatchEvent(new CustomEvent("authStateChanged"));
-        toast({
-          title: "Бүртгэл үүсгэгдсэн",
-          description: "Таны бүртгэл амжилттай үүслээ!",
+      if (otpResponse.data) {
+        setNotification({
+          type: "success",
+          message: "Таны утасны дугаарт 4 оронтой OTP код илгээгдлээ",
         });
-        // Reset form
-        setMobile("");
-        setName("");
-        setPassword(["", "", "", ""]);
-        setConfirmPassword(["", "", "", ""]);
-        onOpenChange(false);
+
+        // Close modal and open verify modal after a short delay
+        setTimeout(() => {
+          onOpenChange(false);
+          onOTPSent?.(mobile, passString, name.trim());
+        }, 1500);
       }
     } catch (error: any) {
-      toast({
-        title: "Бүртгэл үүсгэхэд алдаа гарлаа",
-        description: error.message || "Алдаа гарлаа. Дахин оролдоно уу",
-        variant: "destructive",
-      });
+      setErrors({ mobile: error.message || "Алдаа гарлаа. Дахин оролдоно уу" });
     }
   };
 
@@ -167,6 +160,8 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
     setName("");
     setPassword(["", "", "", ""]);
     setConfirmPassword(["", "", "", ""]);
+    setNotification(null);
+    setErrors({});
     onOpenChange(false);
   };
 
@@ -202,6 +197,13 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
         </div>
 
         <div className="px-6 pb-6 space-y-5">
+          {notification && (
+            <InlineNotification
+              type={notification.type}
+              message={notification.message}
+              onClose={() => setNotification(null)}
+            />
+          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label
@@ -218,15 +220,21 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                   type="tel"
                   id="register-mobile"
                   value={mobile}
-                  onChange={(e) =>
-                    setMobile(e.target.value.replace(/\D/g, "").slice(0, 8))
-                  }
+                  onChange={(e) => {
+                    setMobile(e.target.value.replace(/\D/g, "").slice(0, 8));
+                    if (errors.mobile) setErrors({ ...errors, mobile: undefined });
+                  }}
                   placeholder="8 оронтой утасны дугаар"
-                  className="pl-14 h-12 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
+                  className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                    errors.mobile
+                      ? "border-red-300 focus:border-red-400"
+                      : "border-gray-300 focus:border-primary"
+                  }`}
                   required
                   maxLength={8}
                 />
               </div>
+              {errors.mobile && <FieldError message={errors.mobile} />}
             </div>
 
             <div className="space-y-2">
@@ -237,11 +245,21 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                 id="register-name"
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.slice(0, 50);
+                  setName(value);
+                  if (errors.name) setErrors({ ...errors, name: undefined });
+                }}
                 placeholder="Бүтэн нэрээ оруулна уу"
-                className="h-12 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
+                className={`h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                  errors.name
+                    ? "border-red-300 focus:border-red-400"
+                    : "border-gray-300 focus:border-primary"
+                }`}
                 required
+                maxLength={50}
               />
+              {errors.name && <FieldError message={errors.name} />}
             </div>
 
             <div className="space-y-2">
@@ -259,14 +277,24 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                     inputMode="numeric"
                     maxLength={1}
                     value={digit}
-                    onChange={(e) =>
-                      handlePasswordChange(index, e.target.value)
-                    }
+                    onChange={(e) => {
+                      handlePasswordChange(index, e.target.value);
+                      if (errors.password) setErrors({ ...errors, password: undefined });
+                    }}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
+                    className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                      errors.password
+                        ? "border-2 border-red-300 focus:border-red-400"
+                        : "border-2 border-gray-300 focus:border-primary"
+                    }`}
                   />
                 ))}
               </div>
+              {errors.password && (
+                <div className="flex justify-center">
+                  <FieldError message={errors.password} />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -284,20 +312,30 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                     inputMode="numeric"
                     maxLength={1}
                     value={digit}
-                    onChange={(e) =>
-                      handlePasswordChange(index, e.target.value, true)
-                    }
+                    onChange={(e) => {
+                      handlePasswordChange(index, e.target.value, true);
+                      if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
+                    }}
                     onKeyDown={(e) => handleKeyDown(index, e, true)}
-                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
+                    className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                      errors.confirmPassword
+                        ? "border-2 border-red-300 focus:border-red-400"
+                        : "border-2 border-gray-300 focus:border-primary"
+                    }`}
                   />
                 ))}
               </div>
+              {errors.confirmPassword && (
+                <div className="flex justify-center">
+                  <FieldError message={errors.confirmPassword} />
+                </div>
+              )}
             </div>
 
             <Button
               type="submit"
               disabled={
-                registerMutation.isPending ||
+                sendOTPMutation.isPending ||
                 mobile.length !== 8 ||
                 !name.trim() ||
                 password.join("").length !== 4 ||
@@ -305,10 +343,10 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
               }
               className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              {registerMutation.isPending ? (
+              {sendOTPMutation.isPending ? (
                 <span className="flex items-center gap-2">
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
-                  Бүртгэл үүсгэж байна...
+                  OTP илгээж байна...
                 </span>
               ) : (
                 "Бүртгэл үүсгэх"
