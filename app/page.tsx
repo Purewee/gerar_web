@@ -19,9 +19,9 @@ function CategoryProductsSection({ category }: { category: Category }) {
     category.id,
     true // include subcategories
   );
-  
+
   const categoryProducts = categoryProductsResponse?.data || [];
-  
+
   // Only show section if there are products
   if (categoryProductsLoading) {
     return (
@@ -37,11 +37,11 @@ function CategoryProductsSection({ category }: { category: Category }) {
       </section>
     );
   }
-  
+
   if (categoryProducts.length === 0) {
     return null;
   }
-  
+
   return (
     <section className="py-12 lg:py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
@@ -51,7 +51,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
               {category.name}
             </h2>
             <p className="text-gray-600 text-sm sm:text-base">
-              {category.description || `${category.name} ангиллын бараа`}
+              {category.description || `${category.name} дэд ангиллын бараа`}
             </p>
           </div>
           <Link
@@ -62,7 +62,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
-        
+
         <div className="relative group">
           {/* Navigation Buttons - Desktop Only */}
           <button
@@ -121,11 +121,11 @@ export default function Home() {
   const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch products sorted by newest first
+  // Fetch products sorted by newest first - fetch more to have enough for subcategory grouping
   const { data: productsResponse, isLoading: productsLoading } = useProducts({
     sortBy: "createdAt",
     sortOrder: "desc",
-    limit: 12,
+    limit: 100, // Fetch more products to group by subcategory
   });
 
   // Get categories from store (hydrated by CategoriesProvider)
@@ -139,14 +139,14 @@ export default function Home() {
     const discountedProducts = products
       .filter((p) => p.hasDiscount && p.discountPercentage && p.discountPercentage >= 30)
       .slice(0, 5);
-    
+
     if (discountedProducts.length === 0) {
       return products.slice(0, 5).map((product) => ({
         id: product.id,
         title: product.name.toUpperCase(),
         subtitle: product.description?.slice(0, 50) || "Шинэ бараа",
         discount: product.hasDiscount && product.discountPercentage
-          ? `${product.discountPercentage}% ХЯРТ ХЯМДРАЛТАЙ`
+          ? `${product.discountPercentage}% ХЯМДАРСАН`
           : "Онцгой санал",
         link: `/product/${product.id}`,
         imageUrl: product.firstImage || product.images?.[0],
@@ -158,7 +158,7 @@ export default function Home() {
       title: product.name.toUpperCase(),
       subtitle: product.description?.slice(0, 50) || "Шинэ бараа",
       discount: product.discountPercentage
-        ? `${product.discountPercentage}% ХЯРТ ХЯМДРАЛТАЙ`
+        ? `${product.discountPercentage}% ХЯМДАРСАН`
         : "Онцгой санал",
       link: `/product/${product.id}`,
       imageUrl: product.firstImage || product.images?.[0],
@@ -208,9 +208,73 @@ export default function Home() {
 
   // Get top-level categories only
   const topCategories = categories.filter((cat) => !cat.parentId).slice(0, 8);
-  
-  // Get categories with products for display (first 4-6 categories)
-  const featuredCategories = topCategories.slice(0, 6);
+
+  // Get subcategories (categories with parentId)
+  const subcategories = categories.filter((cat) => cat.parentId !== null);
+
+  // Create a map of category ID to category for quick lookup
+  const categoryMap = useMemo(() => {
+    const map = new Map<number, Category>();
+    categories.forEach((cat) => {
+      map.set(cat.id, cat);
+    });
+    return map;
+  }, [categories]);
+
+  // Group products by subcategory
+  const productsBySubcategory = useMemo(() => {
+    const grouped = new Map<number, { subcategory: Category; products: Product[]; parentName?: string }>();
+
+    products.forEach((product) => {
+      // Check all categories associated with the product
+      if (product.categories && product.categories.length > 0) {
+        product.categories.forEach((productCategory) => {
+          // Find if this category is a subcategory
+          const fullCategory = categoryMap.get(productCategory.id);
+          if (fullCategory && fullCategory.parentId !== null) {
+            // This is a subcategory
+            if (!grouped.has(fullCategory.id)) {
+              const parentCategory = categoryMap.get(fullCategory.parentId);
+              grouped.set(fullCategory.id, {
+                subcategory: fullCategory,
+                products: [],
+                parentName: parentCategory?.name,
+              });
+            }
+            const group = grouped.get(fullCategory.id)!;
+            // Avoid duplicate products
+            if (!group.products.find((p) => p.id === product.id)) {
+              group.products.push(product);
+            }
+          }
+        });
+      }
+      // Also check categoryId if categories array is empty
+      else if (product.categoryId) {
+        const fullCategory = categoryMap.get(product.categoryId);
+        if (fullCategory && fullCategory.parentId !== null) {
+          if (!grouped.has(fullCategory.id)) {
+            const parentCategory = categoryMap.get(fullCategory.parentId);
+            grouped.set(fullCategory.id, {
+              subcategory: fullCategory,
+              products: [],
+              parentName: parentCategory?.name,
+            });
+          }
+          const group = grouped.get(fullCategory.id)!;
+          if (!group.products.find((p) => p.id === product.id)) {
+            group.products.push(product);
+          }
+        }
+      }
+    });
+
+    // Convert to array and sort by number of products (descending)
+    return Array.from(grouped.values())
+      .filter((group) => group.products.length > 0)
+      .sort((a, b) => b.products.length - a.products.length)
+      .slice(0, 8); // Limit to top 8 subcategories with most products
+  }, [products, categoryMap]);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
@@ -253,21 +317,20 @@ export default function Home() {
                   )}
 
                   <div className="px-10 sm:px-12 lg:px-14">
-                  {carouselItems.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-                        index === currentSlide
+                    {carouselItems.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className={`absolute inset-0 transition-all duration-700 ease-in-out ${index === currentSlide
                           ? "opacity-100 translate-x-0"
                           : index < currentSlide
-                          ? "opacity-0 -translate-x-full"
-                          : "opacity-0 translate-x-full"
-                      }`}
-                    >
-                      <div
-                        className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer group h-full"
-                        onClick={() => handleItemClick(item.link)}
+                            ? "opacity-0 -translate-x-full"
+                            : "opacity-0 translate-x-full"
+                          }`}
                       >
+                        <div
+                          className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer group h-full"
+                          onClick={() => handleItemClick(item.link)}
+                        >
                           <div className="flex-1 text-center lg:text-left space-y-2 lg:space-y-3 animate-in fade-in slide-in-from-left-5 duration-500">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
                               <Sparkles className="w-3 h-3" />
@@ -301,7 +364,7 @@ export default function Home() {
                               )}
                             </div>
                           </div>
-                      </div>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -314,11 +377,10 @@ export default function Home() {
                       <button
                         key={index}
                         onClick={() => goToSlide(index)}
-                        className={`transition-all duration-300 rounded-full ${
-                          index === currentSlide
-                            ? "bg-white w-8 h-2 shadow-lg"
-                            : "bg-white/50 w-2 h-2 hover:bg-white/70 hover:w-3"
-                        }`}
+                        className={`transition-all duration-300 rounded-full ${index === currentSlide
+                          ? "bg-white w-8 h-2 shadow-lg"
+                          : "bg-white/50 w-2 h-2 hover:bg-white/70 hover:w-3"
+                          }`}
                         aria-label={`Слайд ${index + 1} руу шилжих`}
                       />
                     ))}
@@ -413,7 +475,7 @@ export default function Home() {
         </section>
 
         {/* Category-based Product Sections */}
-        {featuredCategories.map((category, index) => (
+        {topCategories.map((category, index) => (
           <CategoryProductsSection key={category.id} category={category} />
         ))}
       </main>

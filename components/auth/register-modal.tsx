@@ -222,7 +222,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                     setMobile(e.target.value.replace(/\D/g, "").slice(0, 8))
                   }
                   placeholder="8 оронтой утасны дугаар"
-                  className="pl-14 h-12 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                  className="pl-14 h-12 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
                   required
                   maxLength={8}
                 />
@@ -239,14 +239,14 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Бүтэн нэрээ оруулна уу"
-                className="h-12 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                className="h-12 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
                 required
               />
             </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 text-center">
-                4 оронтой PIN оруулна уу
+                ПИН код
               </label>
               <div className="flex justify-center gap-3">
                 {password.map((digit, index) => (
@@ -263,7 +263,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                       handlePasswordChange(index, e.target.value)
                     }
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
                   />
                 ))}
               </div>
@@ -271,7 +271,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
 
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 text-center">
-                4 оронтой PIN-г баталгаажуулах
+                ПИН код давтах
               </label>
               <div className="flex justify-center gap-3">
                 {confirmPassword.map((digit, index) => (
@@ -288,7 +288,7 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
                       handlePasswordChange(index, e.target.value, true)
                     }
                     onKeyDown={(e) => handleKeyDown(index, e, true)}
-                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                    className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
                   />
                 ))}
               </div>

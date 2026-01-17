@@ -266,7 +266,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
                       )
                     }
                     placeholder="8 оронтой утасны дугаар"
-                    className="pl-14 h-12 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                    className="pl-14 h-12 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
                     required
                     maxLength={8}
                   />
@@ -335,7 +335,7 @@ export function OTPModal({ open, onOpenChange, onSwitchToLogin, onOTPVerified }:
                         onChange={(e) => handleOtpChange(index, e.target.value)}
                         onKeyDown={(e) => handleKeyDown(index, e)}
                         onPaste={handlePaste}
-                        className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                        className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all"
                       />
                     ))}
                   </div>
