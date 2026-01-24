@@ -1,44 +1,33 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/toast";
-import {
-  ArrowLeft,
-  Check,
-  Loader2,
-  MapPin,
-  User,
-  CreditCard,
-} from "lucide-react";
-import { useOrder, useAddresses, useAddressUpdate } from "@/lib/api";
-import Image from "next/image";
-import { CardSkeleton, Spinner } from "@/components/skeleton";
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
+import { ArrowLeft, Check, Loader2, MapPin, User, CreditCard } from 'lucide-react';
+import { useOrder, useAddresses, useAddressUpdate } from '@/lib/api';
+import Image from 'next/image';
+import { CardSkeleton, Spinner } from '@/components/skeleton';
 
-type Step = "location" | "profile" | "payment";
+type Step = 'location' | 'profile' | 'payment';
 
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const orderId = parseInt(params.id as string);
-  const [currentStep, setCurrentStep] = useState<Step>("location");
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
-    null
-  );
-  const [profileName, setProfileName] = useState("");
-  const [profilePhone, setProfilePhone] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "cash" | "">("");
+  const [currentStep, setCurrentStep] = useState<Step>('location');
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [profileName, setProfileName] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash' | ''>('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [hasReachedProfile, setHasReachedProfile] = useState(false);
+  const [hasReachedPayment, setHasReachedPayment] = useState(false);
 
-  const {
-    data: orderResponse,
-    isLoading,
-    error,
-  } = useOrder(isNaN(orderId) ? 0 : orderId);
+  const { data: orderResponse, isLoading, error } = useOrder(isNaN(orderId) ? 0 : orderId);
   const order = orderResponse?.data;
 
   const { data: addressesResponse } = useAddresses();
@@ -53,10 +42,8 @@ export default function OrderDetailPage() {
       }
       // Load profile info from localStorage
       const storedName =
-        localStorage.getItem("user_name") ||
-        localStorage.getItem("profile_name") ||
-        "";
-      const storedPhone = localStorage.getItem("mobile") || "";
+        localStorage.getItem('user_name') || localStorage.getItem('profile_name') || '';
+      const storedPhone = localStorage.getItem('mobile') || '';
       setProfileName(storedName);
       setProfilePhone(storedPhone);
     }
@@ -66,18 +53,19 @@ export default function OrderDetailPage() {
   useEffect(() => {
     if (!order) return;
 
-    if (order.status !== "PENDING") {
-      // Order is completed or cancelled, show details only
+    if (order.status !== 'PENDING') {
       return;
     }
 
-    // Check what step we should be on
     if (!order.addressId) {
-      setCurrentStep("location");
+      setCurrentStep('location');
     } else if (!profileName || !profilePhone) {
-      setCurrentStep("profile");
+      setCurrentStep('profile');
+      setHasReachedProfile(true);
     } else {
-      setCurrentStep("payment");
+      setCurrentStep('payment');
+      setHasReachedProfile(true);
+      setHasReachedPayment(true);
     }
   }, [order, profileName, profilePhone]);
 
@@ -95,9 +83,9 @@ export default function OrderDetailPage() {
   const handleLocationNext = () => {
     if (!selectedAddressId) {
       toast({
-        title: "Хаяг сонгоно уу",
-        description: "Хүргэлтийн хаяг сонгох шаардлагатай",
-        variant: "destructive",
+        title: 'Хаяг сонгоно уу',
+        description: 'Хүргэлтийн хаяг сонгох шаардлагатай',
+        variant: 'destructive',
       });
       return;
     }
@@ -108,33 +96,35 @@ export default function OrderDetailPage() {
       // For now, we'll just proceed to next step
     }
 
-    setCurrentStep("profile");
+    setHasReachedProfile(true);
+    setCurrentStep('profile');
   };
 
   const handleProfileNext = () => {
     if (!profileName.trim() || !profilePhone.trim()) {
       toast({
-        title: "Мэдээлэл дутуу",
-        description: "Нэр болон утасны дугаар оруулах шаардлагатай",
-        variant: "destructive",
+        title: 'Мэдээлэл дутуу',
+        description: 'Нэр болон утасны дугаар оруулах шаардлагатай',
+        variant: 'destructive',
       });
       return;
     }
 
     // Save profile info to localStorage
-    localStorage.setItem("user_name", profileName);
-    localStorage.setItem("profile_name", profileName);
-    localStorage.setItem("mobile", profilePhone);
+    localStorage.setItem('user_name', profileName);
+    localStorage.setItem('profile_name', profileName);
+    localStorage.setItem('mobile', profilePhone);
 
-    setCurrentStep("payment");
+    setHasReachedPayment(true);
+    setCurrentStep('payment');
   };
 
   const handlePayment = async () => {
     if (!paymentMethod) {
       toast({
-        title: "Төлбөрийн арга сонгоно уу",
-        description: "Төлбөрийн арга сонгох шаардлагатай",
-        variant: "destructive",
+        title: 'Төлбөрийн арга сонгоно уу',
+        description: 'Төлбөрийн арга сонгох шаардлагатай',
+        variant: 'destructive',
       });
       return;
     }
@@ -145,11 +135,11 @@ export default function OrderDetailPage() {
     setTimeout(() => {
       setIsProcessingPayment(false);
       toast({
-        title: "Төлбөр амжилттай",
-        description: "Таны захиалга амжилттай баталгаажлаа",
+        title: 'Төлбөр амжилттай',
+        description: 'Таны захиалга амжилттай баталгаажлаа',
       });
       // Route to order list
-      router.push("/profile?tab=orders");
+      router.push('/profile/orders');
     }, 2000);
   };
 
@@ -158,24 +148,18 @@ export default function OrderDetailPage() {
       <div className="min-h-[calc(100vh-525px)] bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Захиалга олдсонгүй</p>
-          <Button onClick={() => router.push("/profile")}>
-            Профайл руу буцах
-          </Button>
+          <Button onClick={() => router.push('/profile')}>Профайл руу буцах</Button>
         </div>
       </div>
     );
   }
 
   // If order is not pending, show read-only view
-  if (order.status !== "PENDING") {
+  if (order.status !== 'PENDING') {
     return (
       <div className="h-full bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Button
-            variant="ghost"
-            onClick={() => router.back()}
-            className="mb-6"
-          >
+          <Button variant="ghost" onClick={() => router.back()} className="mb-6">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Буцах
           </Button>
@@ -183,18 +167,16 @@ export default function OrderDetailPage() {
           <Card className="mb-6">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl sm:text-3xl">
-                  Захиалга #{order.id}
-                </CardTitle>
+                <CardTitle className="text-2xl sm:text-3xl">Захиалга #{order.id}</CardTitle>
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    order.status === "PENDING"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : order.status === "COMPLETED"
-                      ? "bg-green-100 text-green-800"
-                      : order.status === "CANCELLED"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-gray-100 text-gray-800"
+                    order.status === 'PENDING'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : order.status === 'COMPLETED'
+                      ? 'bg-green-100 text-green-800'
+                      : order.status === 'CANCELLED'
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   {order.status}
@@ -206,12 +188,12 @@ export default function OrderDetailPage() {
                 <div>
                   <p className="text-sm text-gray-600">Захиалгын огноо</p>
                   <p className="font-semibold">
-                    {new Date(order.createdAt).toLocaleDateString("mn-MN", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
+                    {new Date(order.createdAt).toLocaleDateString('mn-MN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
                     })}
                   </p>
                 </div>
@@ -235,12 +217,10 @@ export default function OrderDetailPage() {
                   <p className="font-semibold">{order.address.fullName}</p>
                   <p className="text-gray-600">{order.address.phoneNumber}</p>
                   <p className="text-gray-600">
-                    {order.address.provinceOrDistrict},{" "}
-                    {order.address.khorooOrSoum}
+                    {order.address.provinceOrDistrict}, {order.address.khorooOrSoum}
                     {order.address.street && `, ${order.address.street}`}
                     {order.address.building && `, ${order.address.building}`}
-                    {order.address.apartmentNumber &&
-                      `, ${order.address.apartmentNumber}`}
+                    {order.address.apartmentNumber && `, ${order.address.apartmentNumber}`}
                   </p>
                   {order.address.addressNote && (
                     <p className="text-sm text-gray-500 mt-2">
@@ -259,7 +239,7 @@ export default function OrderDetailPage() {
             <CardContent>
               {order.items && order.items.length > 0 ? (
                 <div className="space-y-4">
-                  {order.items.map((item) => (
+                  {order.items.map(item => (
                     <div
                       key={item.id}
                       className="flex gap-4 pb-4 border-b border-gray-200 last:border-0"
@@ -267,9 +247,7 @@ export default function OrderDetailPage() {
                       {item.product?.firstImage || item.product?.images?.[0] ? (
                         <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                           <Image
-                            src={
-                              item.product.firstImage || item.product.images[0]
-                            }
+                            src={item.product.firstImage || item.product.images[0]}
                             alt={item.product.name}
                             width={80}
                             height={80}
@@ -283,21 +261,16 @@ export default function OrderDetailPage() {
                       )}
                       <div className="flex-1">
                         <h3 className="font-semibold mb-1">
-                          {item.product?.name || "Бүтээгдэхүүн"}
+                          {item.product?.name || 'Бүтээгдэхүүн'}
                         </h3>
-                        <p className="text-sm text-gray-600 mb-2">
-                          Тоо ширхэг: {item.quantity}
-                        </p>
+                        <p className="text-sm text-gray-600 mb-2">Тоо ширхэг: {item.quantity}</p>
                         <p className="font-semibold text-lg">
                           {parseFloat(item.price).toLocaleString()}₮
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-lg">
-                          {(
-                            parseFloat(item.price) * item.quantity
-                          ).toLocaleString()}
-                          ₮
+                          {(parseFloat(item.price) * item.quantity).toLocaleString()}₮
                         </p>
                       </div>
                     </div>
@@ -337,9 +310,7 @@ export default function OrderDetailPage() {
         <Card className="mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl sm:text-3xl">
-                Захиалга #{order.id}
-              </CardTitle>
+              <CardTitle className="text-2xl sm:text-3xl">Захиалга #{order.id}</CardTitle>
               <span className="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
                 PENDING
               </span>
@@ -350,16 +321,28 @@ export default function OrderDetailPage() {
         {/* Step Indicator */}
         <Card className="mb-6">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row md:items-center justify-between gap-3 md:gap-0">
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentStep === 'profile' || currentStep === 'payment') {
+                    setCurrentStep('location');
+                  }
+                }}
+                className={`flex items-center gap-2 text-left w-full sm:w-auto ${
+                  currentStep === 'profile' || currentStep === 'payment'
+                    ? 'cursor-pointer hover:opacity-80'
+                    : 'cursor-default'
+                }`}
+              >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    currentStep === "location"
-                      ? "bg-primary text-white"
-                      : "bg-gray-200 text-gray-600"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                    currentStep === 'location'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-200 text-gray-600'
                   }`}
                 >
-                  {currentStep !== "location" && selectedAddressId ? (
+                  {currentStep !== 'location' && selectedAddressId ? (
                     <Check className="w-5 h-5" />
                   ) : (
                     <MapPin className="w-5 h-5" />
@@ -369,19 +352,29 @@ export default function OrderDetailPage() {
                   <p className="font-semibold">Хаяг</p>
                   <p className="text-xs text-gray-500">Хүргэлтийн хаяг</p>
                 </div>
-              </div>
-              <div className="flex-1 h-0.5 bg-gray-200 mx-4" />
-              <div className="flex items-center gap-2">
+              </button>
+              <div className="flex-1 h-0.5 bg-gray-200 mx-4 shrink-0" />
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentStep === 'payment') {
+                    setCurrentStep('profile');
+                  }
+                }}
+                className={`flex items-center gap-2 text-left w-full sm:w-auto ${
+                  currentStep === 'payment' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+                }`}
+              >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    currentStep === "profile"
-                      ? "bg-primary text-white"
-                      : currentStep === "payment"
-                      ? "bg-gray-200 text-gray-600"
-                      : "bg-gray-200 text-gray-600"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                    currentStep === 'profile'
+                      ? 'bg-primary text-white'
+                      : currentStep === 'payment'
+                      ? 'bg-gray-200 text-gray-600'
+                      : 'bg-gray-200 text-gray-600'
                   }`}
                 >
-                  {currentStep === "payment" && profileName ? (
+                  {currentStep === 'payment' && profileName ? (
                     <Check className="w-5 h-5" />
                   ) : (
                     <User className="w-5 h-5" />
@@ -391,14 +384,14 @@ export default function OrderDetailPage() {
                   <p className="font-semibold">Профайл</p>
                   <p className="text-xs text-gray-500">Хувийн мэдээлэл</p>
                 </div>
-              </div>
-              <div className="flex-1 h-0.5 bg-gray-200 mx-4" />
+              </button>
+              <div className="flex-1 h-0.5 bg-gray-200 mx-4 shrink-0" />
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    currentStep === "payment"
-                      ? "bg-primary text-white"
-                      : "bg-gray-200 text-gray-600"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                    currentStep === 'payment'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-200 text-gray-600'
                   }`}
                 >
                   <CreditCard className="w-5 h-5" />
@@ -413,7 +406,7 @@ export default function OrderDetailPage() {
         </Card>
 
         {/* Step Content */}
-        {currentStep === "location" && (
+        {currentStep === 'location' && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -422,55 +415,51 @@ export default function OrderDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {addresses.length === 0 ? (
+              {addresses.length === 0 && !hasReachedProfile ? (
                 <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
                   <p className="text-gray-600 mb-4">Хаяг байхгүй байна</p>
-                  <Button onClick={() => router.push("/profile?tab=addresses")}>
-                    Хаяг нэмэх
-                  </Button>
+                  <Button onClick={() => router.push('/profile/addresses')}>Хаяг нэмэх</Button>
                 </div>
               ) : (
                 <>
                   <div className="space-y-3">
-                    {addresses.map((address) => (
+                    {addresses.map(address => (
                       <div
                         key={address.id}
-                        onClick={() => setSelectedAddressId(address.id)}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                        onClick={() => !hasReachedProfile && setSelectedAddressId(address.id)}
+                        className={`p-4 border-2 rounded-lg transition-colors ${
                           selectedAddressId === address.id
-                            ? "border-primary bg-primary/5"
-                            : "border-gray-200 hover:border-gray-300"
+                            ? 'border-primary bg-primary/5'
+                            : 'border-gray-200'
+                        } ${
+                          hasReachedProfile
+                            ? 'cursor-default opacity-90'
+                            : 'cursor-pointer hover:border-gray-300'
                         }`}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <p className="font-semibold">
-                                {address.fullName}
-                              </p>
+                              <p className="font-semibold">{address.fullName}</p>
                               {address.isDefault && (
                                 <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                                   Үндсэн
                                 </span>
                               )}
                             </div>
+                            <p className="text-sm text-gray-600">{address.phoneNumber}</p>
                             <p className="text-sm text-gray-600">
-                              {address.phoneNumber}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {address.provinceOrDistrict},{" "}
-                              {address.khorooOrSoum}
+                              {address.provinceOrDistrict}, {address.khorooOrSoum}
                               {address.street && `, ${address.street}`}
                               {address.building && `, ${address.building}`}
-                              {address.apartmentNumber &&
-                                `, ${address.apartmentNumber}`}
+                              {address.apartmentNumber && `, ${address.apartmentNumber}`}
                             </p>
                           </div>
                           <div
-                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                               selectedAddressId === address.id
-                                ? "border-primary bg-primary"
-                                : "border-gray-300"
+                                ? 'border-primary bg-primary'
+                                : 'border-gray-300'
                             }`}
                           >
                             {selectedAddressId === address.id && (
@@ -481,17 +470,20 @@ export default function OrderDetailPage() {
                       </div>
                     ))}
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => router.push("/profile?tab=addresses")}
-                    className="w-full"
-                  >
-                    Шинэ хаяг нэмэх
-                  </Button>
+                  {!hasReachedProfile && (
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push('/profile/addresses')}
+                      className="w-full"
+                    >
+                      Шинэ хаяг нэмэх
+                    </Button>
+                  )}
                   <Button
                     onClick={handleLocationNext}
                     className="w-full"
                     size="lg"
+                    disabled={!hasReachedProfile && !selectedAddressId}
                   >
                     Үргэлжлүүлэх
                   </Button>
@@ -501,7 +493,7 @@ export default function OrderDetailPage() {
           </Card>
         )}
 
-        {currentStep === "profile" && (
+        {currentStep === 'profile' && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -514,33 +506,39 @@ export default function OrderDetailPage() {
                 <label className="text-sm font-medium mb-2 block">Нэр</label>
                 <Input
                   value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
+                  onChange={e => !hasReachedPayment && setProfileName(e.target.value)}
                   placeholder="Таны нэр"
+                  disabled={hasReachedPayment}
+                  className={hasReachedPayment ? 'bg-gray-50' : ''}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Утасны дугаар
-                </label>
+                <label className="text-sm font-medium mb-2 block">Утасны дугаар</label>
                 <Input
                   value={profilePhone}
-                  onChange={(e) =>
-                    setProfilePhone(
-                      e.target.value.replace(/\D/g, "").slice(0, 8)
-                    )
+                  onChange={e =>
+                    !hasReachedPayment &&
+                    setProfilePhone(e.target.value.replace(/\D/g, '').slice(0, 8))
                   }
                   placeholder="8 оронтой утасны дугаар"
                   maxLength={8}
+                  disabled={hasReachedPayment}
+                  className={hasReachedPayment ? 'bg-gray-50' : ''}
                 />
               </div>
-              <Button onClick={handleProfileNext} className="w-full" size="lg">
+              <Button
+                onClick={handleProfileNext}
+                className="w-full"
+                size="lg"
+                disabled={!hasReachedPayment && (!profileName.trim() || !profilePhone.trim())}
+              >
                 Үргэлжлүүлэх
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {currentStep === "payment" && (
+        {currentStep === 'payment' && (
           <>
             <Card className="mb-6">
               <CardHeader>
@@ -552,22 +550,22 @@ export default function OrderDetailPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <button
-                    onClick={() => setPaymentMethod("card")}
+                    onClick={() => setPaymentMethod('card')}
                     className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                      paymentMethod === "card"
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200 hover:border-gray-300"
+                      paymentMethod === 'card'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <CreditCard className="w-8 h-8 mx-auto mb-2" />
                     <p className="font-semibold">Карт</p>
                   </button>
                   <button
-                    onClick={() => setPaymentMethod("cash")}
+                    onClick={() => setPaymentMethod('cash')}
                     className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                      paymentMethod === "cash"
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200 hover:border-gray-300"
+                      paymentMethod === 'cash'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <span className="text-2xl mb-2 block">💵</span>
@@ -594,7 +592,7 @@ export default function OrderDetailPage() {
                           Төлбөр боловсруулж байна...
                         </>
                       ) : (
-                        "Төлбөр төлөх"
+                        'Төлбөр төлөх'
                       )}
                     </Button>
                   </CardContent>
@@ -610,19 +608,15 @@ export default function OrderDetailPage() {
               <CardContent>
                 {order.items && order.items.length > 0 ? (
                   <div className="space-y-4">
-                    {order.items.map((item) => (
+                    {order.items.map(item => (
                       <div
                         key={item.id}
                         className="flex gap-4 pb-4 border-b border-gray-200 last:border-0"
                       >
-                        {item.product?.firstImage ||
-                        item.product?.images?.[0] ? (
+                        {item.product?.firstImage || item.product?.images?.[0] ? (
                           <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                             <Image
-                              src={
-                                item.product.firstImage ||
-                                item.product.images[0]
-                              }
+                              src={item.product.firstImage || item.product.images[0]}
                               alt={item.product.name}
                               width={80}
                               height={80}
@@ -636,21 +630,16 @@ export default function OrderDetailPage() {
                         )}
                         <div className="flex-1">
                           <h3 className="font-semibold mb-1">
-                            {item.product?.name || "Бүтээгдэхүүн"}
+                            {item.product?.name || 'Бүтээгдэхүүн'}
                           </h3>
-                          <p className="text-sm text-gray-600 mb-2">
-                            Тоо ширхэг: {item.quantity}
-                          </p>
+                          <p className="text-sm text-gray-600 mb-2">Тоо ширхэг: {item.quantity}</p>
                           <p className="font-semibold text-lg">
                             {parseFloat(item.price).toLocaleString()}₮
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-lg">
-                            {(
-                              parseFloat(item.price) * item.quantity
-                            ).toLocaleString()}
-                            ₮
+                            {(parseFloat(item.price) * item.quantity).toLocaleString()}₮
                           </p>
                         </div>
                       </div>

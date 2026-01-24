@@ -1,36 +1,35 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { ProductCard } from "@/components/product-card";
-import { useProducts, useCategoryProducts, type Product, type Category } from "@/lib/api";
-import { useCategoriesStore } from "@/lib/stores/categories";
-import Link from "next/link";
-import { ChevronLeft, ChevronRight, Sparkles, TrendingUp } from "lucide-react";
-import { ProductSliderSkeleton, CategorySkeleton, Spinner } from "@/components/skeleton";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { ProductCard } from '@/components/product-card';
+import { useProducts, useCategoryProducts, type Product, type Category } from '@/lib/api';
+import { useCategoriesStore } from '@/lib/stores/categories';
+import Link from 'next/link';
+import { ChevronLeft, ChevronRight, Sparkles, TrendingUp } from 'lucide-react';
+import { ProductSliderSkeleton, CategorySkeleton, Spinner } from '@/components/skeleton';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
 
 // Component to display products from a category
 function CategoryProductsSection({ category }: { category: Category }) {
-  const { data: categoryProductsResponse, isLoading: categoryProductsLoading } = useCategoryProducts(
-    category.id,
-    true // include subcategories
-  );
+  const { data: categoryProductsResponse, isLoading: categoryProductsLoading } =
+    useCategoryProducts(
+      category.id,
+      true, // include subcategories
+    );
 
   const categoryProducts = categoryProductsResponse?.data || [];
 
   // Only show section if there are products
   if (categoryProductsLoading) {
     return (
-      <section className="py-12 lg:py-16 bg-white">
+      <section className="py-6 sm:py-10 lg:py-14 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
           <div className="flex items-center gap-3 mb-8">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-              {category.name}
-            </h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{category.name}</h2>
           </div>
           <ProductSliderSkeleton count={6} />
         </div>
@@ -43,13 +42,11 @@ function CategoryProductsSection({ category }: { category: Category }) {
   }
 
   return (
-    <section className="py-12 lg:py-16 bg-white">
+    <section className="py-6 sm:py-10 lg:py-14 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 lg:mb-12 gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 lg:mb-12 gap-2 sm:gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-              {category.name}
-            </h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{category.name}</h2>
             <p className="text-gray-600 text-sm sm:text-base">
               {category.description || `${category.name} дэд ангиллын бараа`}
             </p>
@@ -83,27 +80,21 @@ function CategoryProductsSection({ category }: { category: Category }) {
               prevEl: `.category-swiper-prev-${category.id}`,
               nextEl: `.category-swiper-next-${category.id}`,
             }}
-            spaceBetween={16}
             slidesPerView={2}
             breakpoints={{
               640: { slidesPerView: 3, spaceBetween: 16 },
               768: { slidesPerView: 4, spaceBetween: 16 },
               1024: { slidesPerView: 5, spaceBetween: 24 },
-              1280: { slidesPerView: 5, spaceBetween: 24 },
             }}
             className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4"
           >
-            {categoryProducts.slice(0, 12).map((product) => (
+            {categoryProducts.slice(0, 12).map(product => (
               <SwiperSlide key={product.id}>
                 <ProductCard
                   id={product.id}
                   name={product.name}
                   price={parseFloat(product.price)}
-                  original={
-                    product.originalPrice
-                      ? parseFloat(product.originalPrice)
-                      : undefined
-                  }
+                  original={product.originalPrice ? parseFloat(product.originalPrice) : undefined}
                   imageUrl={product.firstImage || product.images?.[0]}
                 />
               </SwiperSlide>
@@ -123,43 +114,44 @@ export default function Home() {
 
   // Fetch products sorted by newest first - fetch more to have enough for subcategory grouping
   const { data: productsResponse, isLoading: productsLoading } = useProducts({
-    sortBy: "createdAt",
-    sortOrder: "desc",
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
     limit: 100, // Fetch more products to group by subcategory
   });
 
   // Get categories from store (hydrated by CategoriesProvider)
-  const categories = useCategoriesStore((state) => state.categories);
-  const categoriesLoading = useCategoriesStore((state) => state.isLoading);
+  const categories = useCategoriesStore(state => state.categories);
+  const categoriesLoading = useCategoriesStore(state => state.isLoading);
 
   const products = productsResponse?.data || [];
 
   // Create carousel items from products with discounts
   const carouselItems = useMemo(() => {
     const discountedProducts = products
-      .filter((p) => p.hasDiscount && p.discountPercentage && p.discountPercentage >= 30)
+      .filter(p => p.hasDiscount && p.discountPercentage && p.discountPercentage >= 30)
       .slice(0, 5);
 
     if (discountedProducts.length === 0) {
-      return products.slice(0, 5).map((product) => ({
+      return products.slice(0, 5).map(product => ({
         id: product.id,
         title: product.name.toUpperCase(),
-        subtitle: product.description?.slice(0, 50) || "Шинэ бараа",
-        discount: product.hasDiscount && product.discountPercentage
-          ? `${product.discountPercentage}% ХЯМДАРСАН`
-          : "Онцгой санал",
+        subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
+        discount:
+          product.hasDiscount && product.discountPercentage
+            ? `${product.discountPercentage}% ХЯМДАРСАН`
+            : 'Онцгой санал',
         link: `/product/${product.id}`,
         imageUrl: product.firstImage || product.images?.[0],
       }));
     }
 
-    return discountedProducts.map((product) => ({
+    return discountedProducts.map(product => ({
       id: product.id,
       title: product.name.toUpperCase(),
-      subtitle: product.description?.slice(0, 50) || "Шинэ бараа",
+      subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
       discount: product.discountPercentage
         ? `${product.discountPercentage}% ХЯМДАРСАН`
-        : "Онцгой санал",
+        : 'Онцгой санал',
       link: `/product/${product.id}`,
       imageUrl: product.firstImage || product.images?.[0],
     }));
@@ -171,7 +163,7 @@ export default function Home() {
     }
     if (!isPaused && carouselItems.length > 0) {
       intervalRef.current = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % carouselItems.length);
+        setCurrentSlide(prev => (prev + 1) % carouselItems.length);
       }, 5000);
     }
   }, [isPaused, carouselItems.length]);
@@ -191,14 +183,12 @@ export default function Home() {
   };
 
   const goToPrevious = () => {
-    setCurrentSlide(
-      (prev) => (prev - 1 + carouselItems.length) % carouselItems.length
-    );
+    setCurrentSlide(prev => (prev - 1 + carouselItems.length) % carouselItems.length);
     restartTimer();
   };
 
   const goToNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % carouselItems.length);
+    setCurrentSlide(prev => (prev + 1) % carouselItems.length);
     restartTimer();
   };
 
@@ -207,15 +197,15 @@ export default function Home() {
   };
 
   // Get top-level categories only
-  const topCategories = categories.filter((cat) => !cat.parentId).slice(0, 8);
+  const topCategories = categories.filter(cat => !cat.parentId).slice(0, 8);
 
   // Get subcategories (categories with parentId)
-  const subcategories = categories.filter((cat) => cat.parentId !== null);
+  const subcategories = categories.filter(cat => cat.parentId !== null);
 
   // Create a map of category ID to category for quick lookup
   const categoryMap = useMemo(() => {
     const map = new Map<number, Category>();
-    categories.forEach((cat) => {
+    categories.forEach(cat => {
       map.set(cat.id, cat);
     });
     return map;
@@ -223,12 +213,15 @@ export default function Home() {
 
   // Group products by subcategory
   const productsBySubcategory = useMemo(() => {
-    const grouped = new Map<number, { subcategory: Category; products: Product[]; parentName?: string }>();
+    const grouped = new Map<
+      number,
+      { subcategory: Category; products: Product[]; parentName?: string }
+    >();
 
-    products.forEach((product) => {
+    products.forEach(product => {
       // Check all categories associated with the product
       if (product.categories && product.categories.length > 0) {
-        product.categories.forEach((productCategory) => {
+        product.categories.forEach(productCategory => {
           // Find if this category is a subcategory
           const fullCategory = categoryMap.get(productCategory.id);
           if (fullCategory && fullCategory.parentId !== null) {
@@ -243,7 +236,7 @@ export default function Home() {
             }
             const group = grouped.get(fullCategory.id)!;
             // Avoid duplicate products
-            if (!group.products.find((p) => p.id === product.id)) {
+            if (!group.products.find(p => p.id === product.id)) {
               group.products.push(product);
             }
           }
@@ -262,7 +255,7 @@ export default function Home() {
             });
           }
           const group = grouped.get(fullCategory.id)!;
-          if (!group.products.find((p) => p.id === product.id)) {
+          if (!group.products.find(p => p.id === product.id)) {
             group.products.push(product);
           }
         }
@@ -271,7 +264,7 @@ export default function Home() {
 
     // Convert to array and sort by number of products (descending)
     return Array.from(grouped.values())
-      .filter((group) => group.products.length > 0)
+      .filter(group => group.products.length > 0)
       .sort((a, b) => b.products.length - a.products.length)
       .slice(0, 8); // Limit to top 8 subcategories with most products
   }, [products, categoryMap]);
@@ -320,12 +313,13 @@ export default function Home() {
                     {carouselItems.map((item, index) => (
                       <div
                         key={item.id}
-                        className={`absolute inset-0 transition-all duration-700 ease-in-out ${index === currentSlide
-                          ? "opacity-100 translate-x-0"
-                          : index < currentSlide
-                            ? "opacity-0 -translate-x-full"
-                            : "opacity-0 translate-x-full"
-                          }`}
+                        className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                          index === currentSlide
+                            ? 'opacity-100 translate-x-0'
+                            : index < currentSlide
+                            ? 'opacity-0 -translate-x-full'
+                            : 'opacity-0 translate-x-full'
+                        }`}
                       >
                         <div
                           className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer group h-full"
@@ -357,9 +351,7 @@ export default function Home() {
                                 </div>
                               ) : (
                                 <div className="absolute inset-0 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl">
-                                  <div className="text-8xl sm:text-9xl opacity-80">
-                                    🪑
-                                  </div>
+                                  <div className="text-8xl sm:text-9xl opacity-80">🪑</div>
                                 </div>
                               )}
                             </div>
@@ -377,10 +369,11 @@ export default function Home() {
                       <button
                         key={index}
                         onClick={() => goToSlide(index)}
-                        className={`transition-all duration-300 rounded-full ${index === currentSlide
-                          ? "bg-white w-8 h-2 shadow-lg"
-                          : "bg-white/50 w-2 h-2 hover:bg-white/70 hover:w-3"
-                          }`}
+                        className={`transition-all duration-300 rounded-full ${
+                          index === currentSlide
+                            ? 'bg-white w-8 h-2 shadow-lg'
+                            : 'bg-white/50 w-2 h-2 hover:bg-white/70 hover:w-3'
+                        }`}
                         aria-label={`Слайд ${index + 1} руу шилжих`}
                       />
                     ))}
@@ -396,16 +389,14 @@ export default function Home() {
         </section>
 
         {/* Featured Products Section */}
-        <section className="py-12 lg:py-16 bg-linear-to-b from-white to-gray-50">
+        <section className="py-6 sm:py-10 lg:py-14 bg-linear-to-b from-white to-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 lg:mb-12 gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 lg:mb-12 gap-2 sm:gap-4">
               <div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
                   Сүүлд нэмэгдсэн бараа
                 </h2>
-                <p className="text-gray-600 text-sm sm:text-base">
-                  Шинэчлэгдсэн барааны жагсаалт
-                </p>
+                <p className="text-gray-600 text-sm sm:text-base">Шинэчлэгдсэн барааны жагсаалт</p>
               </div>
               <Link
                 href="/products"
@@ -440,29 +431,25 @@ export default function Home() {
                 <Swiper
                   modules={[Navigation]}
                   navigation={{
-                    prevEl: ".products-swiper-prev",
-                    nextEl: ".products-swiper-next",
+                    prevEl: '.products-swiper-prev',
+                    nextEl: '.products-swiper-next',
                   }}
-                  spaceBetween={16}
                   slidesPerView={2}
                   breakpoints={{
                     640: { slidesPerView: 3, spaceBetween: 16 },
                     768: { slidesPerView: 4, spaceBetween: 16 },
                     1024: { slidesPerView: 5, spaceBetween: 24 },
-                    1280: { slidesPerView: 5, spaceBetween: 24 },
                   }}
                   className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4"
                 >
-                  {products.slice(0, 12).map((product) => (
+                  {products.slice(0, 12).map(product => (
                     <SwiperSlide key={product.id}>
                       <ProductCard
                         id={product.id}
                         name={product.name}
                         price={parseFloat(product.price)}
                         original={
-                          product.originalPrice
-                            ? parseFloat(product.originalPrice)
-                            : undefined
+                          product.originalPrice ? parseFloat(product.originalPrice) : undefined
                         }
                         imageUrl={product.firstImage || product.images?.[0]}
                       />

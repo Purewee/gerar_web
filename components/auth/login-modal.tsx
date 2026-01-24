@@ -1,20 +1,14 @@
-"use client";
+'use client';
 
-import { useState, useRef } from "react";
-import Image from "next/image";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useAuthLogin } from "@/lib/api";
-import { X } from "lucide-react";
-import { InlineNotification } from "./inline-notification";
-import { FieldError } from "./field-error";
+import { useState, useRef } from 'react';
+import Image from 'next/image';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAuthLogin } from '@/lib/api';
+import { X } from 'lucide-react';
+import { InlineNotification } from './inline-notification';
+import { FieldError } from './field-error';
 
 interface LoginModalProps {
   open: boolean;
@@ -23,29 +17,36 @@ interface LoginModalProps {
   onSwitchToOTP?: () => void;
 }
 
-export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToOTP }: LoginModalProps) {
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState(["", "", "", ""]);
-  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+export function LoginModal({
+  open,
+  onOpenChange,
+  onSwitchToRegister,
+  onSwitchToOTP,
+}: LoginModalProps) {
+  const [mobile, setMobile] = useState('');
+  const [password, setPassword] = useState(['', '', '', '']);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const [errors, setErrors] = useState<{ mobile?: string; password?: string }>({});
+
   const passwordRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   const loginMutation = useAuthLogin();
 
   const handlePasswordChange = (index: number, value: string) => {
     if (value.length > 1) return;
     const newPassword = [...password];
-    newPassword[index] = value.replace(/\D/g, "");
+    newPassword[index] = value.replace(/\D/g, '');
     setPassword(newPassword);
     if (value && index < 3) {
       passwordRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === "Backspace" && !password[index] && index > 0) {
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !password[index] && index > 0) {
       passwordRefs.current[index - 1]?.focus();
     }
   };
@@ -54,18 +55,18 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
     e.preventDefault();
     setNotification(null);
     setErrors({});
-    
-    const passwordString = password.join("");
+
+    const passwordString = password.join('');
     let hasErrors = false;
     const newErrors: { mobile?: string; password?: string } = {};
 
     if (mobile.length !== 8) {
-      newErrors.mobile = "Зөв 8 оронтой утасны дугаар оруулна уу";
+      newErrors.mobile = 'Зөв 8 оронтой утасны дугаар оруулна уу';
       hasErrors = true;
     }
 
     if (passwordString.length !== 4) {
-      newErrors.password = "4 оронтой PIN оруулна уу";
+      newErrors.password = '4 оронтой PIN оруулна уу';
       hasErrors = true;
     }
 
@@ -81,36 +82,32 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
       });
 
       if (response.data) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("mobile", mobile);
-        localStorage.setItem("user_name", response.data.user.name);
-        localStorage.setItem("user_id", response.data.user.id.toString());
-        window.dispatchEvent(new CustomEvent("authStateChanged"));
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('mobile', mobile);
+        localStorage.setItem('user_name', response.data.user.name);
+        localStorage.setItem('user_email', response.data.user.email);
+        window.dispatchEvent(new CustomEvent('authStateChanged'));
 
         setNotification({
-          type: "success",
+          type: 'success',
           message: `Амжилттай нэвтэрлээ! Тавтай морил, ${response.data.user.name}!`,
         });
-
-        // Reset form and close modal after a short delay
-        setTimeout(() => {
-          setMobile("");
-          setPassword(["", "", "", ""]);
-          setNotification(null);
-          setErrors({});
-          onOpenChange(false);
-        }, 2000);
+        setMobile('');
+        setPassword(['', '', '', '']);
+        setNotification(null);
+        setErrors({});
+        onOpenChange(false);
       } else {
-        setErrors({ password: "Хариу буцаахгүй байна. Дахин оролдоно уу." });
+        setErrors({ password: 'Хариу буцаахгүй байна. Дахин оролдоно уу.' });
       }
     } catch (error: any) {
-      setErrors({ password: error.message || "Утасны дугаар эсвэл PIN буруу байна" });
+      setErrors({ password: error.message || 'Утасны дугаар эсвэл PIN буруу байна' });
     }
   };
 
   const handleClose = () => {
-    setMobile("");
-    setPassword(["", "", "", ""]);
+    setMobile('');
+    setPassword(['', '', '', '']);
     setNotification(null);
     setErrors({});
     onOpenChange(false);
@@ -119,35 +116,21 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
-        <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={handleClose}
-              className="text-white/80 hover:text-white transition-colors rounded-full p-1.5 hover:bg-white/20"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="text-center space-y-3">
-            <div className="inline-block">
-              <Image
-                src="/logo3.svg"
-                alt="Gerar"
-                width={120}
-                height={40}
-                className="h-10 w-auto mx-auto brightness-0 invert"
-                priority
-              />
-            </div>
-            <DialogHeader className="space-y-2">
-              <DialogTitle className="text-2xl font-bold text-white">
-                Нэвтрэх
-              </DialogTitle>
-              <DialogDescription className="text-white/90 text-sm">
-                Бүртгэлдээ нэвтрэх
-              </DialogDescription>
-            </DialogHeader>
-          </div>
+        <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 p-6 flex items-center justify-between">
+          <Image
+            src="/logo3.svg"
+            alt="GERAR"
+            width={100}
+            height={30}
+            className="h-10 w-auto mx-auto brightness-0 invert"
+            priority
+          />
+          <button
+            onClick={handleClose}
+            className="text-white/80 hover:text-white transition-colors rounded-full p-1.5 hover:bg-white/20 absolute top-4 right-4"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         <div className="px-6 pb-6 space-y-6">
@@ -160,10 +143,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
           )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <label
-                htmlFor="login-mobile"
-                className="block text-sm font-semibold text-gray-700"
-              >
+              <label htmlFor="login-mobile" className="block text-sm font-semibold text-gray-700">
                 Утасны дугаар
               </label>
               <div className="relative">
@@ -174,15 +154,15 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
                   type="tel"
                   id="login-mobile"
                   value={mobile}
-                  onChange={(e) => {
-                    setMobile(e.target.value.replace(/\D/g, "").slice(0, 8));
+                  onChange={e => {
+                    setMobile(e.target.value.replace(/\D/g, '').slice(0, 8));
                     if (errors.password) setErrors({ ...errors, password: undefined });
                   }}
                   placeholder="8 оронтой утасны дугаар"
                   className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
                     errors.password
-                      ? "border-red-300 focus:border-red-400"
-                      : "border-gray-300 focus:border-primary"
+                      ? 'border-red-300 focus:border-red-400'
+                      : 'border-gray-300 focus:border-primary'
                   }`}
                   required
                   maxLength={8}
@@ -198,22 +178,22 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
                 {password.map((digit, index) => (
                   <Input
                     key={index}
-                    ref={(el) => {
+                    ref={el => {
                       passwordRefs.current[index] = el;
                     }}
                     type="password"
                     inputMode="numeric"
                     maxLength={1}
                     value={digit}
-                    onChange={(e) => {
+                    onChange={e => {
                       handlePasswordChange(index, e.target.value);
                       if (errors.password) setErrors({ ...errors, password: undefined });
                     }}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onKeyDown={e => handleKeyDown(index, e)}
                     className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
                       errors.password
-                        ? "border-2 border-red-300 focus:border-red-400"
-                        : "border-2 border-gray-300 focus:border-primary"
+                        ? 'border-2 border-red-300 focus:border-red-400'
+                        : 'border-2 border-gray-300 focus:border-primary'
                     }`}
                   />
                 ))}
@@ -228,9 +208,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
             <Button
               type="submit"
               disabled={
-                loginMutation.isPending ||
-                mobile.length !== 8 ||
-                password.join("").length !== 4
+                loginMutation.isPending || mobile.length !== 8 || password.join('').length !== 4
               }
               className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
             >
@@ -240,7 +218,7 @@ export function LoginModal({ open, onOpenChange, onSwitchToRegister, onSwitchToO
                   Нэвтэрч байна...
                 </span>
               ) : (
-                "Нэвтрэх"
+                'Нэвтрэх'
               )}
             </Button>
           </form>

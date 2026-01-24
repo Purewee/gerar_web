@@ -1,5 +1,5 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import 'tailwindcss';
 
 @theme {
   /* Primary color */
@@ -7,8 +7,12 @@
   --color-primary-foreground: #ffffff;
 
   /* Secondary color */
-  --color-secondary: #F2B705;
+  --color-secondary: #f2b705;
   --color-secondary-foreground: #0f172a;
+
+  /* Primary light (lighter tint of primary) */
+  --color-primary-light: #10bb82;
+  --color-primary-light-foreground: #ffffff;
 
   /* Background colors */
   --color-background: #ffffff;
@@ -42,17 +46,17 @@
   --color-ring: #0a714e;
 
   /* Font family */
-  --font-roboto: "Roboto", sans-serif;
+  --font-roboto: 'Roboto', sans-serif;
 }
 
 @layer base {
   body {
-    font-family: "Roboto", sans-serif;
+    font-family: 'Roboto', sans-serif;
   }
 
   /* Remove focus outline for mouse users, but keep it for keyboard navigation */
   button:focus:not(:focus-visible),
-  [role="button"]:focus:not(:focus-visible) {
+  [role='button']:focus:not(:focus-visible) {
     outline: none !important;
     box-shadow: none !important;
   }
@@ -79,7 +83,7 @@
       visibility: visible !important;
       opacity: 1 !important;
     }
-    
+
     header > div > nav button,
     header > div > nav a {
       display: flex !important;
@@ -89,14 +93,14 @@
       transform: none !important;
       animation: none !important;
     }
-    
+
     header > div > nav span {
       visibility: visible !important;
       opacity: 1 !important;
       color: inherit !important;
       transform: none !important;
     }
-    
+
     header > div > nav svg {
       transform: none !important;
       transition: transform 0.2s ease, color 0.2s ease !important;
@@ -112,7 +116,7 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
+
   /* Thin scrollbar for desktop product sliders */
   .product-slider::-webkit-scrollbar {
     height: 8px;
@@ -273,12 +277,12 @@
 @layer utilities {
   .toast-animate-in {
     animation: toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-               toast-fade-in 0.4s ease-out;
+      toast-fade-in 0.4s ease-out;
   }
 
   .toast-animate-out {
     animation: toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
-               toast-fade-out 0.3s ease-in;
+      toast-fade-out 0.3s ease-in;
   }
 
   .toast-bounce-in {
@@ -287,27 +291,27 @@
 }
 
 /* Toast Animation Styles - Applied to Radix Toast Root */
-[data-radix-toast-root][data-state="open"] {
+[data-radix-toast-root][data-state='open'] {
   animation: toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-             toast-fade-in 0.4s ease-out forwards !important;
+    toast-fade-in 0.4s ease-out forwards !important;
   transform-origin: bottom right;
 }
 
-[data-radix-toast-root][data-state="closed"] {
+[data-radix-toast-root][data-state='closed'] {
   animation: toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
-             toast-fade-out 0.3s ease-in forwards !important;
+    toast-fade-out 0.3s ease-in forwards !important;
   transform-origin: bottom right;
 }
 
 /* Fallback for any toast element with data-state */
-.group[data-state="open"] {
+.group[data-state='open'] {
   animation: toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-             toast-fade-in 0.4s ease-out forwards;
+    toast-fade-in 0.4s ease-out forwards;
   transform-origin: bottom right;
 }
 
-.group[data-state="closed"] {
+.group[data-state='closed'] {
   animation: toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
-             toast-fade-out 0.3s ease-in forwards;
+    toast-fade-out 0.3s ease-in forwards;
   transform-origin: bottom right;
 }

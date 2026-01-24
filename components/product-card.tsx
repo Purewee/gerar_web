@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/toast";
-import { useCartAdd, useFavoriteAdd, useFavoriteRemove, useFavoriteStatus } from "@/lib/api";
-import Link from "next/link";
-import Image from "next/image";
-import { ShoppingCart, Heart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
+import { useCartAdd, useFavoriteAdd, useFavoriteRemove, useFavoriteStatus } from '@/lib/api';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ShoppingCart, Heart } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export interface ProductCardProps {
   id: number;
@@ -29,7 +29,7 @@ export function ProductCard({
   icon,
   imageUrl,
   featured = false,
-  className = "",
+  className = '',
   inGrid = false,
 }: ProductCardProps) {
   const { toast } = useToast();
@@ -40,11 +40,9 @@ export function ProductCard({
   const [isProcessingCart, setIsProcessingCart] = useState(false);
   const [isProcessingFavorite, setIsProcessingFavorite] = useState(false);
 
-  const displayImage = imageUrl || icon || "📦";
-  const isImageUrl =
-    imageUrl && (imageUrl.startsWith("http") || imageUrl.startsWith("/"));
+  const displayImage = imageUrl || icon || '📦';
+  const isImageUrl = imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/'));
 
- 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -58,16 +56,16 @@ export function ProductCard({
         quantity: 1,
       });
       toast({
-        title: "Амжилттай",
+        title: 'Амжилттай',
         description: `${name} сагсанд нэмэгдлээ`,
-        variant: "default",
+        variant: 'default',
       });
-      window.dispatchEvent(new Event("cartUpdated"));
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error: any) {
       toast({
-        title: "Алдаа гарлаа",
-        description: error.message || "Сагсанд нэмэхэд алдаа гарлаа",
-        variant: "destructive",
+        title: 'Алдаа гарлаа',
+        description: error.message || 'Сагсанд нэмэхэд алдаа гарлаа',
+        variant: 'destructive',
       });
     } finally {
       setIsProcessingCart(false);
@@ -86,24 +84,24 @@ export function ProductCard({
         await removeFavoriteMutation.mutateAsync(id);
         setIsFavorited(false);
         toast({
-          title: "Амжилттай",
+          title: 'Амжилттай',
           description: `${name} дурсамжаас хасагдлаа`,
-          variant: "default",
+          variant: 'default',
         });
       } else {
         await addFavoriteMutation.mutateAsync(id);
         setIsFavorited(true);
         toast({
-          title: "Амжилттай",
+          title: 'Амжилттай',
           description: `${name} дурсамжид нэмэгдлээ`,
-          variant: "default",
+          variant: 'default',
         });
       }
     } catch (error: any) {
       toast({
-        title: "Алдаа гарлаа",
-        description: error.message || "Дурсамж шинэчлэхэд алдаа гарлаа",
-        variant: "destructive",
+        title: 'Алдаа гарлаа',
+        description: error.message || 'Дурсамж шинэчлэхэд алдаа гарлаа',
+        variant: 'destructive',
       });
     } finally {
       setIsProcessingFavorite(false);
@@ -111,25 +109,26 @@ export function ProductCard({
   };
 
   const hasDiscount = original && original > price;
-  const discountPercentage = hasDiscount
-    ? Math.round(((original - price) / original) * 100)
-    : 0;
+  const discountPercentage = hasDiscount ? Math.round(((original - price) / original) * 100) : 0;
 
-  const wrapperClass = inGrid 
-    ? `w-full ${className}` 
+  const wrapperClass = inGrid
+    ? `w-full ${className}`
     : `shrink-0 w-40 sm:w-44 md:w-48 lg:w-52 ${className}`;
 
   return (
     <div className={wrapperClass}>
       <Card
         className={`group cursor-pointer hover:shadow-xl transition-all duration-300 h-full border-gray-200 overflow-hidden ${
-          featured ? "ring-2 ring-primary/20" : ""
+          featured ? 'ring-2 ring-primary/20' : ''
         }`}
       >
         <Link href={`/product/${id}`} className="block h-full">
           <CardContent className="flex flex-col h-full p-0">
             {/* Image Section */}
-            <div className="relative bg-gray-100 w-full overflow-hidden" style={{ aspectRatio: '4/3' }}>
+            <div
+              className="relative bg-gray-100 w-full overflow-hidden"
+              style={{ aspectRatio: '4/3' }}
+            >
               {isImageUrl ? (
                 <Image
                   src={imageUrl}
@@ -144,19 +143,19 @@ export function ProductCard({
                   {displayImage}
                 </div>
               )}
-              
+
               {/* Favorite Button - Top Right */}
               <button
                 onClick={handleToggleFavorite}
                 disabled={isProcessingFavorite}
                 className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
-                aria-label={isFavorited ? "Дурсамжаас хасах" : "Дурсамжид нэмэх"}
+                aria-label={isFavorited ? 'Дурсамжаас хасах' : 'Дурсамжид нэмэх'}
               >
                 <Heart
                   className={`w-3.5 h-3.5 transition-colors ${
                     isFavorited
-                      ? "fill-red-500 text-red-500"
-                      : "text-gray-600 group-hover:text-red-500"
+                      ? 'fill-red-500 text-red-500'
+                      : 'text-gray-600 group-hover:text-red-500'
                   }`}
                 />
               </button>
@@ -194,7 +193,7 @@ export function ProductCard({
                 <Button
                   onClick={handleAddToCart}
                   disabled={isProcessingCart}
-                  className="flex-1 h-8 text-xs sm:text-sm font-medium"
+                  className="flex-1 h-8 text-xs sm:text-sm font-medium bg-primary-light text-primary-light-foreground"
                   size="sm"
                 >
                   <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />

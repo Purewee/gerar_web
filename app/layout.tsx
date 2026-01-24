@@ -1,14 +1,14 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import { ConditionalNavigation } from "@/components/conditional-navigation";
-import { Providers } from "@/lib/providers";
-import { CategoriesProvider } from "@/components/categories-provider";
+import type { Metadata } from 'next';
+import './globals.css';
+import { Toaster } from '@/components/ui/toaster';
+import { ConditionalNavigation } from '@/components/conditional-navigation';
+import { Providers } from '@/lib/providers';
+import { CategoriesProvider } from '@/components/categories-provider';
 
 export const metadata: Metadata = {
-  title: "Gerar",
+  title: 'GERAR',
   description:
-    "Gerar-д тавтай морил! Тавилга, гэрийн чимэглэл, гэрэлтүүлэг, орны даавуу, гал тогооны хэрэгсэл болон гэрийн тавилгын бүх хэрэгцээнд хамгийн сайн хямд үнэ, санал болголттой.",
+    'GERAR-д тавтай морил! Тавилга, гэрийн чимэглэл, гэрэлтүүлэг, орны даавуу, гал тогооны хэрэгсэл болон гэрийн тавилгын бүх хэрэгцээнд хамгийн сайн хямд үнэ, санал болголттой.',
 };
 
 export default function RootLayout({
@@ -21,9 +21,7 @@ export default function RootLayout({
       <body className="font-roboto">
         <Providers>
           <CategoriesProvider>
-            <ConditionalNavigation>
-              {children}
-            </ConditionalNavigation>
+            <ConditionalNavigation>{children}</ConditionalNavigation>
           </CategoriesProvider>
           <Toaster />
         </Providers>

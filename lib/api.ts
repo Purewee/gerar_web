@@ -1,14 +1,13 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
  * Note: All queries default to refetchOnWindowFocus: false (configured in lib/providers.tsx).
  * To override this default for a specific query, add refetchOnWindowFocus: true to the query options.
  */
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -31,49 +30,61 @@ export interface Pagination {
 
 // Get auth token from localStorage
 export const getAuthToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("token");
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('token');
 };
 
 // Set auth token
 export const setAuthToken = (token: string): void => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("token", token);
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('token', token);
 };
 
 // Remove auth token
 export const removeAuthToken = (): void => {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem("token");
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('token');
 };
 
 // ==================== SESSION TOKEN (GUEST) ====================
 
-const GUEST_SESSION_KEY = "guest_session_token";
+const GUEST_SESSION_KEY = 'guest_session_token';
 
 // Get session token from localStorage
 export const getSessionToken = (): string | null => {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
   return localStorage.getItem(GUEST_SESSION_KEY);
 };
 
 // Set session token
 export const setSessionToken = (token: string): void => {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   localStorage.setItem(GUEST_SESSION_KEY, token);
 };
 
 // Remove session token
 export const removeSessionToken = (): void => {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   localStorage.removeItem(GUEST_SESSION_KEY);
 };
+
+/** Clear all auth tokens and user data (e.g. on 401). */
+function clearAuthAndUserData(): void {
+  if (typeof window === 'undefined') return;
+  removeAuthToken();
+  removeSessionToken();
+  localStorage.removeItem('isAuthenticated');
+  localStorage.removeItem('mobile');
+  localStorage.removeItem('user_name');
+  localStorage.removeItem('user_email');
+  window.dispatchEvent(new CustomEvent('authStateChanged'));
+}
 
 // Helper function to check if authentication is required
 function requireAuth(): void {
   const token = getAuthToken();
   if (!token) {
-    throw new Error("Authentication required. Please log in.");
+    throw new Error('Authentication required. Please log in.');
   }
 }
 
@@ -81,7 +92,7 @@ function requireAuth(): void {
 async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {},
-  requireAuthentication: boolean = false
+  requireAuthentication: boolean = false,
 ): Promise<ApiResponse<T>> {
   // Check authentication requirement before making request
   if (requireAuthentication) {
@@ -91,7 +102,7 @@ async function apiFetch<T>(
   const token = getAuthToken();
   const sessionToken = getSessionToken();
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
     ...options.headers,
   };
 
@@ -102,7 +113,7 @@ async function apiFetch<T>(
 
   // Add session token for guest users (only if not authenticated)
   if (sessionToken && !token) {
-    (headers as Record<string, string>)["X-Session-Token"] = sessionToken;
+    (headers as Record<string, string>)['X-Session-Token'] = sessionToken;
   }
 
   try {
@@ -114,9 +125,11 @@ async function apiFetch<T>(
     const data: ApiResponse<T> = await response.json();
 
     if (!response.ok || !data.success) {
-      throw new Error(
-        data.error?.message || data.message || "API request failed"
-      );
+      if (response.status === 401 && typeof window !== 'undefined') {
+        clearAuthAndUserData();
+        window.dispatchEvent(new CustomEvent('authRequired'));
+      }
+      throw new Error(data.error?.message || data.message || 'API request failed');
     }
 
     // Save session token if returned in response (for guest users)
@@ -135,64 +148,57 @@ async function apiFetch<T>(
 export const queryKeys = {
   // Auth
   auth: {
-    all: ["auth"] as const,
+    all: ['auth'] as const,
   },
 
   // Categories
   categories: {
-    all: ["categories"] as const,
-    lists: () => [...queryKeys.categories.all, "list"] as const,
-    list: (filters?: string) =>
-      [...queryKeys.categories.lists(), { filters }] as const,
-    details: () => [...queryKeys.categories.all, "detail"] as const,
+    all: ['categories'] as const,
+    lists: () => [...queryKeys.categories.all, 'list'] as const,
+    list: (filters?: string) => [...queryKeys.categories.lists(), { filters }] as const,
+    details: () => [...queryKeys.categories.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.categories.details(), id] as const,
     products: (id: number, includeSubcategories?: boolean) =>
-      [
-        ...queryKeys.categories.detail(id),
-        "products",
-        { includeSubcategories },
-      ] as const,
+      [...queryKeys.categories.detail(id), 'products', { includeSubcategories }] as const,
   },
 
   // Products
   products: {
-    all: ["products"] as const,
-    lists: () => [...queryKeys.products.all, "list"] as const,
-    list: (params?: ProductsQueryParams) =>
-      [...queryKeys.products.lists(), params] as const,
-    details: () => [...queryKeys.products.all, "detail"] as const,
+    all: ['products'] as const,
+    lists: () => [...queryKeys.products.all, 'list'] as const,
+    list: (params?: ProductsQueryParams) => [...queryKeys.products.lists(), params] as const,
+    details: () => [...queryKeys.products.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.products.details(), id] as const,
   },
 
   // Cart
   cart: {
-    all: ["cart"] as const,
-    items: () => [...queryKeys.cart.all, "items"] as const,
+    all: ['cart'] as const,
+    items: () => [...queryKeys.cart.all, 'items'] as const,
   },
 
   // Favorites
   favorites: {
-    all: ["favorites"] as const,
-    lists: () => [...queryKeys.favorites.all, "list"] as const,
+    all: ['favorites'] as const,
+    lists: () => [...queryKeys.favorites.all, 'list'] as const,
     list: (params?: { page?: number; limit?: number }) =>
       [...queryKeys.favorites.lists(), params] as const,
-    status: (productId: number) =>
-      [...queryKeys.favorites.all, "status", productId] as const,
+    status: (productId: number) => [...queryKeys.favorites.all, 'status', productId] as const,
   },
 
   // Addresses
   addresses: {
-    all: ["addresses"] as const,
-    lists: () => [...queryKeys.addresses.all, "list"] as const,
-    details: () => [...queryKeys.addresses.all, "detail"] as const,
+    all: ['addresses'] as const,
+    lists: () => [...queryKeys.addresses.all, 'list'] as const,
+    details: () => [...queryKeys.addresses.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.addresses.details(), id] as const,
   },
 
   // Orders
   orders: {
-    all: ["orders"] as const,
-    lists: () => [...queryKeys.orders.all, "list"] as const,
-    details: () => [...queryKeys.orders.all, "detail"] as const,
+    all: ['orders'] as const,
+    lists: () => [...queryKeys.orders.all, 'list'] as const,
+    details: () => [...queryKeys.orders.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.orders.details(), id] as const,
   },
 };
@@ -216,7 +222,8 @@ export interface User {
   id: number;
   phoneNumber: string;
   name: string;
-  role: "USER" | "ADMIN";
+  role: 'USER' | 'ADMIN';
+  email: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -228,11 +235,9 @@ export interface AuthResponse {
 
 // Auth API functions (for mutations)
 const authApiFunctions = {
-  register: async (
-    data: RegisterRequest
-  ): Promise<ApiResponse<AuthResponse>> => {
-    const response = await apiFetch<AuthResponse>("/auth/register", {
-      method: "POST",
+  register: async (data: RegisterRequest): Promise<ApiResponse<AuthResponse>> => {
+    const response = await apiFetch<AuthResponse>('/auth/register', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
     if (response.data?.token) {
@@ -245,7 +250,7 @@ const authApiFunctions = {
           removeSessionToken();
         } catch (error) {
           // Don't block registration if merge fails
-          console.error("Failed to merge cart:", error);
+          console.error('Failed to merge cart:', error);
         }
       }
     }
@@ -253,8 +258,8 @@ const authApiFunctions = {
   },
 
   login: async (data: LoginRequest): Promise<ApiResponse<AuthResponse>> => {
-    const response = await apiFetch<AuthResponse>("/auth/login", {
-      method: "POST",
+    const response = await apiFetch<AuthResponse>('/auth/login', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
     if (response.data?.token) {
@@ -267,7 +272,7 @@ const authApiFunctions = {
           removeSessionToken();
         } catch (error) {
           // Don't block login if merge fails
-          console.error("Failed to merge cart:", error);
+          console.error('Failed to merge cart:', error);
         }
       }
     }
@@ -275,8 +280,8 @@ const authApiFunctions = {
   },
 
   forgotPassword: async (phoneNumber: string): Promise<ApiResponse<any>> => {
-    return apiFetch("/auth/forgot-password", {
-      method: "POST",
+    return apiFetch('/auth/forgot-password', {
+      method: 'POST',
       body: JSON.stringify({ phoneNumber }),
     });
   },
@@ -287,8 +292,8 @@ const authApiFunctions = {
     newPin: string;
     resetToken?: string;
   }): Promise<ApiResponse<AuthResponse>> => {
-    const response = await apiFetch<AuthResponse>("/auth/reset-password", {
-      method: "POST",
+    const response = await apiFetch<AuthResponse>('/auth/reset-password', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
     if (response.data?.token) {
@@ -301,7 +306,7 @@ const authApiFunctions = {
           removeSessionToken();
         } catch (error) {
           // Don't block password reset if merge fails
-          console.error("Failed to merge cart:", error);
+          console.error('Failed to merge cart:', error);
         }
       }
     }
@@ -313,21 +318,20 @@ const authApiFunctions = {
     try {
       await cartApiFunctions.clear();
       // Dispatch cart update event so UI updates immediately
-      window.dispatchEvent(new Event("cartUpdated"));
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       // Don't block logout if cart clear fails
-      console.error("Failed to clear cart on logout:", error);
+      console.error('Failed to clear cart on logout:', error);
     }
-    
+
     removeAuthToken();
     // Remove session token to clear guest cart
     removeSessionToken();
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("mobile");
-    localStorage.removeItem("profile_name");
-    localStorage.removeItem("profile_email");
-    localStorage.removeItem("profile_address");
-    window.dispatchEvent(new CustomEvent("authStateChanged"));
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('mobile');
+    localStorage.removeItem('user_name');
+    localStorage.removeItem('user_email');
+    window.dispatchEvent(new CustomEvent('authStateChanged'));
   },
 };
 
@@ -360,7 +364,7 @@ export const authApi = authApiFunctions;
 
 // ==================== OTP ====================
 
-export type OTPPurpose = "REGISTRATION" | "LOGIN" | "PASSWORD_RESET" | "VERIFICATION";
+export type OTPPurpose = 'REGISTRATION' | 'LOGIN' | 'PASSWORD_RESET' | 'VERIFICATION';
 
 export interface SendOTPRequest {
   phoneNumber: string;
@@ -385,15 +389,15 @@ export interface VerifyOTPResponse {
 // OTP API functions
 const otpApiFunctions = {
   send: async (data: SendOTPRequest): Promise<ApiResponse<SendOTPResponse>> => {
-    return apiFetch<SendOTPResponse>("/otp/send", {
-      method: "POST",
+    return apiFetch<SendOTPResponse>('/otp/send', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
   verify: async (data: VerifyOTPRequest): Promise<ApiResponse<VerifyOTPResponse>> => {
-    return apiFetch<VerifyOTPResponse>("/otp/verify", {
-      method: "POST",
+    return apiFetch<VerifyOTPResponse>('/otp/verify', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },
@@ -447,68 +451,64 @@ export interface ProductsQueryParams {
   maxStock?: number;
   createdAfter?: string;
   createdBefore?: string;
-  sortBy?: "name" | "price" | "stock" | "createdAt" | "updatedAt";
-  sortOrder?: "asc" | "desc";
+  sortBy?: 'name' | 'price' | 'stock' | 'createdAt' | 'updatedAt';
+  sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
 }
 
 // Products API functions
 const productsApiFunctions = {
-  getAll: async (
-    params?: ProductsQueryParams
-  ): Promise<ApiResponse<Product[]>> => {
+  getAll: async (params?: ProductsQueryParams): Promise<ApiResponse<Product[]>> => {
     const queryParams = new URLSearchParams();
 
     if (params?.categoryId) {
-      queryParams.append("categoryId", params.categoryId.toString());
+      queryParams.append('categoryId', params.categoryId.toString());
     }
     if (params?.categoryIds && params.categoryIds.length > 0) {
-      params.categoryIds.forEach((id) => {
-        queryParams.append("categoryIds[]", id.toString());
+      params.categoryIds.forEach(id => {
+        queryParams.append('categoryIds[]', id.toString());
       });
     }
     if (params?.search) {
-      queryParams.append("search", params.search);
+      queryParams.append('search', params.search);
     }
     if (params?.inStock !== undefined) {
-      queryParams.append("inStock", params.inStock.toString());
+      queryParams.append('inStock', params.inStock.toString());
     }
     if (params?.minPrice) {
-      queryParams.append("minPrice", params.minPrice.toString());
+      queryParams.append('minPrice', params.minPrice.toString());
     }
     if (params?.maxPrice) {
-      queryParams.append("maxPrice", params.maxPrice.toString());
+      queryParams.append('maxPrice', params.maxPrice.toString());
     }
     if (params?.minStock) {
-      queryParams.append("minStock", params.minStock.toString());
+      queryParams.append('minStock', params.minStock.toString());
     }
     if (params?.maxStock) {
-      queryParams.append("maxStock", params.maxStock.toString());
+      queryParams.append('maxStock', params.maxStock.toString());
     }
     if (params?.createdAfter) {
-      queryParams.append("createdAfter", params.createdAfter);
+      queryParams.append('createdAfter', params.createdAfter);
     }
     if (params?.createdBefore) {
-      queryParams.append("createdBefore", params.createdBefore);
+      queryParams.append('createdBefore', params.createdBefore);
     }
     if (params?.sortBy) {
-      queryParams.append("sortBy", params.sortBy);
+      queryParams.append('sortBy', params.sortBy);
     }
     if (params?.sortOrder) {
-      queryParams.append("sortOrder", params.sortOrder);
+      queryParams.append('sortOrder', params.sortOrder);
     }
     if (params?.page) {
-      queryParams.append("page", params.page.toString());
+      queryParams.append('page', params.page.toString());
     }
     if (params?.limit) {
-      queryParams.append("limit", params.limit.toString());
+      queryParams.append('limit', params.limit.toString());
     }
 
     const queryString = queryParams.toString();
-    return apiFetch<Product[]>(
-      `/products${queryString ? `?${queryString}` : ""}`
-    );
+    return apiFetch<Product[]>(`/products${queryString ? `?${queryString}` : ''}`);
   },
 
   getById: async (id: number): Promise<ApiResponse<Product>> => {
@@ -549,7 +549,7 @@ export interface Category {
 // Categories API functions
 const categoriesApiFunctions = {
   getAll: async (): Promise<ApiResponse<Category[]>> => {
-    return apiFetch<Category[]>("/categories");
+    return apiFetch<Category[]>('/categories');
   },
 
   getById: async (id: number): Promise<ApiResponse<Category>> => {
@@ -558,9 +558,9 @@ const categoriesApiFunctions = {
 
   getProducts: async (
     id: number,
-    includeSubcategories?: boolean
+    includeSubcategories?: boolean,
   ): Promise<ApiResponse<Product[]>> => {
-    const query = includeSubcategories ? `?includeSubcategories=true` : "";
+    const query = includeSubcategories ? `?includeSubcategories=true` : '';
     return apiFetch<Product[]>(`/categories/${id}/products${query}`);
   },
 };
@@ -583,10 +583,7 @@ export const useCategory = (id: number) => {
   });
 };
 
-export const useCategoryProducts = (
-  id: number,
-  includeSubcategories?: boolean
-) => {
+export const useCategoryProducts = (id: number, includeSubcategories?: boolean) => {
   return useQuery({
     queryKey: queryKeys.categories.products(id, includeSubcategories),
     queryFn: () => categoriesApiFunctions.getProducts(id, includeSubcategories),
@@ -616,15 +613,12 @@ const cartApiFunctions = {
     const sessionToken = getSessionToken();
     // Cart get requires either auth token or session token
     if (!token && !sessionToken) {
-      throw new Error("Authentication or session required to view cart.");
+      throw new Error('Authentication or session required to view cart.');
     }
-    return apiFetch<CartItem[]>("/cart");
+    return apiFetch<CartItem[]>('/cart');
   },
 
-  add: async (
-    productId: number,
-    quantity: number
-  ): Promise<ApiResponse<CartItem>> => {
+  add: async (productId: number, quantity: number): Promise<ApiResponse<CartItem>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
     const body: any = { productId, quantity };
@@ -634,16 +628,13 @@ const cartApiFunctions = {
       body.sessionToken = sessionToken;
     }
 
-    return apiFetch<CartItem>("/cart", {
-      method: "POST",
+    return apiFetch<CartItem>('/cart', {
+      method: 'POST',
       body: JSON.stringify(body),
     });
   },
 
-  update: async (
-    productId: number,
-    quantity: number
-  ): Promise<ApiResponse<CartItem>> => {
+  update: async (productId: number, quantity: number): Promise<ApiResponse<CartItem>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
     const body: any = { quantity };
@@ -654,7 +645,7 @@ const cartApiFunctions = {
     }
 
     return apiFetch<CartItem>(`/cart/${productId}/update`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(body),
     });
   },
@@ -670,7 +661,7 @@ const cartApiFunctions = {
     }
 
     return apiFetch<CartItem>(`/cart/${productId}/remove`, {
-      method: "POST",
+      method: 'POST',
       body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
     });
   },
@@ -685,17 +676,19 @@ const cartApiFunctions = {
       body.sessionToken = sessionToken;
     }
 
-    return apiFetch<{ deletedCount: number }>("/cart/clear", {
-      method: "POST",
+    return apiFetch<{ deletedCount: number }>('/cart/clear', {
+      method: 'POST',
       body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
     });
   },
 
-  merge: async (sessionToken: string): Promise<ApiResponse<{ mergedCount: number; skippedCount: number }>> => {
+  merge: async (
+    sessionToken: string,
+  ): Promise<ApiResponse<{ mergedCount: number; skippedCount: number }>> => {
     // Merge requires authentication token
     requireAuth();
-    return apiFetch<{ mergedCount: number; skippedCount: number }>("/cart/merge", {
-      method: "POST",
+    return apiFetch<{ mergedCount: number; skippedCount: number }>('/cart/merge', {
+      method: 'POST',
       body: JSON.stringify({ sessionToken }),
     });
   },
@@ -715,13 +708,8 @@ export const useCart = () => {
 export const useCartAdd = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      productId,
-      quantity,
-    }: {
-      productId: number;
-      quantity: number;
-    }) => cartApiFunctions.add(productId, quantity),
+    mutationFn: ({ productId, quantity }: { productId: number; quantity: number }) =>
+      cartApiFunctions.add(productId, quantity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
     },
@@ -731,13 +719,8 @@ export const useCartAdd = () => {
 export const useCartUpdate = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      productId,
-      quantity,
-    }: {
-      productId: number;
-      quantity: number;
-    }) => cartApiFunctions.update(productId, quantity),
+    mutationFn: ({ productId, quantity }: { productId: number; quantity: number }) =>
+      cartApiFunctions.update(productId, quantity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
     },
@@ -782,42 +765,47 @@ export const cartApi = cartApiFunctions;
 
 // Favorites API functions
 const favoritesApiFunctions = {
-  get: async (
-    page?: number,
-    limit?: number
-  ): Promise<ApiResponse<Product[]>> => {
+  get: async (page?: number, limit?: number): Promise<ApiResponse<Product[]>> => {
     requireAuth();
     const params = new URLSearchParams();
-    if (page) params.append("page", page.toString());
-    if (limit) params.append("limit", limit.toString());
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
     const query = params.toString();
-    return apiFetch<Product[]>(`/favorites${query ? `?${query}` : ""}`, {}, true);
+    return apiFetch<Product[]>(`/favorites${query ? `?${query}` : ''}`, {}, true);
   },
 
   add: async (productId: number): Promise<ApiResponse<Product>> => {
     requireAuth();
-    return apiFetch<Product>("/favorites", {
-      method: "POST",
-      body: JSON.stringify({ productId }),
-    }, true);
+    return apiFetch<Product>(
+      '/favorites',
+      {
+        method: 'POST',
+        body: JSON.stringify({ productId }),
+      },
+      true,
+    );
   },
 
   remove: async (productId: number): Promise<ApiResponse<Product>> => {
     requireAuth();
-    return apiFetch<Product>(`/favorites/${productId}/remove`, {
-      method: "POST",
-      body: JSON.stringify({}),
-    }, true);
+    return apiFetch<Product>(
+      `/favorites/${productId}/remove`,
+      {
+        method: 'POST',
+        body: JSON.stringify({}),
+      },
+      true,
+    );
   },
 
   checkStatus: async (
-    productId: number
+    productId: number,
   ): Promise<ApiResponse<{ productId: number; isFavorited: boolean }>> => {
     requireAuth();
     return apiFetch<{ productId: number; isFavorited: boolean }>(
       `/favorites/${productId}/status`,
       {},
-      true
+      true,
     );
   },
 };
@@ -906,7 +894,7 @@ export interface CreateAddressRequest {
 const addressesApiFunctions = {
   getAll: async (): Promise<ApiResponse<Address[]>> => {
     requireAuth();
-    return apiFetch<Address[]>("/addresses", {}, true);
+    return apiFetch<Address[]>('/addresses', {}, true);
   },
 
   getById: async (id: number): Promise<ApiResponse<Address>> => {
@@ -916,44 +904,64 @@ const addressesApiFunctions = {
 
   create: async (data: CreateAddressRequest): Promise<ApiResponse<Address>> => {
     requireAuth();
-    return apiFetch<Address>("/addresses", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }, true);
+    return apiFetch<Address>(
+      '/addresses',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+      true,
+    );
   },
 
   update: async (
     id: number,
-    data: Partial<CreateAddressRequest>
+    data: Partial<CreateAddressRequest>,
   ): Promise<ApiResponse<Address>> => {
     requireAuth();
-    return apiFetch<Address>(`/addresses/${id}/update`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    }, true);
+    return apiFetch<Address>(
+      `/addresses/${id}/update`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+      true,
+    );
   },
 
   delete: async (id: number): Promise<ApiResponse<Address>> => {
     requireAuth();
-    return apiFetch<Address>(`/addresses/${id}/delete`, {
-      method: "POST",
-      body: JSON.stringify({}),
-    }, true);
+    return apiFetch<Address>(
+      `/addresses/${id}/delete`,
+      {
+        method: 'POST',
+        body: JSON.stringify({}),
+      },
+      true,
+    );
   },
 
   setDefault: async (id: number): Promise<ApiResponse<Address>> => {
     requireAuth();
-    return apiFetch<Address>(`/addresses/${id}/set-default`, {
-      method: "PATCH",
-    }, true);
+    return apiFetch<Address>(
+      `/addresses/${id}/set-default`,
+      {
+        method: 'PATCH',
+      },
+      true,
+    );
   },
 
   getDistricts: async (): Promise<ApiResponse<string[]>> => {
-    return apiFetch<string[]>("/addresses/districts");
+    return apiFetch<string[]>('/addresses/districts');
   },
 
-  getKhoroo: async (district: string): Promise<ApiResponse<{ district: string; khorooOptions: string[] }>> => {
-    return apiFetch<{ district: string; khorooOptions: string[] }>(`/addresses/khoroo?district=${encodeURIComponent(district)}`);
+  getKhoroo: async (
+    district: string,
+  ): Promise<ApiResponse<{ district: string; khorooOptions: string[] }>> => {
+    return apiFetch<{ district: string; khorooOptions: string[] }>(
+      `/addresses/khoroo?district=${encodeURIComponent(district)}`,
+    );
   },
 };
 
@@ -979,8 +987,7 @@ export const useAddress = (id: number) => {
 export const useAddressCreate = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateAddressRequest) =>
-      addressesApiFunctions.create(data),
+    mutationFn: (data: CreateAddressRequest) => addressesApiFunctions.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.addresses.all });
     },
@@ -990,13 +997,8 @@ export const useAddressCreate = () => {
 export const useAddressUpdate = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: Partial<CreateAddressRequest>;
-    }) => addressesApiFunctions.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateAddressRequest> }) =>
+      addressesApiFunctions.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.addresses.all });
     },
@@ -1025,7 +1027,7 @@ export const useAddressSetDefault = () => {
 
 export const useDistricts = () => {
   return useQuery({
-    queryKey: [...queryKeys.addresses.all, "districts"],
+    queryKey: [...queryKeys.addresses.all, 'districts'],
     queryFn: () => addressesApiFunctions.getDistricts(),
     staleTime: 24 * 60 * 60 * 1000, // 24 hours - districts don't change often
   });
@@ -1033,10 +1035,10 @@ export const useDistricts = () => {
 
 export const useKhoroo = (district: string | null) => {
   return useQuery({
-    queryKey: [...queryKeys.addresses.all, "khoroo", district],
+    queryKey: [...queryKeys.addresses.all, 'khoroo', district],
     queryFn: () => {
       if (!district) {
-        throw new Error("District is required");
+        throw new Error('District is required');
       }
       return addressesApiFunctions.getKhoroo(district);
     },
@@ -1096,14 +1098,14 @@ export interface CreateOrderRequest {
   sessionToken?: string;
   address?: GuestAddress;
   // Common
-  deliveryTimeSlot?: "10-14" | "14-18" | "18-21" | "21-00";
+  deliveryTimeSlot?: '10-14' | '14-18' | '18-21' | '21-00';
 }
 
 // Orders API functions
 const ordersApiFunctions = {
   getAll: async (): Promise<ApiResponse<Order[]>> => {
     requireAuth();
-    return apiFetch<Order[]>("/orders", {}, true);
+    return apiFetch<Order[]>('/orders', {}, true);
   },
 
   getById: async (id: number): Promise<ApiResponse<Order>> => {
@@ -1114,12 +1116,12 @@ const ordersApiFunctions = {
   create: async (data: CreateOrderRequest): Promise<ApiResponse<Order>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
-    
+
     // Order creation requires either auth token or session token
     if (!token && !sessionToken) {
-      throw new Error("Authentication or session required to create order.");
+      throw new Error('Authentication or session required to create order.');
     }
-    
+
     const body: any = { ...data };
 
     // For guest users, ensure session token is included
@@ -1128,10 +1130,14 @@ const ordersApiFunctions = {
     }
 
     // If authenticated, require auth in apiFetch
-    return apiFetch<Order>("/orders", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }, !!token); // Require auth only if token exists
+    return apiFetch<Order>(
+      '/orders',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      !!token,
+    ); // Require auth only if token exists
   },
 };
 

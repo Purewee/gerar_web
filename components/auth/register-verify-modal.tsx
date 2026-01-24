@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useOTPVerify, useAuthRegister, useOTPSend } from "@/lib/api";
-import { X } from "lucide-react";
-import { InlineNotification } from "./inline-notification";
-import { FieldError } from "./field-error";
+} from '@/components/ui/dialog';
+import { useOTPVerify, useAuthRegister, useOTPSend } from '@/lib/api';
+import { X } from 'lucide-react';
+import { InlineNotification } from './inline-notification';
+import { FieldError } from './field-error';
 
 interface RegisterVerifyModalProps {
   open: boolean;
@@ -33,10 +33,13 @@ export function RegisterVerifyModal({
   pin,
   name,
 }: RegisterVerifyModalProps) {
-  const [otp, setOtp] = useState(["", "", "", ""]); // 4-digit OTP for REGISTRATION
+  const [otp, setOtp] = useState(['', '', '', '']); // 4-digit OTP for REGISTRATION
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const [errors, setErrors] = useState<{ otp?: string }>({});
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const verifyOTPMutation = useOTPVerify();
@@ -46,7 +49,7 @@ export function RegisterVerifyModal({
   // Reset state when modal opens/closes
   useEffect(() => {
     if (open) {
-      setOtp(["", "", "", ""]);
+      setOtp(['', '', '', '']);
       setTimer(60);
       setCanResend(false);
       setNotification(null);
@@ -58,7 +61,7 @@ export function RegisterVerifyModal({
   useEffect(() => {
     if (timer > 0 && open) {
       const interval = setInterval(() => {
-        setTimer((prev) => {
+        setTimer(prev => {
           if (prev <= 1) {
             setCanResend(true);
             return 0;
@@ -73,7 +76,7 @@ export function RegisterVerifyModal({
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) return;
     const newOtp = [...otp];
-    newOtp[index] = value.replace(/\D/g, "");
+    newOtp[index] = value.replace(/\D/g, '');
     setOtp(newOtp);
 
     if (value && index < 3) {
@@ -81,23 +84,17 @@ export function RegisterVerifyModal({
     }
   };
 
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, 4);
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
     const newOtp = [...otp];
-    pastedData.split("").forEach((char, index) => {
+    pastedData.split('').forEach((char, index) => {
       if (index < 4) {
         newOtp[index] = char;
       }
@@ -112,29 +109,29 @@ export function RegisterVerifyModal({
     try {
       const response = await sendOTPMutation.mutateAsync({
         phoneNumber: phoneNumber,
-        purpose: "REGISTRATION",
+        purpose: 'REGISTRATION',
       });
       if (response.data) {
         setTimer(60);
         setCanResend(false);
-        setOtp(["", "", "", ""]);
+        setOtp(['', '', '', '']);
         setNotification({
-          type: "success",
-          message: "Таны утасны дугаарт 4 оронтой OTP код дахин илгээгдлээ",
+          type: 'success',
+          message: 'Таны утасны дугаарт 4 оронтой OTP код дахин илгээгдлээ',
         });
       }
     } catch (error: any) {
-      setErrors({ otp: error.message || "Алдаа гарлаа. Дахин оролдоно уу" });
+      setErrors({ otp: error.message || 'Алдаа гарлаа. Дахин оролдоно уу' });
     }
   };
 
   const handleVerify = async () => {
     setNotification(null);
     setErrors({});
-    const otpString = otp.join("");
-    
+    const otpString = otp.join('');
+
     if (otpString.length !== 4) {
-      setErrors({ otp: "Бүтэн 4 оронтой OTP оруулна уу" });
+      setErrors({ otp: 'Бүтэн 4 оронтой OTP оруулна уу' });
       return;
     }
 
@@ -143,7 +140,7 @@ export function RegisterVerifyModal({
       const verifyResponse = await verifyOTPMutation.mutateAsync({
         phoneNumber: phoneNumber,
         code: otpString,
-        purpose: "REGISTRATION",
+        purpose: 'REGISTRATION',
       });
 
       if (verifyResponse.data?.verified) {
@@ -157,33 +154,29 @@ export function RegisterVerifyModal({
 
         if (registerResponse.data) {
           // Set authentication data
-          localStorage.setItem("isAuthenticated", "true");
-          localStorage.setItem("mobile", phoneNumber);
-          localStorage.setItem("user_name", registerResponse.data.user.name);
-          localStorage.setItem("user_id", registerResponse.data.user.id.toString());
-          window.dispatchEvent(new CustomEvent("authStateChanged"));
+          localStorage.setItem('isAuthenticated', 'true');
+          localStorage.setItem('mobile', phoneNumber);
+          localStorage.setItem('user_name', registerResponse.data.user.name);
+          window.dispatchEvent(new CustomEvent('authStateChanged'));
 
           setNotification({
-            type: "success",
-            message: "Таны бүртгэл амжилттай үүслээ!",
+            type: 'success',
+            message: 'Таны бүртгэл амжилттай үүслээ!',
           });
 
-          // Close modal after a short delay
-          setTimeout(() => {
-            setOtp(["", "", "", ""]);
-            setNotification(null);
-            setErrors({});
-            onOpenChange(false);
-          }, 2000);
+          setOtp(['', '', '', '']);
+          setNotification(null);
+          setErrors({});
+          onOpenChange(false);
         }
       }
     } catch (error: any) {
-      setErrors({ otp: error.message || "Буруу эсвэл хугацаа дууссан OTP код" });
+      setErrors({ otp: error.message || 'Буруу эсвэл хугацаа дууссан OTP код' });
     }
   };
 
   const handleClose = () => {
-    setOtp(["", "", "", ""]);
+    setOtp(['', '', '', '']);
     setNotification(null);
     setErrors({});
     onOpenChange(false);
@@ -192,35 +185,21 @@ export function RegisterVerifyModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
-        <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 px-6 pt-8 pb-6">
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={handleClose}
-              className="text-white/80 hover:text-white transition-colors rounded-full p-1.5 hover:bg-white/20"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="text-center space-y-3">
-            <div className="inline-block">
-              <Image
-                src="/logo3.svg"
-                alt="Gerar"
-                width={120}
-                height={40}
-                className="h-10 w-auto mx-auto brightness-0 invert"
-                priority
-              />
-            </div>
-            <DialogHeader className="space-y-2">
-              <DialogTitle className="text-2xl font-bold text-white">
-                Бүртгэл баталгаажуулах
-              </DialogTitle>
-              <DialogDescription className="text-white/90 text-sm">
-                4 оронтой OTP кодыг оруулна уу
-              </DialogDescription>
-            </DialogHeader>
-          </div>
+        <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 p-6 flex items-center justify-between">
+          <Image
+            src="/logo3.svg"
+            alt="GERAR"
+            width={100}
+            height={30}
+            className="h-10 w-auto mx-auto brightness-0 invert"
+            priority
+          />
+          <button
+            onClick={handleClose}
+            className="text-white/80 hover:text-white transition-colors rounded-full p-1.5 hover:bg-white/20 absolute top-4 right-4"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         <div className="px-6 pb-6 space-y-6">
@@ -236,30 +215,28 @@ export function RegisterVerifyModal({
               <label className="block text-sm font-semibold text-gray-700 text-center">
                 4 оронтой OTP код оруулна уу
               </label>
-              <p className="text-xs text-gray-500 text-center">
-                Утасны дугаар: +976 {phoneNumber}
-              </p>
+              <p className="text-xs text-gray-500 text-center">Утасны дугаар: +976 {phoneNumber}</p>
               <div className="flex justify-center gap-3">
                 {otp.map((digit, index) => (
                   <Input
                     key={index}
-                    ref={(el) => {
+                    ref={el => {
                       inputRefs.current[index] = el;
                     }}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
                     value={digit}
-                    onChange={(e) => {
+                    onChange={e => {
                       handleOtpChange(index, e.target.value);
                       if (errors.otp) setErrors({ ...errors, otp: undefined });
                     }}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onKeyDown={e => handleKeyDown(index, e)}
                     onPaste={handlePaste}
                     className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
                       errors.otp
-                        ? "border-2 border-red-300 focus:border-red-400"
-                        : "border-2 border-gray-300 focus:border-primary"
+                        ? 'border-2 border-red-300 focus:border-red-400'
+                        : 'border-2 border-gray-300 focus:border-primary'
                     }`}
                   />
                 ))}
@@ -274,7 +251,7 @@ export function RegisterVerifyModal({
             <Button
               onClick={handleVerify}
               disabled={
-                otp.join("").length !== 4 ||
+                otp.join('').length !== 4 ||
                 verifyOTPMutation.isPending ||
                 registerMutation.isPending
               }
@@ -286,15 +263,14 @@ export function RegisterVerifyModal({
                   Баталгаажуулж байна...
                 </span>
               ) : (
-                "Бүртгэл үүсгэх"
+                'Бүртгэл үүсгэх'
               )}
             </Button>
 
             <div className="text-center space-y-2">
               {timer > 0 ? (
                 <p className="text-sm text-gray-600">
-                  OTP дахин илгээх{" "}
-                  <span className="font-semibold text-primary">{timer}</span>
+                  OTP дахин илгээх <span className="font-semibold text-primary">{timer}</span>
                 </p>
               ) : (
                 <Button
@@ -309,7 +285,7 @@ export function RegisterVerifyModal({
                       Илгээж байна...
                     </span>
                   ) : (
-                    "OTP дахин илгээх"
+                    'OTP дахин илгээх'
                   )}
                 </Button>
               )}
