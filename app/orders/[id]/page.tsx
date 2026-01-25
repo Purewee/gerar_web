@@ -5,18 +5,17 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/toast';
 import { ArrowLeft, Check, Loader2, MapPin, User, CreditCard } from 'lucide-react';
 import { useOrder, useAddresses, useAddressUpdate } from '@/lib/api';
 import Image from 'next/image';
-import { CardSkeleton, Spinner } from '@/components/skeleton';
+import { CardSkeleton } from '@/components/skeleton';
+import { toast } from 'sonner';
 
 type Step = 'location' | 'profile' | 'payment';
 
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
   const orderId = parseInt(params.id as string);
   const [currentStep, setCurrentStep] = useState<Step>('location');
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -82,10 +81,8 @@ export default function OrderDetailPage() {
 
   const handleLocationNext = () => {
     if (!selectedAddressId) {
-      toast({
-        title: 'Хаяг сонгоно уу',
+      toast.error('Хаяг сонгоно уу', {
         description: 'Хүргэлтийн хаяг сонгох шаардлагатай',
-        variant: 'destructive',
       });
       return;
     }
@@ -102,10 +99,8 @@ export default function OrderDetailPage() {
 
   const handleProfileNext = () => {
     if (!profileName.trim() || !profilePhone.trim()) {
-      toast({
-        title: 'Мэдээлэл дутуу',
+      toast.error('Мэдээлэл дутуу', {
         description: 'Нэр болон утасны дугаар оруулах шаардлагатай',
-        variant: 'destructive',
       });
       return;
     }
@@ -121,10 +116,8 @@ export default function OrderDetailPage() {
 
   const handlePayment = async () => {
     if (!paymentMethod) {
-      toast({
-        title: 'Төлбөрийн арга сонгоно уу',
+      toast.error('Төлбөрийн арга сонгоно уу', {
         description: 'Төлбөрийн арга сонгох шаардлагатай',
-        variant: 'destructive',
       });
       return;
     }
@@ -134,8 +127,7 @@ export default function OrderDetailPage() {
     // Simulate payment processing
     setTimeout(() => {
       setIsProcessingPayment(false);
-      toast({
-        title: 'Төлбөр амжилттай',
+      toast.success('Төлбөр амжилттай', {
         description: 'Таны захиалга амжилттай баталгаажлаа',
       });
       // Route to order list

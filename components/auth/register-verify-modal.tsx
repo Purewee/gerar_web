@@ -4,17 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useOTPVerify, useAuthRegister, useOTPSend } from '@/lib/api';
 import { X } from 'lucide-react';
-import { InlineNotification } from './inline-notification';
 import { FieldError } from './field-error';
+import { toast } from 'sonner';
 
 interface RegisterVerifyModalProps {
   open: boolean;
@@ -36,10 +30,6 @@ export function RegisterVerifyModal({
   const [otp, setOtp] = useState(['', '', '', '']); // 4-digit OTP for REGISTRATION
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
   const [errors, setErrors] = useState<{ otp?: string }>({});
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const verifyOTPMutation = useOTPVerify();
@@ -52,7 +42,6 @@ export function RegisterVerifyModal({
       setOtp(['', '', '', '']);
       setTimer(60);
       setCanResend(false);
-      setNotification(null);
       setErrors({});
     }
   }, [open]);
@@ -104,7 +93,6 @@ export function RegisterVerifyModal({
   };
 
   const handleResend = async () => {
-    setNotification(null);
     setErrors({});
     try {
       const response = await sendOTPMutation.mutateAsync({
@@ -115,10 +103,7 @@ export function RegisterVerifyModal({
         setTimer(60);
         setCanResend(false);
         setOtp(['', '', '', '']);
-        setNotification({
-          type: 'success',
-          message: 'Таны утасны дугаарт 4 оронтой OTP код дахин илгээгдлээ',
-        });
+        toast.success('Таны утасны дугаарт 4 оронтой OTP код дахин илгээгдлээ');
       }
     } catch (error: any) {
       setErrors({ otp: error.message || 'Алдаа гарлаа. Дахин оролдоно уу' });
@@ -126,7 +111,6 @@ export function RegisterVerifyModal({
   };
 
   const handleVerify = async () => {
-    setNotification(null);
     setErrors({});
     const otpString = otp.join('');
 
@@ -159,13 +143,9 @@ export function RegisterVerifyModal({
           localStorage.setItem('user_name', registerResponse.data.user.name);
           window.dispatchEvent(new CustomEvent('authStateChanged'));
 
-          setNotification({
-            type: 'success',
-            message: 'Таны бүртгэл амжилттай үүслээ!',
-          });
+          toast.success('Таны бүртгэл амжилттай үүслээ!');
 
           setOtp(['', '', '', '']);
-          setNotification(null);
           setErrors({});
           onOpenChange(false);
         }
@@ -177,7 +157,6 @@ export function RegisterVerifyModal({
 
   const handleClose = () => {
     setOtp(['', '', '', '']);
-    setNotification(null);
     setErrors({});
     onOpenChange(false);
   };
@@ -203,13 +182,6 @@ export function RegisterVerifyModal({
         </div>
 
         <div className="px-6 pb-6 space-y-6">
-          {notification && (
-            <InlineNotification
-              type={notification.type}
-              message={notification.message}
-              onClose={() => setNotification(null)}
-            />
-          )}
           <div className="space-y-5">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700 text-center">

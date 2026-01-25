@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/components/ui/toast';
 import {
   Trash2,
   Plus,
@@ -28,10 +27,10 @@ import { useCategoriesStore } from '@/lib/stores/categories';
 import { ProductCard } from '@/components/product-card';
 import Image from 'next/image';
 import { CardSkeleton } from '@/components/skeleton';
+import { toast } from 'sonner';
 
 export default function CartPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch by only rendering dynamic content after mount
@@ -82,10 +81,8 @@ export default function CartPage() {
       await updateCartMutation.mutateAsync({ productId, quantity: newQuantity });
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: error.message || 'Тоо ширхэг шинэчлэхэд алдаа гарлаа',
-        variant: 'destructive',
       });
     }
   };
@@ -94,15 +91,12 @@ export default function CartPage() {
     try {
       await removeCartMutation.mutateAsync(productId);
       window.dispatchEvent(new Event('cartUpdated'));
-      toast({
-        title: 'Зүйл устгагдсан',
+      toast.success('Зүйл устгагдсан', {
         description: 'Зүйл таны сагснаас устгагдлаа',
       });
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: error.message || 'Зүйл устгахад алдаа гарлаа',
-        variant: 'destructive',
       });
     }
   };
@@ -111,15 +105,10 @@ export default function CartPage() {
     try {
       await clearCartMutation.mutateAsync();
       window.dispatchEvent(new Event('cartUpdated'));
-      toast({
-        title: 'Сагс цэвэрлэгдсэн',
-        description: 'Бүх зүйл сагснаас устгагдлаа',
-      });
+      toast.success('Сагс цэвэрлэгдсэн');
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: error.message || 'Сагс цэвэрлэхэд алдаа гарлаа',
-        variant: 'destructive',
       });
     }
   };
@@ -137,10 +126,7 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
-      toast({
-        title: 'Сагс хоосон',
-        description: 'Төлбөр төлөхөөс өмнө сагсанд зүйл нэмнэ үү',
-      });
+      toast.error('Сагс хоосон байна');
       return;
     }
 

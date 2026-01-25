@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/components/ui/toast';
 import { ShoppingCart, ArrowLeft, Plus, Minus, Heart } from 'lucide-react';
 import {
   useProduct,
@@ -16,13 +15,13 @@ import {
 } from '@/lib/api';
 import Image from 'next/image';
 import { CardSkeleton, Spinner } from '@/components/skeleton';
+import { toast } from 'sonner';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const { toast } = useToast();
 
   const productId = parseInt(params.id as string);
   const {
@@ -86,15 +85,10 @@ export default function ProductDetailPage() {
     try {
       await addToCartMutation.mutateAsync({ productId: product.id, quantity });
       window.dispatchEvent(new Event('cartUpdated'));
-      toast({
-        title: 'Сагсанд нэмэгдсэн',
-        description: `${product.name} таны сагсанд нэмэгдлээ`,
-      });
+      toast.success('Сагсанд нэмэгдсэн');
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: error.message || 'Сагсанд нэмэхэд алдаа гарлаа',
-        variant: 'destructive',
       });
     }
   };
@@ -106,10 +100,7 @@ export default function ProductDetailPage() {
       return;
     }
 
-    toast({
-      title: 'Төлбөр төлөх рүү шилжиж байна',
-      description: 'Төлбөр төлөх хуудас руу шилжиж байна...',
-    });
+    toast.info('Төлбөр төлөх рүү шилжиж байна');
   };
 
   const handleToggleFavorite = async () => {
@@ -136,10 +127,8 @@ export default function ProductDetailPage() {
       //   });
       // }
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: error.message || 'Дуртай жагсаалт шинэчлэхэд алдаа гарлаа',
-        variant: 'destructive',
       });
     }
   };

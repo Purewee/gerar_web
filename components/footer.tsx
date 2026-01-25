@@ -1,33 +1,12 @@
-import React from 'react';
-import { Phone, Instagram, Facebook } from 'lucide-react';
+import { Phone, Facebook, Instagram } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
-  const categories = [
-    'Тавилга',
-    'Гэрийн чимэглэл',
-    'Гэрэлтүүлэг',
-    'Орны даавуу & Цамц',
-    'Гал тогоо & Хоолны өрөө',
-    'Угаалгын өрөөний хэрэгсэл',
-    'Хавтас & Цамц',
-    'Хаалга & Хоолой',
-  ];
-
-  const services = [
-    'Бидний тухай',
-    'Нөхцөл ба журам',
-    'Түгээмэл асуулт',
-    'Нууцлалын бодлого',
-    'Цахим хог хаягдлын бодлого',
-    'Цуцлах & Буцаах бодлого',
-  ];
-
   return (
     <footer className="bg-gray-50 border-t border-gray-200">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6 sm:py-14 lg:py-20">
+      <div className="max-w-7xl mx-auto px-6 py-6 md:py-12">
         <div className="flex flex-col md:flex-row gap-6 sm:gap-12 lg:gap-16">
           {/* Left Column - Contact */}
           <div className="space-y-6 max-w-[500px]">

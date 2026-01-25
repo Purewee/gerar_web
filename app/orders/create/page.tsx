@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/toast';
 import { Loader2, User, LogOut, MapPin, ChevronRight } from 'lucide-react';
 import {
   useOrderCreate,
@@ -20,10 +19,10 @@ import {
   type CreateAddressRequest,
 } from '@/lib/api';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 export default function OrderCreatePage() {
   const router = useRouter();
-  const { toast } = useToast();
   const createOrderMutation = useOrderCreate();
   const createAddressMutation = useAddressCreate();
   const {
@@ -162,35 +161,19 @@ export default function OrderCreatePage() {
     khorooOrSoum: string;
   }): boolean => {
     if (!address.fullName.trim()) {
-      toast({
-        title: 'Алдаа',
-        description: 'Бүтэн нэр оруулна уу',
-        variant: 'destructive',
-      });
+      toast.warning('Бүтэн нэр оруулна уу');
       return false;
     }
     if (!address.phoneNumber || address.phoneNumber.length !== 8) {
-      toast({
-        title: 'Алдаа',
-        description: 'Зөв 8 оронтой утасны дугаар оруулна уу',
-        variant: 'destructive',
-      });
+      toast.warning('8 оронтой утасны дугаар оруулна уу');
       return false;
     }
     if (!address.provinceOrDistrict.trim()) {
-      toast({
-        title: 'Алдаа',
-        description: 'Аймаг/Дүүрэг оруулна уу',
-        variant: 'destructive',
-      });
+      toast.warning('Аймаг/Дүүрэг оруулна уу');
       return false;
     }
     if (!address.khorooOrSoum.trim()) {
-      toast({
-        title: 'Алдаа',
-        description: 'Хороо/Сум оруулна уу',
-        variant: 'destructive',
-      });
+      toast.warning('Хороо/Сум оруулна уу');
       return false;
     }
     return true;
@@ -198,10 +181,8 @@ export default function OrderCreatePage() {
 
   const handleCreateOrder = async () => {
     if (cartItems.length === 0) {
-      toast({
-        title: 'Сагс хоосон',
+      toast.warning('Сагс хоосон', {
         description: 'Захиалга үүсгэхийн тулд сагсанд бүтээгдэхүүн байх ёстой',
-        variant: 'destructive',
       });
       router.push('/cart');
       return;
@@ -226,21 +207,13 @@ export default function OrderCreatePage() {
             await refetchAddresses();
           }
         } catch (error: any) {
-          toast({
-            title: 'Алдаа гарлаа',
-            description: error.message || 'Хаяг үүсгэхэд алдаа гарлаа',
-            variant: 'destructive',
-          });
+          toast.error(error.message || 'Хаяг үүсгэхэд алдаа гарлаа');
           return;
         }
       }
 
       if (!addressIdToUse) {
-        toast({
-          title: 'Хаяг сонгоно уу',
-          description: 'Хүргэлтийн хаяг сонгох шаардлагатай',
-          variant: 'destructive',
-        });
+        toast.warning('Хүргэлтийн хаяг сонгоно уу');
         return;
       }
 
@@ -251,18 +224,11 @@ export default function OrderCreatePage() {
         });
 
         if (response.data) {
-          toast({
-            title: 'Захиалга үүслээ',
-            description: 'Захиалга амжилттай үүслээ',
-          });
+          toast.success('Захиалга үүслээ');
           router.push(`/orders/${response.data.id}`);
         }
       } catch (error: any) {
-        toast({
-          title: 'Алдаа гарлаа',
-          description: error.message || 'Захиалга үүсгэхэд алдаа гарлаа',
-          variant: 'destructive',
-        });
+        toast.error(error.message || 'Захиалга үүсгэхэд алдаа гарлаа');
       }
     } else {
       // Guest user flow
@@ -290,18 +256,11 @@ export default function OrderCreatePage() {
         });
 
         if (response.data) {
-          toast({
-            title: 'Захиалга үүслээ',
-            description: 'Захиалга амжилттай үүслээ',
-          });
+          toast.success('Захиалга үүслээ');
           router.push(`/orders/${response.data.id}`);
         }
       } catch (error: any) {
-        toast({
-          title: 'Алдаа гарлаа',
-          description: error.message || 'Захиалга үүсгэхэд алдаа гарлаа',
-          variant: 'destructive',
-        });
+        toast.error(error.message || 'Захиалга үүсгэхэд алдаа гарлаа');
       }
     }
   };

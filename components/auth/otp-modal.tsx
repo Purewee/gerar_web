@@ -13,8 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { useOTPSend, useOTPVerify, type OTPPurpose } from '@/lib/api';
 import { X } from 'lucide-react';
-import { InlineNotification } from './inline-notification';
 import { FieldError } from './field-error';
+import { toast } from 'sonner';
 
 interface OTPModalProps {
   open: boolean;
@@ -40,10 +40,6 @@ export function OTPModal({
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [showMobileInput, setShowMobileInput] = useState(true);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
   const [errors, setErrors] = useState<{ mobile?: string; otp?: string }>({});
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const sendOTPMutation = useOTPSend();
@@ -65,7 +61,6 @@ export function OTPModal({
       setMobileInput('');
       setTimer(60);
       setCanResend(false);
-      setNotification(null);
       setErrors({});
     } else {
       // Clean up when closing
@@ -73,14 +68,12 @@ export function OTPModal({
       setMobileInput('');
       setShowMobileInput(true);
       setMobile('');
-      setNotification(null);
       setErrors({});
     }
   }, [open, purpose]);
 
   const handleMobileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setNotification(null);
     setErrors({});
 
     if (mobileInput.length !== 8) {
@@ -99,10 +92,7 @@ export function OTPModal({
         setShowMobileInput(false);
         setTimer(60);
         setCanResend(false);
-        setNotification({
-          type: 'success',
-          message: `Таны утасны дугаарт ${otpLength} оронтой OTP код илгээгдлээ`,
-        });
+        toast.success(`Таны утасны дугаарт ${otpLength} оронтой OTP код илгээгдлээ`);
       }
     } catch (error: any) {
       setErrors({ mobile: error.message || 'Алдаа гарлаа. Дахин оролдоно уу' });
@@ -155,7 +145,6 @@ export function OTPModal({
   };
 
   const handleVerify = async () => {
-    setNotification(null);
     setErrors({});
     const otpString = otp.join('');
 
@@ -179,10 +168,7 @@ export function OTPModal({
       if (response.data?.verified) {
         // Store OTP verification state
         sessionStorage.setItem('otpVerified', 'true');
-        setNotification({
-          type: 'success',
-          message: 'OTP код амжилттай баталгаажлаа',
-        });
+        toast.success('OTP код амжилттай баталгаажлаа');
 
         onOTPVerified?.(mobile, otpString);
         onOpenChange(false);
@@ -194,7 +180,6 @@ export function OTPModal({
 
   const handleResend = async () => {
     if (!mobile) return;
-    setNotification(null);
     setErrors({});
 
     try {
@@ -206,10 +191,7 @@ export function OTPModal({
         setTimer(60);
         setCanResend(false);
         setOtp(Array(otpLength).fill(''));
-        setNotification({
-          type: 'success',
-          message: `Таны утасны дугаарт ${otpLength} оронтой OTP код дахин илгээгдлээ`,
-        });
+        toast.success(`Таны утасны дугаарт ${otpLength} оронтой OTP код дахин илгээгдлээ`);
       }
     } catch (error: any) {
       setErrors({ otp: error.message || 'Алдаа гарлаа. Дахин оролдоно уу' });
@@ -221,7 +203,6 @@ export function OTPModal({
     setMobileInput('');
     setShowMobileInput(true);
     setMobile('');
-    setNotification(null);
     setErrors({});
     onOpenChange(false);
   };
@@ -267,13 +248,6 @@ export function OTPModal({
         </div>
 
         <div className="px-6 pb-6 space-y-6">
-          {notification && (
-            <InlineNotification
-              type={notification.type}
-              message={notification.message}
-              onClose={() => setNotification(null)}
-            />
-          )}
           {showMobileInput ? (
             <form onSubmit={handleMobileSubmit} className="space-y-5">
               <div className="space-y-2">

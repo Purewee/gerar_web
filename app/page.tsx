@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
 import { useProducts, useCategoryProducts, type Product, type Category } from '@/lib/api';
@@ -9,9 +9,10 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Sparkles, TrendingUp } from 'lucide-react';
 import { ProductSliderSkeleton, CategorySkeleton, Spinner } from '@/components/skeleton';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 // Component to display products from a category
 function CategoryProductsSection({ category }: { category: Category }) {
@@ -81,10 +82,11 @@ function CategoryProductsSection({ category }: { category: Category }) {
               nextEl: `.category-swiper-next-${category.id}`,
             }}
             slidesPerView={2}
+            spaceBetween={16}
             breakpoints={{
               640: { slidesPerView: 3, spaceBetween: 16 },
               768: { slidesPerView: 4, spaceBetween: 16 },
-              1024: { slidesPerView: 5, spaceBetween: 24 },
+              1024: { slidesPerView: 5, spaceBetween: 16 },
             }}
             className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4"
           >
@@ -96,6 +98,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
                   price={parseFloat(product.price)}
                   original={product.originalPrice ? parseFloat(product.originalPrice) : undefined}
                   imageUrl={product.firstImage || product.images?.[0]}
+                  inGrid
                 />
               </SwiperSlide>
             ))}
@@ -108,9 +111,6 @@ function CategoryProductsSection({ category }: { category: Category }) {
 
 export default function Home() {
   const router = useRouter();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch products sorted by newest first - fetch more to have enough for subcategory grouping
   const { data: productsResponse, isLoading: productsLoading } = useProducts({
@@ -156,41 +156,6 @@ export default function Home() {
       imageUrl: product.firstImage || product.images?.[0],
     }));
   }, [products]);
-
-  const restartTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-    if (!isPaused && carouselItems.length > 0) {
-      intervalRef.current = setInterval(() => {
-        setCurrentSlide(prev => (prev + 1) % carouselItems.length);
-      }, 5000);
-    }
-  }, [isPaused, carouselItems.length]);
-
-  useEffect(() => {
-    restartTimer();
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [restartTimer]);
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-    restartTimer();
-  };
-
-  const goToPrevious = () => {
-    setCurrentSlide(prev => (prev - 1 + carouselItems.length) % carouselItems.length);
-    restartTimer();
-  };
-
-  const goToNext = () => {
-    setCurrentSlide(prev => (prev + 1) % carouselItems.length);
-    restartTimer();
-  };
 
   const handleItemClick = (link: string) => {
     router.push(link);
@@ -273,113 +238,100 @@ export default function Home() {
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
       <main>
         {/* Hero Carousel */}
-        <section
-          className="relative overflow-hidden bg-linear-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
+        <section className="relative overflow-hidden bg-linear-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground">
           {/* Animated background pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] bg-size-[20px_20px]"></div>
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] bg-size-[20px_20px]" />
           </div>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6  py-4 sm:py-6 lg:py-8 relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 relative z-10">
             {carouselItems.length > 0 ? (
-              <>
-                <div className="relative min-h-[150px] sm:min-h-[180px] lg:min-h-[200px]">
-                  {/* Navigation Buttons */}
-                  {carouselItems.length > 1 && (
-                    <>
-                      <button
-                        onClick={goToPrevious}
-                        className="absolute left-0 top-[150px] -translate-y-1/2 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 z-30 border border-white/30"
-                        aria-label="Өмнөх слайд"
-                        style={{ transform: 'translateY(-150%) translateX(-150%)' }}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={goToNext}
-                        className="absolute right-0 top-[150px] -translate-y-1/2 p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 z-30 border border-white/30"
-                        aria-label="Дараагийн слайд"
-                        style={{ transform: 'translateY(-150%) translateX(150%)' }}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-
-                  <div className="px-10 sm:px-12 lg:px-14">
-                    {carouselItems.map((item, index) => (
+              <div className="relative hero-carousel">
+                {carouselItems.length > 1 && (
+                  <>
+                    <button
+                      className="hero-swiper-prev absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
+                      aria-label="Өмнөх слайд"
+                    >
+                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                    <button
+                      className="hero-swiper-next absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
+                      aria-label="Дараагийн слайд"
+                    >
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                    </button>
+                  </>
+                )}
+                <Swiper
+                  modules={[Autoplay, Navigation, Pagination]}
+                  navigation={{
+                    prevEl: '.hero-swiper-prev',
+                    nextEl: '.hero-swiper-next',
+                  }}
+                  pagination={{
+                    clickable: true,
+                  }}
+                  // autoplay={{
+                  //   delay: 5000,
+                  //   disableOnInteraction: false,
+                  //   pauseOnMouseEnter: true,
+                  // }}
+                  loop={carouselItems.length > 1}
+                  slidesPerView={1}
+                  spaceBetween={0}
+                  className="hero-carousel min-h-[150px] sm:min-h-[180px] lg:min-h-[200px]"
+                >
+                  {carouselItems.map(item => (
+                    <SwiperSlide key={item.id}>
                       <div
-                        key={item.id}
-                        className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-                          index === currentSlide
-                            ? 'opacity-100 translate-x-0'
-                            : index < currentSlide
-                            ? 'opacity-0 -translate-x-full'
-                            : 'opacity-0 translate-x-full'
-                        }`}
+                        role="button"
+                        tabIndex={0}
+                        className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer group h-full min-h-[180px] lg:min-h-[250px] px-4 sm:px-8 lg:px-20 pb-3 sm:pb-0"
+                        onClick={() => handleItemClick(item.link)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleItemClick(item.link);
+                          }
+                        }}
                       >
-                        <div
-                          className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer group h-full"
-                          onClick={() => handleItemClick(item.link)}
-                        >
-                          <div className="flex-1 text-center lg:text-left space-y-2 lg:space-y-3 animate-in fade-in slide-in-from-left-5 duration-500">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
-                              <Sparkles className="w-3 h-3" />
-                              <span className="opacity-95">{item.subtitle}</span>
-                            </div>
-                            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
-                              {item.title}
-                            </h2>
-                            <div className="inline-block">
-                              <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/30">
-                                {item.discount}
-                              </p>
-                            </div>
+                        <div className="flex-1 text-center lg:text-left space-y-2 lg:space-y-3 order-2 lg:order-1">
+                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
+                            <Sparkles className="w-3 h-3" />
+                            <span className="opacity-95">{item.subtitle}</span>
                           </div>
-                          <div className="flex-1 flex justify-center lg:justify-end w-full lg:w-auto">
-                            <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 group-hover:scale-105 transition-transform duration-500">
-                              {item.imageUrl ? (
-                                <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/20">
-                                  <img
-                                    src={item.imageUrl}
-                                    alt={item.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="absolute inset-0 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl">
-                                  <div className="text-8xl sm:text-9xl opacity-80">🪑</div>
-                                </div>
-                              )}
-                            </div>
+                          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
+                            {item.title}
+                          </h2>
+                          <div className="inline-block">
+                            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/30">
+                              {item.discount}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex-1 flex justify-center lg:justify-end w-full lg:w-auto order-1 lg:order-2">
+                          <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 group-hover:scale-105 transition-transform duration-500">
+                            {item.imageUrl ? (
+                              <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/20">
+                                <img
+                                  src={item.imageUrl}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="absolute inset-0 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl">
+                                <div className="text-8xl sm:text-9xl opacity-80">🪑</div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Indicator Dots */}
-                {carouselItems.length > 1 && (
-                  <div className="flex justify-center lg:justify-start gap-2 mt-4 lg:mt-6 relative z-10">
-                    {carouselItems.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => goToSlide(index)}
-                        className={`transition-all duration-300 rounded-full ${
-                          index === currentSlide
-                            ? 'bg-white w-8 h-2 shadow-lg'
-                            : 'bg-white/50 w-2 h-2 hover:bg-white/70 hover:w-3'
-                        }`}
-                        aria-label={`Слайд ${index + 1} руу шилжих`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </div>
             ) : (
               <div className="min-h-[200px] flex items-center justify-center">
                 <Spinner size="lg" className="border-white/30 border-t-white" />
@@ -435,6 +387,7 @@ export default function Home() {
                     nextEl: '.products-swiper-next',
                   }}
                   slidesPerView={2}
+                  spaceBetween={16}
                   breakpoints={{
                     640: { slidesPerView: 3, spaceBetween: 16 },
                     768: { slidesPerView: 4, spaceBetween: 16 },
@@ -452,6 +405,7 @@ export default function Home() {
                           product.originalPrice ? parseFloat(product.originalPrice) : undefined
                         }
                         imageUrl={product.firstImage || product.images?.[0]}
+                        inGrid
                       />
                     </SwiperSlide>
                   ))}
