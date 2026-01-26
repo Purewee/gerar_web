@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/toast';
 import { User, MapPin, Plus, Edit, Trash2 } from 'lucide-react';
 import {
   useAddresses,
@@ -20,9 +19,9 @@ import {
   type CreateAddressRequest,
 } from '@/lib/api';
 import { AddressCardSkeleton } from '@/components/skeleton';
+import { toast } from 'sonner';
 
 export default function ProfileAddressesPage() {
-  const { toast } = useToast();
   const { data: addressesResponse, isLoading, error } = useAddresses();
   const addresses = addressesResponse?.data || [];
   const createAddressMutation = useAddressCreate();
@@ -41,8 +40,8 @@ export default function ProfileAddressesPage() {
     Array.isArray(khorooResponse.data.khorooOptions)
       ? khorooResponse.data.khorooOptions
       : Array.isArray(khorooResponse?.data)
-        ? khorooResponse.data
-        : [];
+      ? khorooResponse.data
+      : [];
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -107,18 +106,14 @@ export default function ProfileAddressesPage() {
     try {
       if (editingId) {
         await updateAddressMutation.mutateAsync({ id: editingId, data: formData });
-        toast({ title: 'Хаяг шинэчлэгдсэн', description: 'Хаяг амжилттай шинэчлэгдлээ' });
+        toast.success('Хаяг амжилттай шинэчлэгдлээ.');
       } else {
         await createAddressMutation.mutateAsync(formData);
-        toast({ title: 'Хаяг нэмэгдсэн', description: 'Хаяг амжилттай нэмэгдлээ' });
+        toast.success('Хаяг амжилттай нэмэгдлээ.');
       }
       resetForm();
     } catch (err: any) {
-      toast({
-        title: 'Алдаа гарлаа',
-        description: err.message || 'Хаяг хадгалахад алдаа гарлаа',
-        variant: 'destructive',
-      });
+      toast.error(err.message || 'Алдаа гарлаа');
     }
   };
 
@@ -147,26 +142,18 @@ export default function ProfileAddressesPage() {
     if (!confirm('Энэ хаягийг устгахдаа итгэлтэй байна уу?')) return;
     try {
       await deleteAddressMutation.mutateAsync(id);
-      toast({ title: 'Хаяг устгагдсан', description: 'Хаяг амжилттай устгагдлаа' });
+      toast.success('Хаяг амжилттай устгагдлаа');
     } catch (err: any) {
-      toast({
-        title: 'Алдаа гарлаа',
-        description: err.message || 'Хаяг устгахад алдаа гарлаа',
-        variant: 'destructive',
-      });
+      toast.error(err.message || 'Хаяг устгахад алдаа гарлаа');
     }
   };
 
   const handleSetDefault = async (id: number) => {
     try {
       await setDefaultAddressMutation.mutateAsync(id);
-      toast({ title: 'Үндсэн хаяг шинэчлэгдсэн', description: 'Үндсэн хаяг амжилттай шинэчлэгдлээ' });
+      toast('Хаяг амжилттай шинэчлэгдлээ');
     } catch (err: any) {
-      toast({
-        title: 'Алдаа гарлаа',
-        description: err.message || 'Үндсэн хаяг шинэчлэхэд алдаа гарлаа',
-        variant: 'destructive',
-      });
+      toast.error(err.message || 'Үндсэн хаяг шинэчлэхэд алдаа гарлаа');
     }
   };
 
@@ -263,7 +250,9 @@ export default function ProfileAddressesPage() {
                         onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                         required
                         placeholder="Бүтэн нэр *"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                       />
                     </div>
                     <div>
@@ -279,7 +268,9 @@ export default function ProfileAddressesPage() {
                         required
                         placeholder="Утасны дугаар *"
                         maxLength={8}
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                       />
                     </div>
                   </div>
@@ -296,7 +287,9 @@ export default function ProfileAddressesPage() {
                           setFormData({ ...formData, provinceOrDistrict: d });
                         }}
                         required
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <option value="">Аймаг/Дүүрэг сонгох *</option>
@@ -325,8 +318,8 @@ export default function ProfileAddressesPage() {
                           {khorooLoading
                             ? 'Ачаалж байна...'
                             : selectedDistrict
-                              ? 'Хороо/Сум сонгох *'
-                              : 'Эхлээд дүүрэг сонгоно уу'}
+                            ? 'Хороо/Сум сонгох *'
+                            : 'Эхлээд дүүрэг сонгоно уу'}
                         </option>
                         {Array.isArray(khorooOptions) &&
                           khorooOptions.map(k => (
@@ -342,7 +335,9 @@ export default function ProfileAddressesPage() {
                         value={formData.street || ''}
                         onChange={e => setFormData({ ...formData, street: e.target.value })}
                         placeholder="Гудамж (заавал биш)"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                       />
                     </div>
                     <div>
@@ -351,7 +346,9 @@ export default function ProfileAddressesPage() {
                         value={formData.neighborhood || ''}
                         onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
                         placeholder="Хороолол (заавал биш)"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                       />
                     </div>
                   </div>
@@ -366,7 +363,9 @@ export default function ProfileAddressesPage() {
                           setFormData({ ...formData, residentialComplex: e.target.value })
                         }
                         placeholder="Орон сууцны цогцолбор"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                       />
                     </div>
                     <div>
@@ -375,7 +374,9 @@ export default function ProfileAddressesPage() {
                         value={formData.building || ''}
                         onChange={e => setFormData({ ...formData, building: e.target.value })}
                         placeholder="Барилга"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                       />
                     </div>
                     <div>
@@ -384,16 +385,22 @@ export default function ProfileAddressesPage() {
                         value={formData.entrance || ''}
                         onChange={e => setFormData({ ...formData, entrance: e.target.value })}
                         placeholder="Орц"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                       />
                     </div>
                     <div>
                       <Input
                         id="apartmentNumber"
                         value={formData.apartmentNumber || ''}
-                        onChange={e => setFormData({ ...formData, apartmentNumber: e.target.value })}
+                        onChange={e =>
+                          setFormData({ ...formData, apartmentNumber: e.target.value })
+                        }
                         placeholder="Тоот оруулна уу"
-                        disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                        disabled={
+                          createAddressMutation.isPending || updateAddressMutation.isPending
+                        }
                       />
                     </div>
                   </div>
@@ -436,8 +443,8 @@ export default function ProfileAddressesPage() {
                         ? 'Хадгалж байна...'
                         : 'Хадгалах'
                       : createAddressMutation.isPending
-                        ? 'Нэмж байна...'
-                        : 'Нэмэх'}
+                      ? 'Нэмж байна...'
+                      : 'Нэмэх'}
                   </Button>
                   <Button
                     type="button"
@@ -475,7 +482,7 @@ export default function ProfileAddressesPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {addresses.map((address) => (
+            {addresses.map(address => (
               <Card
                 key={address.id}
                 className={`transition-all duration-200 hover:shadow-lg ${
@@ -500,7 +507,9 @@ export default function ProfileAddressesPage() {
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900 mb-1 text-lg">{address.fullName}</p>
+                        <p className="font-semibold text-gray-900 mb-1 text-lg">
+                          {address.fullName}
+                        </p>
                         <p className="text-sm text-gray-600 flex items-center gap-1">
                           <span>📞</span>
                           {address.phoneNumber}

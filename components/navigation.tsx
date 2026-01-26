@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import { OTPModal } from '@/components/auth/otp-modal';
 import { RegisterVerifyModal } from '@/components/auth/register-verify-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 import { Spinner } from '@/components/skeleton';
+import Link from 'next/link';
 
 export function Navigation() {
   const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
@@ -47,6 +48,7 @@ export function Navigation() {
   } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Fetch cart data from API
   const { data: cartResponse } = useCart();
@@ -145,7 +147,31 @@ export function Navigation() {
   // Filter to show only parent categories (parentId === null)
   const categories = allCategories.filter(cat => cat.parentId === null);
 
-  // Auto-select first parent category and first child on mobile when categories load
+  // Get active categoryId from URL
+  const categoryIdParam = searchParams?.get('categoryId');
+  const activeCategoryId = categoryIdParam ? parseInt(categoryIdParam, 10) : null;
+  const isValidCategoryId =
+    activeCategoryId !== null && !isNaN(activeCategoryId) && activeCategoryId > 0;
+  const finalActiveCategoryId = isValidCategoryId ? activeCategoryId : null;
+
+  // Find the active category (could be parent or child)
+  const findActiveCategory = () => {
+    if (!finalActiveCategoryId) return null;
+    // First check if it's a parent category
+    const parentCategory = categories.find(cat => cat.id === finalActiveCategoryId);
+    if (parentCategory) return { category: parentCategory, isChild: false };
+
+    // Then check if it's a child category
+    for (const parent of categories) {
+      const childCategory = parent.children?.find(child => child.id === finalActiveCategoryId);
+      if (childCategory) return { category: childCategory, parent, isChild: true };
+    }
+    return null;
+  };
+
+  const activeCategoryInfo = findActiveCategory();
+
+  // Auto-select category based on URL or first category on mobile when categories load
   useEffect(() => {
     if (hasAutoSelectedCategory || categoriesLoading || categories.length === 0) return;
     if (typeof window === 'undefined') return;
@@ -154,7 +180,28 @@ export function Navigation() {
     const isMobile = window.innerWidth < 1024;
     if (!isMobile) return;
 
-    // Find first parent category with children
+    // If there's an active category from URL, use it
+    if (activeCategoryInfo) {
+      if (activeCategoryInfo.isChild && activeCategoryInfo.parent) {
+        setExpandedCategoryId(activeCategoryInfo.parent.id);
+        setSelectedChildCategoryId(activeCategoryInfo.category.id);
+        setHasAutoSelectedCategory(true);
+        return;
+      } else if (!activeCategoryInfo.isChild) {
+        // If it's a parent category with children, expand it
+        if (
+          activeCategoryInfo.category.children &&
+          activeCategoryInfo.category.children.length > 0
+        ) {
+          setExpandedCategoryId(activeCategoryInfo.category.id);
+          setSelectedChildCategoryId(activeCategoryInfo.category.children[0].id);
+        }
+        setHasAutoSelectedCategory(true);
+        return;
+      }
+    }
+
+    // Fallback: Find first parent category with children
     const firstParentWithChildren = categories.find(cat => cat.children && cat.children.length > 0);
 
     if (
@@ -168,7 +215,7 @@ export function Navigation() {
       const firstChild = firstParentWithChildren.children[0];
       setSelectedChildCategoryId(firstChild.id);
     }
-  }, [categories, categoriesLoading, hasAutoSelectedCategory]);
+  }, [categories, categoriesLoading, hasAutoSelectedCategory, activeCategoryInfo]);
 
   // Get user initials for avatar
   const getUserInitials = (name: string) => {
@@ -182,8 +229,8 @@ export function Navigation() {
 
   return (
     <>
-      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
+      <header className="bg-white backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between py-2 sm:py-3 md:py-5 gap-4">
             {/* Profile Icon - Mobile/Small Screens (Left Side) */}
             <button
@@ -201,16 +248,16 @@ export function Navigation() {
             </button>
 
             {/* Logo */}
-            <a href="/" className="shrink-0 flex items-center">
+            <Link href="/" className="shrink-0 flex items-center">
               <Image
                 src="/logo3.svg"
                 alt="GERAR"
                 width={120}
                 height={40}
                 priority
-                className="w-auto h-7 md:h-10"
+                className="w-[120px] h-7 md:h-10"
               />
-            </a>
+            </Link>
 
             {/* Search Bar */}
             <div className="flex-1 max-w-2xl mx-4 hidden sm:flex">
@@ -289,9 +336,8 @@ export function Navigation() {
               </Button>
             </div>
           </div>
-
           {/* Category Navigation - Desktop */}
-          <nav className="hidden lg:flex items-center gap-2 py-3 border-t border-gray-200/80 relative z-40">
+          <nav className="hidden sm:flex items-center gap-2 py-3 border-t border-gray-200/80 relative z-40">
             {categoriesLoading ? (
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Spinner size="sm" />
@@ -300,13 +346,20 @@ export function Navigation() {
               <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide w-full">
                 {categories.map(category => {
                   const hasChildren = category.children && category.children.length > 0;
+                  const isCategoryActive = finalActiveCategoryId === category.id;
+                  const hasActiveChild =
+                    activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
 
                   if (hasChildren) {
                     return (
                       <DropdownMenu key={category.id}>
                         <DropdownMenuTrigger asChild>
                           <button
-                            className="text-sm font-semibold text-gray-700 hover:text-primary whitespace-nowrap py-2.5 px-4 bg-white border border-gray-200 hover:border-primary/30 data-[state=open]:bg-linear-to-r data-[state=open]:from-primary/10 data-[state=open]:to-primary/5 data-[state=open]:text-primary data-[state=open]:border-primary/30 shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 flex items-center gap-1.5 shrink-0 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5 relative group outline-none focus:outline-none focus-visible:outline-none"
+                            className={`text-sm font-semibold whitespace-nowrap py-2.5 px-4 bg-white border shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 flex items-center gap-1.5 shrink-0 relative group outline-none focus:outline-none focus-visible:outline-none ${
+                              isCategoryActive || hasActiveChild
+                                ? 'text-primary border-primary/30 bg-linear-to-r from-primary/10 to-primary/5'
+                                : 'text-gray-700 hover:text-primary border-gray-200 hover:border-primary/30 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
+                            }`}
                             onBlur={e => {
                               // Remove any lingering focus styles
                               e.currentTarget.style.outline = 'none';
@@ -318,24 +371,41 @@ export function Navigation() {
                               e.currentTarget.style.boxShadow = 'none';
                             }}
                           >
-                            <span className="relative z-10 text-gray-700 group-hover:text-primary data-[state=open]:text-primary">
+                            <span
+                              className={`relative z-10 ${
+                                isCategoryActive || hasActiveChild
+                                  ? 'text-primary'
+                                  : 'text-gray-700 group-hover:text-primary data-[state=open]:text-primary'
+                              }`}
+                            >
                               {category.name}
                             </span>
-                            <ChevronDown className="w-3.5 h-3.5 text-gray-700 group-hover:text-primary transition-transform duration-300 data-[state=open]:rotate-180 data-[state=open]:text-primary relative z-10" />
-                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 transition-transform duration-300 data-[state=open]:rotate-180 relative z-10 ${
+                                isCategoryActive || hasActiveChild
+                                  ? 'text-primary'
+                                  : 'text-gray-700 group-hover:text-primary data-[state=open]:text-primary'
+                              }`}
+                            />
+                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent duration-300 rounded-lg" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-56 min-w-56">
-                          {category.children?.map(child => (
-                            <DropdownMenuItem key={child.id} asChild>
-                              <a
-                                href={`/products?categoryId=${encodeURIComponent(child.id)}`}
-                                className="cursor-pointer w-full"
-                              >
-                                {child.name}
-                              </a>
-                            </DropdownMenuItem>
-                          ))}
+                          {category.children?.map(child => {
+                            const isChildActive = activeCategoryId === child.id;
+                            return (
+                              <DropdownMenuItem key={child.id} asChild>
+                                <a
+                                  href={`/products?categoryId=${encodeURIComponent(child.id)}`}
+                                  className={`cursor-pointer w-full ${
+                                    isChildActive ? 'text-primary font-semibold bg-primary/5' : ''
+                                  }`}
+                                >
+                                  {child.name}
+                                </a>
+                              </DropdownMenuItem>
+                            );
+                          })}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     );
@@ -345,10 +415,16 @@ export function Navigation() {
                     <a
                       key={category.id}
                       href={`/products?categoryId=${encodeURIComponent(category.id)}`}
-                      className="text-sm font-semibold text-gray-700 hover:text-primary whitespace-nowrap py-2.5 px-4 bg-white border border-gray-200 hover:border-primary/30 shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5 shrink-0 relative group"
+                      className={`text-sm font-semibold whitespace-nowrap py-2.5 px-4 bg-white border shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 shrink-0 relative group ${
+                        isCategoryActive
+                          ? 'text-primary border-primary/30 bg-linear-to-r from-primary/10 to-primary/5'
+                          : 'text-gray-700 hover:text-primary border-gray-200 hover:border-primary/30 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
+                      }`}
                     >
                       <span className="relative z-10">{category.name}</span>
-                      <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                      {!isCategoryActive && (
+                        <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent duration-300 rounded-lg" />
+                      )}
                     </a>
                   );
                 })}
@@ -358,14 +434,11 @@ export function Navigation() {
             )}
           </nav>
         </div>
-      </header>
-
-      {/* Mobile Category Menu - Always visible, sticky */}
-      <nav className="lg:hidden bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-[65px] z-30 overflow-x-auto shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
-          <div className="flex flex-col">
+        {/* Category Navigation - Mobile */}
+        <nav className="flex sm:hidden bg-white backdrop-blur-md border-b border-gray-200/80 z-40 shadow-sm">
+          <div className="w-full px-4">
             {/* Categories Row */}
-            <div className="flex items-center gap-2 py-3 overflow-x-auto">
+            <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
               {categoriesLoading ? (
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Spinner size="sm" />
@@ -374,6 +447,9 @@ export function Navigation() {
                 categories.map(category => {
                   const hasChildren = category.children && category.children.length > 0;
                   const isExpanded = expandedCategoryId === category.id;
+                  const isActive = finalActiveCategoryId === category.id;
+                  const hasActiveChild =
+                    activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
 
                   return (
                     <button
@@ -381,7 +457,7 @@ export function Navigation() {
                       onClick={e => {
                         if (hasChildren) {
                           e.preventDefault();
-                          setExpandedCategoryId(isExpanded ? null : category.id);
+                          setExpandedCategoryId(category.id);
                         } else {
                           router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
                         }
@@ -397,7 +473,7 @@ export function Navigation() {
                         e.currentTarget.style.boxShadow = 'none';
                       }}
                       className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-1.5 px-2 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
-                        isExpanded
+                        isExpanded || isActive || hasActiveChild
                           ? 'text-primary bg-linear-to-r from-primary/15 to-primary/5 shadow-sm'
                           : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
                       }`}
@@ -405,13 +481,15 @@ export function Navigation() {
                       <span className="relative z-10">{category.name}</span>
                       {hasChildren && (
                         <ChevronDown
-                          className={`w-3.5 h-3.5 text-gray-700 group-hover:text-primary transition-all duration-300 relative z-10 ${
-                            isExpanded ? 'rotate-180 text-primary' : 'group-hover:translate-y-0.5'
+                          className={`w-3.5 h-3.5 transition-all duration-300 relative z-10 ${
+                            isExpanded || hasActiveChild
+                              ? 'rotate-180 text-primary'
+                              : 'text-gray-700 group-hover:text-primary group-hover:translate-y-0.5'
                           }`}
                         />
                       )}
-                      {!isExpanded && (
-                        <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                      {!isExpanded && !isActive && !hasActiveChild && (
+                        <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent duration-300 rounded-lg" />
                       )}
                     </button>
                   );
@@ -421,41 +499,35 @@ export function Navigation() {
               )}
             </div>
 
-            {/* Children Categories Row - Show when parent is expanded */}
-            {expandedCategoryId !== null && (
-              <div className="flex items-center gap-2 py-2.5 border-t border-gray-200/60 overflow-x-auto">
-                {categories
-                  .find(cat => cat.id === expandedCategoryId)
-                  ?.children?.map(child => {
-                    const isSelected = selectedChildCategoryId === child.id;
-                    return (
-                      <a
-                        key={child.id}
-                        href={`/products?categoryId=${encodeURIComponent(child.id)}`}
-                        className={`text-xs sm:text-sm font-medium whitespace-nowrap py-2 px-3 shrink-0 rounded-lg transition-all duration-200 ${
-                          isSelected
-                            ? 'text-primary bg-primary/10 shadow-sm font-semibold'
-                            : 'text-gray-600 hover:text-primary hover:bg-white/80 hover:shadow-sm'
-                        }`}
-                        onClick={() => {
-                          setExpandedCategoryId(null);
-                          setSelectedChildCategoryId(child.id);
-                        }}
-                      >
-                        {child.name}
-                      </a>
-                    );
-                  })}
-              </div>
-            )}
+            <div className="flex items-center gap-2 py-2.5 border-t border-gray-200/60 overflow-x-auto scrollbar-hide">
+              {categories
+                .find(cat => cat.id === expandedCategoryId)
+                ?.children?.map(child => {
+                  const isSelected = selectedChildCategoryId === child.id;
+                  const isChildActive = activeCategoryId === child.id;
+                  return (
+                    <Link
+                      key={child.id}
+                      href={`/products?categoryId=${encodeURIComponent(child.id)}`}
+                      className={`text-xs sm:text-sm font-medium whitespace-nowrap py-2 px-3 shrink-0 rounded-lg transition-all duration-200 ${
+                        isSelected || isChildActive
+                          ? 'text-primary bg-primary/10 shadow-sm font-semibold'
+                          : 'text-gray-600 hover:text-primary hover:bg-white hover:shadow-sm'
+                      }`}
+                    >
+                      {child.name}
+                    </Link>
+                  );
+                })}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </header>
 
       {/* Mobile Drawer Overlay */}
       {mobileProfileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-101 transition-opacity"
+          className="lg:hidden fixed inset-0 bg-black/50 z-101"
           onClick={() => setMobileProfileMenuOpen(false)}
         />
       )}

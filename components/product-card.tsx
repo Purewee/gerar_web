@@ -2,12 +2,12 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/toast';
 import { useCartAdd, useFavoriteAdd, useFavoriteRemove, useFavoriteStatus } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export interface ProductCardProps {
   id: number;
@@ -32,7 +32,6 @@ export function ProductCard({
   className = '',
   inGrid = false,
 }: ProductCardProps) {
-  const { toast } = useToast();
   const addToCartMutation = useCartAdd();
   const addFavoriteMutation = useFavoriteAdd();
   const removeFavoriteMutation = useFavoriteRemove();
@@ -55,17 +54,11 @@ export function ProductCard({
         productId: id,
         quantity: 1,
       });
-      toast({
-        title: 'Амжилттай',
-        description: `${name} сагсанд нэмэгдлээ`,
-        variant: 'default',
-      });
+      toast.success('Сагсанд нэмэгдсэн');
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: error.message || 'Сагсанд нэмэхэд алдаа гарлаа',
-        variant: 'destructive',
       });
     } finally {
       setIsProcessingCart(false);
@@ -83,25 +76,15 @@ export function ProductCard({
       if (isFavorited) {
         await removeFavoriteMutation.mutateAsync(id);
         setIsFavorited(false);
-        toast({
-          title: 'Амжилттай',
-          description: `${name} дурсамжаас хасагдлаа`,
-          variant: 'default',
-        });
+        toast.success('Амжилттай хасагдлаа');
       } else {
         await addFavoriteMutation.mutateAsync(id);
         setIsFavorited(true);
-        toast({
-          title: 'Амжилттай',
-          description: `${name} дурсамжид нэмэгдлээ`,
-          variant: 'default',
-        });
+        toast.success('Амжилттай нэмэгдлээ');
       }
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
-        description: error.message || 'Дурсамж шинэчлэхэд алдаа гарлаа',
-        variant: 'destructive',
+      toast.error('Алдаа гарлаа', {
+        description: error.message || 'Шинэчлэхэд алдаа гарлаа',
       });
     } finally {
       setIsProcessingFavorite(false);

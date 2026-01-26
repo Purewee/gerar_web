@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
 import { ConditionalNavigation } from '@/components/conditional-navigation';
 import { Providers } from '@/lib/providers';
 import { CategoriesProvider } from '@/components/categories-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 export const metadata: Metadata = {
   title: 'GERAR',

@@ -4,17 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useAuthResetPassword } from '@/lib/api';
 import { X } from 'lucide-react';
-import { InlineNotification } from './inline-notification';
 import { FieldError } from './field-error';
+import { toast } from 'sonner';
 
 interface ResetPasswordModalProps {
   open: boolean;
@@ -33,10 +27,6 @@ export function ResetPasswordModal({
 }: ResetPasswordModalProps) {
   const [newPin, setNewPin] = useState(['', '', '', '']);
   const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
   const [errors, setErrors] = useState<{ newPin?: string; confirmPin?: string }>({});
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const confirmRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -47,7 +37,6 @@ export function ResetPasswordModal({
     if (open) {
       setNewPin(['', '', '', '']);
       setConfirmPin(['', '', '', '']);
-      setNotification(null);
       setErrors({});
     }
   }, [open]);
@@ -67,10 +56,7 @@ export function ResetPasswordModal({
         const pinString = newPin.join('');
         if (confirmString.length === 4 && pinString.length === 4) {
           if (confirmString !== pinString) {
-            setNotification({
-              type: 'error',
-              message: 'Хоёр ПИН код ижил байгаа эсэхийг шалгана уу',
-            });
+            toast.warning('Хоёр ПИН код ижил байгаа эсэхийг шалгана уу');
           }
         }
       }
@@ -105,7 +91,6 @@ export function ResetPasswordModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setNotification(null);
     setErrors({});
 
     const pinString = newPin.join('');
@@ -147,14 +132,10 @@ export function ResetPasswordModal({
         localStorage.setItem('user_name', response.data.user.name);
         window.dispatchEvent(new CustomEvent('authStateChanged'));
 
-        setNotification({
-          type: 'success',
-          message: 'Таны нууц үг амжилттай шинэчлэгдлээ!',
-        });
+        toast.success('Таны нууц үг амжилттай шинэчлэгдлээ!');
 
         setNewPin(['', '', '', '']);
         setConfirmPin(['', '', '', '']);
-        setNotification(null);
         setErrors({});
         onOpenChange(false);
       }
@@ -166,7 +147,6 @@ export function ResetPasswordModal({
   const handleClose = () => {
     setNewPin(['', '', '', '']);
     setConfirmPin(['', '', '', '']);
-    setNotification(null);
     setErrors({});
     onOpenChange(false);
   };
@@ -193,13 +173,6 @@ export function ResetPasswordModal({
         </div>
 
         <div className="px-6 pb-6 space-y-6">
-          {notification && (
-            <InlineNotification
-              type={notification.type}
-              message={notification.message}
-              onClose={() => setNotification(null)}
-            />
-          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-gray-700">Шинэ ПИН код</label>

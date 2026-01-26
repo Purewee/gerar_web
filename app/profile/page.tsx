@@ -5,15 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/toast';
 import { Edit } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ProfilePage() {
   const [mobile, setMobile] = useState('');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [editMode, setEditMode] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     const storedMobile = localStorage.getItem('mobile');
@@ -28,10 +27,7 @@ export default function ProfilePage() {
     localStorage.setItem('user_name', name);
     localStorage.setItem('user_email', email);
     setEditMode(false);
-    toast({
-      title: 'Профайл шинэчлэгдсэн',
-      description: 'Таны профайл амжилттай шинэчлэгдлээ!',
-    });
+    toast.success('Амжилттай шинэчлэгдлээ');
   };
 
   return (

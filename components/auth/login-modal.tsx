@@ -4,11 +4,11 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useAuthLogin } from '@/lib/api';
 import { X } from 'lucide-react';
-import { InlineNotification } from './inline-notification';
 import { FieldError } from './field-error';
+import { toast } from 'sonner';
 
 interface LoginModalProps {
   open: boolean;
@@ -25,10 +25,6 @@ export function LoginModal({
 }: LoginModalProps) {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState(['', '', '', '']);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
   const [errors, setErrors] = useState<{ mobile?: string; password?: string }>({});
 
   const passwordRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -53,7 +49,6 @@ export function LoginModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setNotification(null);
     setErrors({});
 
     const passwordString = password.join('');
@@ -88,13 +83,9 @@ export function LoginModal({
         localStorage.setItem('user_email', response.data.user.email);
         window.dispatchEvent(new CustomEvent('authStateChanged'));
 
-        setNotification({
-          type: 'success',
-          message: `Амжилттай нэвтэрлээ! Тавтай морил, ${response.data.user.name}!`,
-        });
+        toast.success('Амжилттай нэвтэрлээ!');
         setMobile('');
         setPassword(['', '', '', '']);
-        setNotification(null);
         setErrors({});
         onOpenChange(false);
       } else {
@@ -108,7 +99,6 @@ export function LoginModal({
   const handleClose = () => {
     setMobile('');
     setPassword(['', '', '', '']);
-    setNotification(null);
     setErrors({});
     onOpenChange(false);
   };
@@ -135,13 +125,6 @@ export function LoginModal({
         </div>
 
         <div className="px-6 pb-6 space-y-6">
-          {notification && (
-            <InlineNotification
-              type={notification.type}
-              message={notification.message}
-              onClose={() => setNotification(null)}
-            />
-          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="login-mobile" className="block text-sm font-semibold text-gray-700">

@@ -4,11 +4,11 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useOTPSend } from '@/lib/api';
 import { X } from 'lucide-react';
-import { InlineNotification } from './inline-notification';
 import { FieldError } from './field-error';
+import { toast } from 'sonner';
 
 interface RegisterModalProps {
   open: boolean;
@@ -27,10 +27,6 @@ export function RegisterModal({
   const [name, setName] = useState('');
   const [password, setPassword] = useState(['', '', '', '']);
   const [confirmPassword, setConfirmPassword] = useState(['', '', '', '']);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
   const [errors, setErrors] = useState<{
     mobile?: string;
     name?: string;
@@ -93,7 +89,6 @@ export function RegisterModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setNotification(null);
     setErrors({});
 
     const passString = password.join('');
@@ -147,10 +142,7 @@ export function RegisterModal({
       });
 
       if (otpResponse.data) {
-        setNotification({
-          type: 'success',
-          message: 'Таны утасны дугаарт 4 оронтой OTP код илгээгдлээ',
-        });
+        toast.success('Таны утасны дугаарт 4 оронтой OTP код илгээгдлээ');
 
         onOpenChange(false);
         onOTPSent?.(mobile, passString, name.trim());
@@ -165,7 +157,6 @@ export function RegisterModal({
     setName('');
     setPassword(['', '', '', '']);
     setConfirmPassword(['', '', '', '']);
-    setNotification(null);
     setErrors({});
     onOpenChange(false);
   };
@@ -192,13 +183,6 @@ export function RegisterModal({
         </div>
 
         <div className="px-6 pb-6 space-y-5">
-          {notification && (
-            <InlineNotification
-              type={notification.type}
-              message={notification.message}
-              onClose={() => setNotification(null)}
-            />
-          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label

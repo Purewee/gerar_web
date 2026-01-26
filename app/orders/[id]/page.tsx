@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/components/ui/toast';
-import { ArrowLeft, QrCode, Phone, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, QrCode, CheckCircle2, Phone } from 'lucide-react';
 import { useOrder, usePaymentStatus } from '@/lib/api';
 import Image from 'next/image';
 import { CardSkeleton } from '@/components/skeleton';
@@ -14,7 +13,6 @@ import { PaymentModal } from '@/components/payment-modal';
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
   const orderId = parseInt(params.id as string);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
