@@ -116,7 +116,7 @@ export function ProductCard({
               className="relative bg-gray-100 w-full overflow-hidden"
               style={{ aspectRatio: '4/3' }}
             >
-              {/* {isImageUrl ? (
+              {isImageUrl ? (
                 <Image
                   src={imageUrl}
                   alt={name}
@@ -124,12 +124,13 @@ export function ProductCard({
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   fill
                   priority
+                  fetchPriority="high"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl">
                   {displayImage}
                 </div>
-              )} */}
+              )}
 
               {/* Favorite Button - Top Right */}
               <button
