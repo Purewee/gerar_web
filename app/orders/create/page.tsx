@@ -155,7 +155,7 @@ export default function OrderCreatePage() {
       const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
       setSelectedAddressId(defaultAddress.id);
     }
-  }, [addresses, router, toast, selectedAddressId, isAuthenticated, cartItems.length]);
+  }, [addresses, router, selectedAddressId, isAuthenticated, cartItems.length]);
 
   const validateAddress = (address: {
     fullName: string;

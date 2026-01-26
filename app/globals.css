@@ -1,6 +1,5 @@
 /* Fonts loaded asynchronously via link tag in layout.tsx to avoid render-blocking */
 @import 'tailwindcss';
-@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
