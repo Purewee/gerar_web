@@ -151,9 +151,14 @@ export default function OrderDetailPage() {
     return (
       <div className="h-full bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Буцах
+          <Button 
+            variant="ghost" 
+            onClick={() => router.back()} 
+            className="mb-6"
+            aria-label="Өмнөх хуудас руу буцах"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
+            <span>Буцах</span>
           </Button>
 
           <Card className="mb-6">

@@ -1,28 +1,65 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
 import { useProducts, useCategoryProducts, type Product, type Category } from '@/lib/api';
 import { useCategoriesStore } from '@/lib/stores/categories';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Sparkles, TrendingUp } from 'lucide-react';
-import { ProductSliderSkeleton, CategorySkeleton, Spinner } from '@/components/skeleton';
+import Image from 'next/image';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ProductSliderSkeleton, Spinner } from '@/components/skeleton';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 // Component to display products from a category
+// Uses Intersection Observer to lazy load when section comes into view
 function CategoryProductsSection({ category }: { category: Category }) {
-  const { data: categoryProductsResponse, isLoading: categoryProductsLoading } =
-    useCategoryProducts(
-      category.id,
-      true, // include subcategories
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Lazy load category products when section is visible
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }, // Start loading 200px before section is visible
     );
 
+    observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const { data: categoryProductsResponse, isLoading: categoryProductsLoading } =
+    useCategoryProducts(category.id, true, {
+      enabled: isVisible, // Only fetch when section is visible (lazy loading)
+    });
+
   const categoryProducts = categoryProductsResponse?.data || [];
+
+  // Don't render until section is visible (lazy loading)
+  if (!isVisible) {
+    return (
+      <section ref={sectionRef} className="py-6 sm:py-10 lg:py-14 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center gap-3 mb-8">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{category.name}</h2>
+          </div>
+          <ProductSliderSkeleton count={6} />
+        </div>
+      </section>
+    );
+  }
 
   // Only show section if there are products
   if (categoryProductsLoading) {
@@ -43,7 +80,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
   }
 
   return (
-    <section className="py-6 sm:py-10 lg:py-14 bg-white">
+    <section ref={sectionRef} className="py-6 sm:py-10 lg:py-14 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 lg:mb-12 gap-2 sm:gap-4">
           <div>
@@ -55,9 +92,13 @@ function CategoryProductsSection({ category }: { category: Category }) {
           <Link
             href={`/products?categoryId=${category.id}`}
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold text-sm sm:text-base group transition-colors"
+            aria-label={`${category.name} ангиллын бүх бараа харах`}
           >
-            Бүгдийг харах
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span>Бүгдийг харах</span>
+            <ChevronRight
+              className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+              aria-hidden="true"
+            />
           </Link>
         </div>
 
@@ -67,13 +108,13 @@ function CategoryProductsSection({ category }: { category: Category }) {
             className={`category-swiper-prev-${category.id} hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110`}
             aria-label={`${category.name} - Өмнөх бараа`}
           >
-            <ChevronLeft className="w-5 h-5 text-gray-700" />
+            <ChevronLeft className="w-5 h-5 text-gray-700" aria-hidden="true" />
           </button>
           <button
             className={`category-swiper-next-${category.id} hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110`}
             aria-label={`${category.name} - Дараагийн бараа`}
           >
-            <ChevronRight className="w-5 h-5 text-gray-700" />
+            <ChevronRight className="w-5 h-5 text-gray-700" aria-hidden="true" />
           </button>
           <Swiper
             modules={[Navigation]}
@@ -121,7 +162,6 @@ export default function Home() {
 
   // Get categories from store (hydrated by CategoriesProvider)
   const categories = useCategoriesStore(state => state.categories);
-  const categoriesLoading = useCategoriesStore(state => state.isLoading);
 
   const products = productsResponse?.data || [];
 
@@ -164,9 +204,6 @@ export default function Home() {
   // Get top-level categories only
   const topCategories = categories.filter(cat => !cat.parentId).slice(0, 8);
 
-  // Get subcategories (categories with parentId)
-  const subcategories = categories.filter(cat => cat.parentId !== null);
-
   // Create a map of category ID to category for quick lookup
   const categoryMap = useMemo(() => {
     const map = new Map<number, Category>();
@@ -176,63 +213,29 @@ export default function Home() {
     return map;
   }, [categories]);
 
-  // Group products by subcategory
-  const productsBySubcategory = useMemo(() => {
-    const grouped = new Map<
-      number,
-      { subcategory: Category; products: Product[]; parentName?: string }
-    >();
-
-    products.forEach(product => {
-      // Check all categories associated with the product
-      if (product.categories && product.categories.length > 0) {
-        product.categories.forEach(productCategory => {
-          // Find if this category is a subcategory
-          const fullCategory = categoryMap.get(productCategory.id);
-          if (fullCategory && fullCategory.parentId !== null) {
-            // This is a subcategory
-            if (!grouped.has(fullCategory.id)) {
-              const parentCategory = categoryMap.get(fullCategory.parentId);
-              grouped.set(fullCategory.id, {
-                subcategory: fullCategory,
-                products: [],
-                parentName: parentCategory?.name,
-              });
-            }
-            const group = grouped.get(fullCategory.id)!;
-            // Avoid duplicate products
-            if (!group.products.find(p => p.id === product.id)) {
-              group.products.push(product);
-            }
-          }
-        });
+  // Preload first hero image for LCP optimization
+  const firstCarouselImage = carouselItems[0]?.imageUrl;
+  useEffect(() => {
+    if (firstCarouselImage && typeof document !== 'undefined') {
+      // Check if preload link already exists
+      const existingPreload = document.querySelector(
+        `link[rel="preload"][href="${firstCarouselImage}"]`,
+      );
+      if (!existingPreload) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = firstCarouselImage;
+        link.setAttribute('fetchpriority', 'high');
+        // Add imageSizes for responsive images
+        link.setAttribute(
+          'imagesizes',
+          '(max-width: 640px) 128px, (max-width: 1024px) 160px, 192px',
+        );
+        document.head.appendChild(link);
       }
-      // Also check categoryId if categories array is empty
-      else if (product.categoryId) {
-        const fullCategory = categoryMap.get(product.categoryId);
-        if (fullCategory && fullCategory.parentId !== null) {
-          if (!grouped.has(fullCategory.id)) {
-            const parentCategory = categoryMap.get(fullCategory.parentId);
-            grouped.set(fullCategory.id, {
-              subcategory: fullCategory,
-              products: [],
-              parentName: parentCategory?.name,
-            });
-          }
-          const group = grouped.get(fullCategory.id)!;
-          if (!group.products.find(p => p.id === product.id)) {
-            group.products.push(product);
-          }
-        }
-      }
-    });
-
-    // Convert to array and sort by number of products (descending)
-    return Array.from(grouped.values())
-      .filter(group => group.products.length > 0)
-      .sort((a, b) => b.products.length - a.products.length)
-      .slice(0, 8); // Limit to top 8 subcategories with most products
-  }, [products, categoryMap]);
+    }
+  }, [firstCarouselImage]);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
@@ -253,13 +256,13 @@ export default function Home() {
                       className="hero-swiper-prev absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
                       aria-label="Өмнөх слайд"
                     >
-                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                     </button>
                     <button
                       className="hero-swiper-next absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
                       aria-label="Дараагийн слайд"
                     >
-                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                     </button>
                   </>
                 )}
@@ -295,10 +298,11 @@ export default function Home() {
                             handleItemClick(item.link);
                           }
                         }}
+                        aria-label={`${item.title} - Дэлгэрэнгүй мэдээлэл харах`}
                       >
                         <div className="flex-1 text-center lg:text-left space-y-2 lg:space-y-3 order-2 lg:order-1">
                           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
-                            <Sparkles className="w-3 h-3" />
+                            <Sparkles className="w-3 h-3" aria-hidden="true" />
                             <span className="opacity-95">{item.subtitle}</span>
                           </div>
                           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
@@ -314,10 +318,14 @@ export default function Home() {
                           <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 group-hover:scale-105 transition-transform duration-500">
                             {item.imageUrl ? (
                               <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/20">
-                                <img
+                                <Image
                                   src={item.imageUrl}
                                   alt={item.title}
-                                  className="w-full h-full object-cover"
+                                  sizes="(max-width: 640px) 128px, (max-width: 1024px) 160px, 192px"
+                                  className="object-cover"
+                                  priority={item.id === carouselItems[0]?.id}
+                                  fill
+                                  fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
                                 />
                               </div>
                             ) : (
@@ -341,6 +349,7 @@ export default function Home() {
         </section>
 
         {/* Featured Products Section */}
+
         <section className="py-6 sm:py-10 lg:py-14 bg-linear-to-b from-white to-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 lg:mb-12 gap-2 sm:gap-4">
@@ -353,9 +362,13 @@ export default function Home() {
               <Link
                 href="/products"
                 className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold text-sm sm:text-base group transition-colors"
+                aria-label="Сүүлд нэмэгдсэн бүх бараа харах"
               >
-                Бүгдийг харах
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <span>Бүгдийг харах</span>
+                <ChevronRight
+                  className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                  aria-hidden="true"
+                />
               </Link>
             </div>
 
@@ -372,13 +385,13 @@ export default function Home() {
                   className="products-swiper-prev hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
                   aria-label="Өмнөх бараа"
                 >
-                  <ChevronLeft className="w-5 h-5 text-gray-700" />
+                  <ChevronLeft className="w-5 h-5 text-gray-700" aria-hidden="true" />
                 </button>
                 <button
                   className="products-swiper-next hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
                   aria-label="Дараагийн бараа"
                 >
-                  <ChevronRight className="w-5 h-5 text-gray-700" />
+                  <ChevronRight className="w-5 h-5 text-gray-700" aria-hidden="true" />
                 </button>
                 <Swiper
                   modules={[Navigation]}

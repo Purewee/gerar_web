@@ -136,9 +136,14 @@ export default function ProductDetailPage() {
   return (
     <div className="h-full bg-white pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-        <Button onClick={() => router.back()} variant="ghost" className="mb-2 md:mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Буцах
+        <Button
+          onClick={() => router.back()}
+          variant="ghost"
+          className="mb-2 md:mb-6"
+          aria-label="Өмнөх хуудас руу буцах"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
+          <span>Буцах</span>
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -156,6 +161,10 @@ export default function ProductDetailPage() {
                       width={800}
                       height={600}
                       className="w-full h-full object-contain"
+                      priority={selectedImage === 0}
+                      quality={90}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+                      fetchPriority={selectedImage === 0 ? 'high' : 'auto'}
                     />
                   ) : (
                     <div className="text-8xl sm:text-9xl">
@@ -174,17 +183,24 @@ export default function ProductDetailPage() {
                     variant={selectedImage === idx ? 'default' : 'outline'}
                     size="icon"
                     className="h-16 sm:h-20 w-16 sm:w-20"
+                    aria-label={`${product.name} - Зураг ${idx + 1} сонгох`}
+                    aria-pressed={selectedImage === idx}
                   >
                     {img.startsWith('http') || img.startsWith('/') ? (
                       <Image
                         src={img}
-                        alt={`${product.name} ${idx + 1}`}
+                        alt=""
                         width={80}
                         height={80}
                         className="w-full h-full object-cover"
+                        loading="lazy"
+                        quality={75}
+                        aria-hidden="true"
                       />
                     ) : (
-                      <span className="text-3xl">{img}</span>
+                      <span className="text-3xl" aria-hidden="true">
+                        {img}
+                      </span>
                     )}
                   </Button>
                 ))}
@@ -237,12 +253,23 @@ export default function ProductDetailPage() {
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     variant="outline"
                     size="icon"
+                    aria-label="Тоо ширхэг багасгах"
                   >
-                    <Minus className="w-4 h-4" />
+                    <Minus className="w-4 h-4" aria-hidden="true" />
                   </Button>
-                  <span className="text-lg font-semibold w-12 text-center">{quantity}</span>
-                  <Button onClick={() => setQuantity(quantity + 1)} variant="outline" size="icon">
-                    <Plus className="w-4 h-4" />
+                  <span
+                    className="text-lg font-semibold w-12 text-center"
+                    aria-label={`Тоо ширхэг: ${quantity}`}
+                  >
+                    {quantity}
+                  </span>
+                  <Button
+                    onClick={() => setQuantity(quantity + 1)}
+                    variant="outline"
+                    size="icon"
+                    aria-label="Тоо ширхэг нэмэх"
+                  >
+                    <Plus className="w-4 h-4" aria-hidden="true" />
                   </Button>
                 </div>
               </div>
@@ -251,10 +278,16 @@ export default function ProductDetailPage() {
                 variant="outline"
                 size="icon"
                 disabled={addFavoriteMutation.isPending || removeFavoriteMutation.isPending}
+                aria-label={
+                  addFavoriteMutation.isPending || removeFavoriteMutation.isPending
+                    ? 'Хүлээж байна...'
+                    : 'Дуртай жагсаалтад нэмэх'
+                }
               >
                 <Heart
                   className={`w-5 h-5 
                     }`}
+                  aria-hidden="true"
                 />
               </Button>
             </div>
@@ -265,11 +298,21 @@ export default function ProductDetailPage() {
                 variant="outline"
                 className="flex-1"
                 disabled={addToCartMutation.isPending || product.stock === 0}
+                aria-label={
+                  addToCartMutation.isPending
+                    ? 'Сагсанд нэмэж байна...'
+                    : `${product.name} сагсанд нэмэх`
+                }
               >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                {addToCartMutation.isPending ? 'Нэмэж байна...' : 'Сагсанд нэмэх'}
+                <ShoppingCart className="w-4 h-4 mr-2" aria-hidden="true" />
+                <span>{addToCartMutation.isPending ? 'Нэмэж байна...' : 'Сагсанд нэмэх'}</span>
               </Button>
-              <Button onClick={handleBuyNow} className="flex-1" disabled={product.stock === 0}>
+              <Button
+                onClick={handleBuyNow}
+                className="flex-1"
+                disabled={product.stock === 0}
+                aria-label={`${product.name} одоо худалдаж авах`}
+              >
                 Одоо худалдаж авах
               </Button>
             </div>

@@ -136,8 +136,9 @@ function ProductsContent() {
               variant="outline"
               onClick={() => router.back()} 
               className="flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-gray-200 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-200 rounded-lg shadow-sm hover:shadow-md group"
+              aria-label="Өмнөх хуудас руу буцах"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" aria-hidden="true" />
               <span className="font-medium hidden sm:inline">Буцах</span>
             </Button>
             <div className="flex-1 min-w-0">

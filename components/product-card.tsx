@@ -6,7 +6,7 @@ import { useCartAdd, useFavoriteAdd, useFavoriteRemove, useFavoriteStatus } from
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingCart, Heart } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 export interface ProductCardProps {
@@ -105,27 +105,31 @@ export function ProductCard({
           featured ? 'ring-2 ring-primary/20' : ''
         }`}
       >
-        <Link href={`/product/${id}`} className="block h-full">
+        <Link
+          href={`/product/${id}`}
+          className="block h-full"
+          aria-label={`${name} - ${price.toLocaleString()}₮ - Дэлгэрэнгүй мэдээлэл харах`}
+        >
           <CardContent className="flex flex-col h-full p-0">
             {/* Image Section */}
             <div
               className="relative bg-gray-100 w-full overflow-hidden"
               style={{ aspectRatio: '4/3' }}
             >
-              {isImageUrl ? (
+              {/* {isImageUrl ? (
                 <Image
                   src={imageUrl}
                   alt={name}
-                  fill
-                  sizes="(max-width: 640px) 160px, (max-width: 768px) 176px, (max-width: 1024px) 192px, 208px"
+                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  unoptimized
+                  fill
+                  priority
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl">
                   {displayImage}
                 </div>
-              )}
+              )} */}
 
               {/* Favorite Button - Top Right */}
               <button
@@ -178,9 +182,10 @@ export function ProductCard({
                   disabled={isProcessingCart}
                   className="flex-1 h-8 text-xs sm:text-sm font-medium bg-primary-light text-primary-light-foreground"
                   size="sm"
+                  aria-label={`${name} сагсанд нэмэх`}
                 >
-                  <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-                  Сагслах
+                  <ShoppingCart className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+                  <span>Сагслах</span>
                 </Button>
               </div>
             </div>

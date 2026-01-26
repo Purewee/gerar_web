@@ -256,6 +256,7 @@ export function Navigation() {
                 height={40}
                 priority
                 className="w-[120px] h-7 md:h-10"
+                fetchPriority="high"
               />
             </Link>
 
@@ -272,8 +273,9 @@ export function Navigation() {
                 <button
                   type="submit"
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-muted-foreground hover:text-primary hover:bg-gray-100 rounded-md cursor-pointer transition-colors duration-200"
+                  aria-label="Хайх"
                 >
-                  <Search className="w-5 h-5" />
+                  <Search className="w-5 h-5" aria-hidden="true" />
                 </button>
               </form>
             </div>
@@ -325,14 +327,20 @@ export function Navigation() {
                 className="relative hover:bg-gray-100 rounded-lg transition-all duration-200"
                 asChild
               >
-                <a href="/cart">
-                  <ShoppingCart className="w-6 h-6 text-gray-700" />
+                <Link
+                  href="/cart"
+                  aria-label={`Сагс ${cartCount > 0 ? `(${cartCount} зүйл)` : ''}`}
+                >
+                  <ShoppingCart className="w-6 h-6 text-gray-700" aria-hidden="true" />
                   {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center shadow-md animate-in zoom-in-50">
-                      {cartCount > 99 ? '99+' : cartCount}
+                    <span
+                      className="absolute -top-1 -right-1 bg-primary text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center shadow-md animate-in zoom-in-50"
+                      aria-hidden="true"
+                    >
+                      {cartCount > 9 ? '9+' : cartCount}
                     </span>
                   )}
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
@@ -400,6 +408,7 @@ export function Navigation() {
                                   className={`cursor-pointer w-full ${
                                     isChildActive ? 'text-primary font-semibold bg-primary/5' : ''
                                   }`}
+                                  aria-label={`${child.name} ангиллын бараа харах`}
                                 >
                                   {child.name}
                                 </a>
@@ -420,6 +429,8 @@ export function Navigation() {
                           ? 'text-primary border-primary/30 bg-linear-to-r from-primary/10 to-primary/5'
                           : 'text-gray-700 hover:text-primary border-gray-200 hover:border-primary/30 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
                       }`}
+                      aria-label={`${category.name} ангиллын бараа харах`}
+                      aria-current={isCategoryActive ? 'page' : undefined}
                     >
                       <span className="relative z-10">{category.name}</span>
                       {!isCategoryActive && (
@@ -477,6 +488,12 @@ export function Navigation() {
                           ? 'text-primary bg-linear-to-r from-primary/15 to-primary/5 shadow-sm'
                           : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
                       }`}
+                      aria-label={
+                        hasChildren
+                          ? `${category.name} ангиллын дэд ангилал ${isExpanded ? 'хаах' : 'нээх'}`
+                          : `${category.name} ангиллын бараа харах`
+                      }
+                      aria-expanded={hasChildren ? isExpanded : undefined}
                     >
                       <span className="relative z-10">{category.name}</span>
                       {hasChildren && (
@@ -486,6 +503,7 @@ export function Navigation() {
                               ? 'rotate-180 text-primary'
                               : 'text-gray-700 group-hover:text-primary group-hover:translate-y-0.5'
                           }`}
+                          aria-hidden="true"
                         />
                       )}
                       {!isExpanded && !isActive && !hasActiveChild && (
@@ -514,6 +532,8 @@ export function Navigation() {
                           ? 'text-primary bg-primary/10 shadow-sm font-semibold'
                           : 'text-gray-600 hover:text-primary hover:bg-white hover:shadow-sm'
                       }`}
+                      aria-label={`${child.name} ангиллын бараа харах`}
+                      aria-current={isChildActive ? 'page' : undefined}
                     >
                       {child.name}
                     </Link>
@@ -685,8 +705,9 @@ export function Navigation() {
               <button
                 type="submit"
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-muted-foreground hover:text-primary hover:bg-gray-100 rounded-md cursor-pointer transition-colors duration-200"
+                aria-label="Хайх"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-5 h-5" aria-hidden="true" />
               </button>
             </form>
           </div>

@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Force dynamic rendering to prevent build errors
+export const dynamic = 'force-dynamic';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -806,6 +809,8 @@ export default function OrderCreatePage() {
                           width={80}
                           height={80}
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          quality={75}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-2xl">

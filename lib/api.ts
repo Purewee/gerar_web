@@ -583,11 +583,15 @@ export const useCategory = (id: number) => {
   });
 };
 
-export const useCategoryProducts = (id: number, includeSubcategories?: boolean) => {
+export const useCategoryProducts = (
+  id: number,
+  includeSubcategories?: boolean,
+  options?: { enabled?: boolean },
+) => {
   return useQuery({
     queryKey: queryKeys.categories.products(id, includeSubcategories),
     queryFn: () => categoriesApiFunctions.getProducts(id, includeSubcategories),
-    enabled: !!id,
+    enabled: options?.enabled !== undefined ? options.enabled && !!id : !!id,
   });
 };
 

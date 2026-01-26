@@ -144,9 +144,10 @@ export default function CartPage() {
               variant="ghost"
               onClick={() => router.back()}
               className="hidden sm:flex hover:bg-gray-100 transition-colors"
+              aria-label="Өмнөх хуудас руу буцах"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Буцах
+              <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
+              <span>Буцах</span>
             </Button>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-xl">
@@ -266,9 +267,10 @@ export default function CartPage() {
                     variant="ghost"
                     onClick={() => router.push('/products')}
                     className="text-primary hover:text-primary/80 hover:bg-primary/5 transition-colors"
+                    aria-label="Санал болгож буй бүх бараа харах"
                   >
-                    Бүгдийг харах
-                    <ArrowRight className="w-4 h-4 ml-1" />
+                    <span>Бүгдийг харах</span>
+                    <ArrowRight className="w-4 h-4 ml-1" aria-hidden="true" />
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
