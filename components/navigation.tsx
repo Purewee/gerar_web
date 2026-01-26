@@ -49,6 +49,9 @@ export function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  
+  // Hide categories on payment page
+  const hideCategories = pathname?.includes('/payment') || false;
 
   // Fetch cart data from API
   const { data: cartResponse } = useCart();
@@ -345,6 +348,7 @@ export function Navigation() {
             </div>
           </div>
           {/* Category Navigation - Desktop */}
+          {!hideCategories && (
           <nav className="hidden sm:flex items-center gap-2 py-3 border-t border-gray-200/80 relative z-40">
             {categoriesLoading ? (
               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -444,8 +448,10 @@ export function Navigation() {
               <span className="text-sm text-gray-500">Ангилал олдсонгүй</span>
             )}
           </nav>
+          )}
         </div>
         {/* Category Navigation - Mobile */}
+        {!hideCategories && (
         <nav className="flex sm:hidden bg-white backdrop-blur-md border-b border-gray-200/80 z-40 shadow-sm">
           <div className="w-full px-4">
             {/* Categories Row */}
@@ -542,6 +548,7 @@ export function Navigation() {
             </div>
           </div>
         </nav>
+        )}
       </header>
 
       {/* Mobile Drawer Overlay */}
