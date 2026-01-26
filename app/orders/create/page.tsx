@@ -253,9 +253,9 @@ export default function OrderCreatePage() {
         if (response.data) {
           toast({
             title: 'Захиалга үүслээ',
-            description: 'Захиалга амжилттай үүслээ',
+            description: 'Захиалга амжилттай үүслээ. Төлбөр төлөх хуудас руу шилжиж байна...',
           });
-          router.push(`/orders/${response.data.id}`);
+          router.push(`/orders/${response.data.id}/payment`);
         }
       } catch (error: any) {
         toast({
@@ -292,9 +292,9 @@ export default function OrderCreatePage() {
         if (response.data) {
           toast({
             title: 'Захиалга үүслээ',
-            description: 'Захиалга амжилттай үүслээ',
+            description: 'Захиалга амжилттай үүслээ. Төлбөр төлөх хуудас руу шилжиж байна...',
           });
-          router.push(`/orders/${response.data.id}`);
+          router.push(`/orders/${response.data.id}/payment`);
         }
       } catch (error: any) {
         toast({

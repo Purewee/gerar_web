@@ -174,6 +174,7 @@ export function ResetPasswordModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
+        <DialogTitle className="sr-only">Нууц үг солих</DialogTitle>
         <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 p-6 flex items-center justify-between">
           <Image
             src="/logo3.svg"

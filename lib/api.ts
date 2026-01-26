@@ -200,6 +200,7 @@ export const queryKeys = {
     lists: () => [...queryKeys.orders.all, 'list'] as const,
     details: () => [...queryKeys.orders.all, 'detail'] as const,
     detail: (id: number) => [...queryKeys.orders.details(), id] as const,
+    paymentStatus: (id: number) => [...queryKeys.orders.detail(id), 'payment-status'] as const,
   },
 };
 
@@ -1074,6 +1075,13 @@ export interface Order {
   updatedAt: string;
   address?: Address;
   items?: OrderItem[];
+  // QPAY Payment fields
+  qpayInvoiceId?: string | null;
+  qpayPaymentId?: string | null;
+  paymentStatus?: string;
+  paymentMethod?: string | null;
+  paidAt?: string | null;
+  ebarimtId?: string | null;
 }
 
 export interface GuestAddress {
@@ -1172,3 +1180,187 @@ export const useOrderCreate = () => {
 };
 
 export const ordersApi = ordersApiFunctions;
+
+// ==================== PAYMENT ====================
+
+export interface PaymentInitiateResponse {
+  orderId: number;
+  qpayInvoiceId: string;
+  qrCode: string;
+  qrText: string;
+  urls: {
+    web: string;
+    deeplink: string;
+  };
+  paymentStatus: string;
+  amount: number;
+  expiryDate?: string; // ISO 8601 timestamp when QR code expires
+  isExpired?: boolean; // Whether QR code is already expired
+}
+
+export interface PaymentStatusResponse {
+  orderId: number;
+  paymentStatus: string;
+  qpayInvoiceId?: string | null;
+  qpayPaymentId?: string | null;
+  paidAt?: string | null;
+  paymentMethod?: string | null;
+  qpayStatus?: {
+    paymentId: string;
+    status: string;
+    amount: number;
+    paidAt: string;
+  };
+  ebarimtId?: string | null;
+  shouldStopPolling?: boolean; // Backend signals when to stop polling
+}
+
+export interface PaymentCancelResponse {
+  orderId: number;
+  status: string;
+  paymentStatus: string;
+}
+
+export interface PaymentRefundResponse {
+  orderId: number;
+  status: string;
+  paymentStatus: string;
+}
+
+// Payment API functions
+const paymentApiFunctions = {
+  initiate: async (orderId: number): Promise<ApiResponse<PaymentInitiateResponse>> => {
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    if (!token && !sessionToken) {
+      throw new Error('Authentication or session required to initiate payment.');
+    }
+    return apiFetch<PaymentInitiateResponse>(
+      `/orders/${orderId}/initiate-payment`,
+      {
+        method: 'POST',
+      },
+      !!token,
+    );
+  },
+
+  getStatus: async (orderId: number): Promise<ApiResponse<PaymentStatusResponse>> => {
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    if (!token && !sessionToken) {
+      throw new Error('Authentication or session required to check payment status.');
+    }
+    return apiFetch<PaymentStatusResponse>(
+      `/orders/${orderId}/payment-status`,
+      {},
+      !!token,
+    );
+  },
+
+  cancel: async (orderId: number): Promise<ApiResponse<PaymentCancelResponse>> => {
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    if (!token && !sessionToken) {
+      throw new Error('Authentication or session required to cancel payment.');
+    }
+    return apiFetch<PaymentCancelResponse>(
+      `/orders/${orderId}/cancel-payment`,
+      {
+        method: 'POST',
+      },
+      !!token,
+    );
+  },
+
+  refund: async (orderId: number): Promise<ApiResponse<PaymentRefundResponse>> => {
+    requireAuth();
+    return apiFetch<PaymentRefundResponse>(
+      `/orders/${orderId}/refund`,
+      {
+        method: 'POST',
+      },
+      true,
+    );
+  },
+};
+
+// Payment hooks
+export const usePaymentInitiate = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderId: number) => paymentApiFunctions.initiate(orderId),
+    onSuccess: (_, orderId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(orderId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.paymentStatus(orderId) });
+    },
+  });
+};
+
+export const usePaymentStatus = (
+  orderId: number,
+  options?: {
+    stopPollingAfter?: number; // Stop polling after X milliseconds (default: 5 minutes)
+  },
+) => {
+  const token = getAuthToken();
+  const sessionToken = getSessionToken();
+  const stopPollingAfter = options?.stopPollingAfter || 5 * 60 * 1000; // 5 minutes default
+
+  return useQuery({
+    queryKey: queryKeys.orders.paymentStatus(orderId),
+    queryFn: () => paymentApiFunctions.getStatus(orderId),
+    enabled: !!orderId && (!!token || !!sessionToken),
+    refetchInterval: (query) => {
+      const data = query.state.data?.data;
+      
+      // Stop polling if backend signals to stop
+      if (data?.shouldStopPolling) {
+        return false;
+      }
+
+      // Stop polling if payment is paid or cancelled
+      if (data?.paymentStatus === 'PAID' || data?.paymentStatus === 'CANCELLED') {
+        return false;
+      }
+
+      // Stop polling if timeout reached (using dataUpdatedAt from React Query)
+      if (query.state.dataUpdatedAt) {
+        const elapsed = Date.now() - query.state.dataUpdatedAt;
+        if (elapsed >= stopPollingAfter) {
+          return false;
+        }
+      }
+
+      // Poll every 8 seconds if payment is pending (increased from 3 seconds)
+      if (data?.paymentStatus === 'PENDING') {
+        return 8000; // 8 seconds
+      }
+
+      return false;
+    },
+  });
+};
+
+export const usePaymentCancel = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderId: number) => paymentApiFunctions.cancel(orderId),
+    onSuccess: (_, orderId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(orderId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.paymentStatus(orderId) });
+    },
+  });
+};
+
+export const usePaymentRefund = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderId: number) => paymentApiFunctions.refund(orderId),
+    onSuccess: (_, orderId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.detail(orderId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.paymentStatus(orderId) });
+    },
+  });
+};
+
+export const paymentApi = paymentApiFunctions;

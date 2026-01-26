@@ -1,73 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toast';
-import { ArrowLeft, Check, Loader2, MapPin, User, CreditCard } from 'lucide-react';
-import { useOrder, useAddresses, useAddressUpdate } from '@/lib/api';
+import { ArrowLeft, QrCode, Phone, CheckCircle2 } from 'lucide-react';
+import { useOrder, usePaymentStatus } from '@/lib/api';
 import Image from 'next/image';
-import { CardSkeleton, Spinner } from '@/components/skeleton';
-
-type Step = 'location' | 'profile' | 'payment';
+import { CardSkeleton } from '@/components/skeleton';
+import { PaymentModal } from '@/components/payment-modal';
 
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const orderId = parseInt(params.id as string);
-  const [currentStep, setCurrentStep] = useState<Step>('location');
-  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-  const [profileName, setProfileName] = useState('');
-  const [profilePhone, setProfilePhone] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash' | ''>('');
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [hasReachedProfile, setHasReachedProfile] = useState(false);
-  const [hasReachedPayment, setHasReachedPayment] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
-  const { data: orderResponse, isLoading, error } = useOrder(isNaN(orderId) ? 0 : orderId);
+  const { data: orderResponse, isLoading, error } = useOrder(
+    isNaN(orderId) ? 0 : orderId,
+  );
   const order = orderResponse?.data;
 
-  const { data: addressesResponse } = useAddresses();
-  const addresses = addressesResponse?.data || [];
-  const updateAddressMutation = useAddressUpdate();
-
-  useEffect(() => {
-    if (order) {
-      // Set initial address if order has one
-      if (order.addressId && !selectedAddressId) {
-        setSelectedAddressId(order.addressId);
-      }
-      // Load profile info from localStorage
-      const storedName =
-        localStorage.getItem('user_name') || localStorage.getItem('profile_name') || '';
-      const storedPhone = localStorage.getItem('mobile') || '';
-      setProfileName(storedName);
-      setProfilePhone(storedPhone);
-    }
-  }, [order, selectedAddressId]);
-
-  // Determine current step based on order status and completion
-  useEffect(() => {
-    if (!order) return;
-
-    if (order.status !== 'PENDING') {
-      return;
-    }
-
-    if (!order.addressId) {
-      setCurrentStep('location');
-    } else if (!profileName || !profilePhone) {
-      setCurrentStep('profile');
-      setHasReachedProfile(true);
-    } else {
-      setCurrentStep('payment');
-      setHasReachedProfile(true);
-      setHasReachedPayment(true);
-    }
-  }, [order, profileName, profilePhone]);
+  const { data: paymentStatusResponse } = usePaymentStatus(orderId);
+  const paymentStatus =
+    paymentStatusResponse?.data?.paymentStatus || order?.paymentStatus;
 
   if (isLoading) {
     return (
@@ -80,579 +38,331 @@ export default function OrderDetailPage() {
     );
   }
 
-  const handleLocationNext = () => {
-    if (!selectedAddressId) {
-      toast({
-        title: 'Хаяг сонгоно уу',
-        description: 'Хүргэлтийн хаяг сонгох шаардлагатай',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Update order address if different
-    if (order && order.addressId !== selectedAddressId) {
-      // In a real app, you'd update the order's address here
-      // For now, we'll just proceed to next step
-    }
-
-    setHasReachedProfile(true);
-    setCurrentStep('profile');
-  };
-
-  const handleProfileNext = () => {
-    if (!profileName.trim() || !profilePhone.trim()) {
-      toast({
-        title: 'Мэдээлэл дутуу',
-        description: 'Нэр болон утасны дугаар оруулах шаардлагатай',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Save profile info to localStorage
-    localStorage.setItem('user_name', profileName);
-    localStorage.setItem('profile_name', profileName);
-    localStorage.setItem('mobile', profilePhone);
-
-    setHasReachedPayment(true);
-    setCurrentStep('payment');
-  };
-
-  const handlePayment = async () => {
-    if (!paymentMethod) {
-      toast({
-        title: 'Төлбөрийн арга сонгоно уу',
-        description: 'Төлбөрийн арга сонгох шаардлагатай',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsProcessingPayment(true);
-
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessingPayment(false);
-      toast({
-        title: 'Төлбөр амжилттай',
-        description: 'Таны захиалга амжилттай баталгаажлаа',
-      });
-      // Route to order list
-      router.push('/profile/orders');
-    }, 2000);
-  };
-
   if (error || !order) {
     return (
       <div className="min-h-[calc(100vh-525px)] bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Захиалга олдсонгүй</p>
-          <Button onClick={() => router.push('/profile')}>Профайл руу буцах</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // If order is not pending, show read-only view
-  if (order.status !== 'PENDING') {
-    return (
-      <div className="h-full bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Буцах
+          <Button onClick={() => router.push('/profile/orders')}>
+            Миний захиалгууд руу буцах
           </Button>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl sm:text-3xl">Захиалга #{order.id}</CardTitle>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    order.status === 'PENDING'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : order.status === 'COMPLETED'
-                      ? 'bg-green-100 text-green-800'
-                      : order.status === 'CANCELLED'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {order.status}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600">Захиалгын огноо</p>
-                  <p className="font-semibold">
-                    {new Date(order.createdAt).toLocaleDateString('mn-MN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-                {order.deliveryTimeSlot && (
-                  <div>
-                    <p className="text-sm text-gray-600">Хүргэлтийн цаг</p>
-                    <p className="font-semibold">{order.deliveryTimeSlot}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {order.address && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Хүргэлтийн хаяг</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p className="font-semibold">{order.address.fullName}</p>
-                  <p className="text-gray-600">{order.address.phoneNumber}</p>
-                  <p className="text-gray-600">
-                    {order.address.provinceOrDistrict}, {order.address.khorooOrSoum}
-                    {order.address.street && `, ${order.address.street}`}
-                    {order.address.building && `, ${order.address.building}`}
-                    {order.address.apartmentNumber && `, ${order.address.apartmentNumber}`}
-                  </p>
-                  {order.address.addressNote && (
-                    <p className="text-sm text-gray-500 mt-2">
-                      Тэмдэглэл: {order.address.addressNote}
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Захиалгын дэлгэрэнгүй</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {order.items && order.items.length > 0 ? (
-                <div className="space-y-4">
-                  {order.items.map(item => (
-                    <div
-                      key={item.id}
-                      className="flex gap-4 pb-4 border-b border-gray-200 last:border-0"
-                    >
-                      {item.product?.firstImage || item.product?.images?.[0] ? (
-                        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
-                          <Image
-                            src={item.product.firstImage || item.product.images[0]}
-                            alt={item.product.name}
-                            width={80}
-                            height={80}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
-                          <span className="text-2xl">📦</span>
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <h3 className="font-semibold mb-1">
-                          {item.product?.name || 'Бүтээгдэхүүн'}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2">Тоо ширхэг: {item.quantity}</p>
-                        <p className="font-semibold text-lg">
-                          {parseFloat(item.price).toLocaleString()}₮
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg">
-                          {(parseFloat(item.price) * item.quantity).toLocaleString()}₮
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Дэлгэрэнгүй мэдээлэл байхгүй</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center">
-                <span className="text-xl font-semibold">Нийт дүн</span>
-                <span className="text-2xl font-bold text-primary">
-                  {parseFloat(order.totalAmount).toLocaleString()}₮
-                </span>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     );
   }
 
-  // Multi-step flow for pending orders
+  const orderDate = new Date(order.createdAt);
+  const formattedDate = orderDate.toLocaleDateString('mn-MN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const formattedTime = orderDate.toLocaleTimeString('mn-MN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  const isCancelled =
+    order.status === 'CANCELLED' || paymentStatus === 'CANCELLED';
+  const isPaid = paymentStatus === 'PAID' || order.status === 'PAID';
+  const isPending = order.status === 'PENDING' && paymentStatus !== 'PAID';
+
+  // Calculate totals
+  const itemTotal = order.items?.reduce(
+    (sum, item) => sum + parseFloat(item.price) * item.quantity,
+    0,
+  ) || 0;
+  const deliveryFee = 0; // Assuming no delivery fee for now
+  const totalAmount = parseFloat(order.totalAmount) || itemTotal + deliveryFee;
+
   return (
-    <div className="h-full bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <Button variant="ghost" onClick={() => router.back()} className="mb-6">
+    <div className="min-h-[calc(100vh-525px)] bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Header */}
+        <Button
+          variant="ghost"
+          onClick={() => router.push('/profile/orders')}
+          className="mb-6 p-2 h-auto hover:bg-gray-100 rounded-lg transition-colors"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Буцах
+          <span className="text-base font-medium">Миний захиалгууд</span>
         </Button>
 
-        {/* Order Status */}
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl sm:text-3xl">Захиалга #{order.id}</CardTitle>
-              <span className="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
-                PENDING
-              </span>
+        {/* Title Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+              Захиалгын мэдээлэл
+            </h1>
+            <p className="text-sm text-gray-500 sm:hidden">
+              {formattedDate} {formattedTime}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium text-gray-700">
+                {formattedDate}
+              </p>
+              <p className="text-xs text-gray-500">{formattedTime}</p>
             </div>
-          </CardHeader>
-        </Card>
+            {/* Payment Button - Only show if pending and not cancelled */}
+            {isPending && !isCancelled && order.status !== 'CANCELLED' && paymentStatus !== 'CANCELLED' && (
+              <Button
+                onClick={() => setPaymentModalOpen(true)}
+                size="lg"
+                className="w-full sm:w-auto shadow-lg hover:shadow-xl transition-all duration-200 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
+              >
+                <QrCode className="w-4 h-4 mr-2" />
+                Төлбөр төлөх
+              </Button>
+            )}
+            {isPaid && (
+              <div className="px-5 py-2.5 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl w-full sm:w-auto text-center sm:text-left shadow-sm">
+                <p className="text-sm text-green-800 font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Төлөгдсөн
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
 
-        {/* Step Indicator */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row md:items-center justify-between gap-3 md:gap-0">
-              <button
-                type="button"
-                onClick={() => {
-                  if (currentStep === 'profile' || currentStep === 'payment') {
-                    setCurrentStep('location');
-                  }
-                }}
-                className={`flex items-center gap-2 text-left w-full sm:w-auto ${
-                  currentStep === 'profile' || currentStep === 'payment'
-                    ? 'cursor-pointer hover:opacity-80'
-                    : 'cursor-default'
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    currentStep === 'location'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {currentStep !== 'location' && selectedAddressId ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <MapPin className="w-5 h-5" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold">Хаяг</p>
-                  <p className="text-xs text-gray-500">Хүргэлтийн хаяг</p>
-                </div>
-              </button>
-              <div className="flex-1 h-0.5 bg-gray-200 mx-4 shrink-0" />
-              <button
-                type="button"
-                onClick={() => {
-                  if (currentStep === 'payment') {
-                    setCurrentStep('profile');
-                  }
-                }}
-                className={`flex items-center gap-2 text-left w-full sm:w-auto ${
-                  currentStep === 'payment' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
-                }`}
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    currentStep === 'profile'
-                      ? 'bg-primary text-white'
-                      : currentStep === 'payment'
-                      ? 'bg-gray-200 text-gray-600'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {currentStep === 'payment' && profileName ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <User className="w-5 h-5" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold">Профайл</p>
-                  <p className="text-xs text-gray-500">Хувийн мэдээлэл</p>
-                </div>
-              </button>
-              <div className="flex-1 h-0.5 bg-gray-200 mx-4 shrink-0" />
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    currentStep === 'payment'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-semibold">Төлбөр</p>
-                  <p className="text-xs text-gray-500">Төлбөр төлөх</p>
-                </div>
+        {/* Status Banner */}
+        {isCancelled && (
+          <div className="mb-6 p-5 bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-400 flex items-center justify-center mt-0.5">
+                <span className="text-yellow-900 text-xs font-bold">!</span>
+              </div>
+              <div>
+                <p className="font-bold text-yellow-900 mb-1 text-lg">
+                  Захиалга хүчингүй болсон
+                </p>
+                <p className="text-sm text-yellow-800">
+                  Төлбөр төлөгдөөгүй 60 минут өнгөрсөн тул захиалга цуцлагдсан.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Order Summary Card */}
+        <Card className="mb-6 bg-white border-2 border-gray-100 shadow-lg hover:shadow-xl transition-shadow duration-200">
+          <CardContent className="p-6 sm:p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+              Захиалгын дүн
+            </h2>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2">
+                <span className="text-sm text-gray-600">Захиалгын дугаар</span>
+                <span className="font-bold text-lg text-gray-900 bg-gray-50 px-3 py-1 rounded-lg">
+                  R{String(order.id).padStart(9, '0')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-sm text-gray-600">Захиалга хийсэн огноо</span>
+                <span className="font-semibold text-gray-800">
+                  {formattedDate} {formattedTime}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-sm text-gray-600">Барааны дүн</span>
+                <span className="font-semibold text-gray-800">
+                  {itemTotal.toLocaleString()} ¥
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-sm text-gray-600">Дотоодын хүргэлт</span>
+                <span className="font-semibold text-gray-800">
+                  {deliveryFee.toLocaleString()} ¥
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-4 mt-4 border-t-2 border-gray-200">
+                <span className="text-base font-bold text-gray-900">
+                  Нийт төлсөн дүн
+                </span>
+                <span className="font-bold text-2xl text-primary bg-primary/10 px-4 py-2 rounded-lg">
+                  {totalAmount.toLocaleString()} ¥
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Step Content */}
-        {currentStep === 'location' && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Хүргэлтийн хаяг сонгох
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {addresses.length === 0 && !hasReachedProfile ? (
-                <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
-                  <p className="text-gray-600 mb-4">Хаяг байхгүй байна</p>
-                  <Button onClick={() => router.push('/profile/addresses')}>Хаяг нэмэх</Button>
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-3">
-                    {addresses.map(address => (
-                      <div
-                        key={address.id}
-                        onClick={() => !hasReachedProfile && setSelectedAddressId(address.id)}
-                        className={`p-4 border-2 rounded-lg transition-colors ${
-                          selectedAddressId === address.id
-                            ? 'border-primary bg-primary/5'
-                            : 'border-gray-200'
-                        } ${
-                          hasReachedProfile
-                            ? 'cursor-default opacity-90'
-                            : 'cursor-pointer hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <p className="font-semibold">{address.fullName}</p>
-                              {address.isDefault && (
-                                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                  Үндсэн
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600">{address.phoneNumber}</p>
-                            <p className="text-sm text-gray-600">
-                              {address.provinceOrDistrict}, {address.khorooOrSoum}
-                              {address.street && `, ${address.street}`}
-                              {address.building && `, ${address.building}`}
-                              {address.apartmentNumber && `, ${address.apartmentNumber}`}
-                            </p>
-                          </div>
-                          <div
-                            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                              selectedAddressId === address.id
-                                ? 'border-primary bg-primary'
-                                : 'border-gray-300'
-                            }`}
-                          >
-                            {selectedAddressId === address.id && (
-                              <div className="w-2 h-2 rounded-full bg-white" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {!hasReachedProfile && (
-                    <Button
-                      variant="outline"
-                      onClick={() => router.push('/profile/addresses')}
-                      className="w-full"
-                    >
-                      Шинэ хаяг нэмэх
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleLocationNext}
-                    className="w-full"
-                    size="lg"
-                    disabled={!hasReachedProfile && !selectedAddressId}
-                  >
-                    Үргэлжлүүлэх
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {currentStep === 'profile' && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Профайл мэдээлэл
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Нэр</label>
-                <Input
-                  value={profileName}
-                  onChange={e => !hasReachedPayment && setProfileName(e.target.value)}
-                  placeholder="Таны нэр"
-                  disabled={hasReachedPayment}
-                  className={hasReachedPayment ? 'bg-gray-50' : ''}
-                />
+        {/* Product Details Card */}
+        {order.items && order.items.length > 0 && (
+          <Card className="mb-6 bg-white border-2 border-gray-100 shadow-lg hover:shadow-xl transition-shadow duration-200">
+            <CardContent className="p-6 sm:p-8">
+              <div className="mb-6 pb-4 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                  Дижитал бүтээгдэхүүн
+                </h2>
+                <p className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Цахим хаягаар хүргэгдэнэ
+                </p>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Утасны дугаар</label>
-                <Input
-                  value={profilePhone}
-                  onChange={e =>
-                    !hasReachedPayment &&
-                    setProfilePhone(e.target.value.replace(/\D/g, '').slice(0, 8))
-                  }
-                  placeholder="8 оронтой утасны дугаар"
-                  maxLength={8}
-                  disabled={hasReachedPayment}
-                  className={hasReachedPayment ? 'bg-gray-50' : ''}
-                />
-              </div>
-              <Button
-                onClick={handleProfileNext}
-                className="w-full"
-                size="lg"
-                disabled={!hasReachedPayment && (!profileName.trim() || !profilePhone.trim())}
-              >
-                Үргэлжлүүлэх
-              </Button>
-            </CardContent>
-          </Card>
-        )}
 
-        {currentStep === 'payment' && (
-          <>
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5" />
-                  Төлбөр төлөх
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => setPaymentMethod('card')}
-                    className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                      paymentMethod === 'card'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+              <div className="space-y-4">
+                {order.items.map((item, index) => (
+                  <Card
+                    key={item.id}
+                    className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 hover:border-primary/30 transition-all duration-200 hover:shadow-md"
                   >
-                    <CreditCard className="w-8 h-8 mx-auto mb-2" />
-                    <p className="font-semibold">Карт</p>
-                  </button>
-                  <button
-                    onClick={() => setPaymentMethod('cash')}
-                    className={`p-4 border-2 rounded-lg text-center transition-colors ${
-                      paymentMethod === 'cash'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <span className="text-2xl mb-2 block">💵</span>
-                    <p className="font-semibold">Бэлэн мөнгө</p>
-                  </button>
-                </div>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-lg font-semibold">Нийт дүн</span>
-                      <span className="text-2xl font-bold text-primary">
-                        {parseFloat(order.totalAmount).toLocaleString()}₮
-                      </span>
-                    </div>
-                    <Button
-                      onClick={handlePayment}
-                      disabled={!paymentMethod || isProcessingPayment}
-                      className="w-full"
-                      size="lg"
-                    >
-                      {isProcessingPayment ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Төлбөр боловсруулж байна...
-                        </>
-                      ) : (
-                        'Төлбөр төлөх'
-                      )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </CardContent>
-            </Card>
-
-            {/* Order Summary */}
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Захиалгын дэлгэрэнгүй</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {order.items && order.items.length > 0 ? (
-                  <div className="space-y-4">
-                    {order.items.map(item => (
-                      <div
-                        key={item.id}
-                        className="flex gap-4 pb-4 border-b border-gray-200 last:border-0"
-                      >
+                    <CardContent className="p-5">
+                      <div className="flex gap-5">
+                        {/* Product Image */}
                         {item.product?.firstImage || item.product?.images?.[0] ? (
-                          <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                          <div className="w-28 h-28 bg-gray-100 rounded-xl overflow-hidden shrink-0 shadow-md ring-2 ring-gray-100">
                             <Image
-                              src={item.product.firstImage || item.product.images[0]}
+                              src={
+                                item.product.firstImage || item.product.images[0]
+                              }
                               alt={item.product.name}
-                              width={80}
-                              height={80}
+                              width={112}
+                              height={112}
                               className="w-full h-full object-cover"
                             />
                           </div>
                         ) : (
-                          <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
-                            <span className="text-2xl">📦</span>
+                          <div className="w-28 h-28 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center shrink-0 shadow-md">
+                            <span className="text-4xl">📦</span>
                           </div>
                         )}
-                        <div className="flex-1">
-                          <h3 className="font-semibold mb-1">
+
+                        {/* Product Details */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-lg text-gray-900 mb-2">
                             {item.product?.name || 'Бүтээгдэхүүн'}
                           </h3>
-                          <p className="text-sm text-gray-600 mb-2">Тоо ширхэг: {item.quantity}</p>
-                          <p className="font-semibold text-lg">
-                            {parseFloat(item.price).toLocaleString()}₮
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg">
-                            {(parseFloat(item.price) * item.quantity).toLocaleString()}₮
-                          </p>
+                          {item.product?.description && (
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                              {item.product.description}
+                            </p>
+                          )}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                Тоо ширхэг: {item.quantity}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                              <span className="text-sm text-gray-600">
+                                {parseFloat(item.price).toLocaleString()} ¥ × {item.quantity}
+                              </span>
+                              <span className="font-bold text-xl text-primary">
+                                {(parseFloat(item.price) * item.quantity).toLocaleString()} ¥
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-blue-50 px-3 py-1.5 rounded-lg w-fit">
+                            <span>📧</span>
+                            <span className="font-medium">Цахимаар хүргэнэ</span>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">Дэлгэрэнгүй мэдээлэл байхгүй</p>
-                )}
-              </CardContent>
-            </Card>
-          </>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Contact Info */}
+              <div className="flex items-center justify-end gap-2 mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
+                  <Phone className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">7777-8985</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
+
+        {/* Customer Information Card */}
+        <Card className="mb-6 bg-white border-2 border-gray-100 shadow-lg hover:shadow-xl transition-shadow duration-200">
+          <CardContent className="p-6 sm:p-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+              Захиалагчийн мэдээлэл
+            </h2>
+            <div className="flex flex-wrap gap-6 sm:gap-8 justify-between">
+              {/* Овог */}
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 mb-1">Овог</span>
+                <span className="text-sm text-gray-900">
+                  {order.address?.fullName
+                    ? order.address.fullName.split(' ')[0]
+                    : '-'}
+                </span>
+              </div>
+              
+              {/* Нэр */}
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 mb-1">Нэр</span>
+                <span className="text-sm text-gray-900">
+                  {order.address?.fullName
+                    ? order.address.fullName.split(' ').slice(1).join(' ') || '-'
+                    : '-'}
+                </span>
+              </div>
+              
+              {/* Утас */}
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 mb-1">Утас</span>
+                <span className="text-sm text-gray-900">
+                  {order.address?.phoneNumber || 
+                   (typeof window !== 'undefined' && localStorage.getItem('mobile')) || 
+                   '-'}
+                </span>
+              </div>
+              
+              {/* Цахим хаяг */}
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 mb-1">Цахим хаяг</span>
+                <span className="text-sm text-gray-900">
+                  {typeof window !== 'undefined' && localStorage.getItem('user_email') || '-'}
+                </span>
+              </div>
+              
+              {/* Хувь хүн */}
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 mb-1">Хувь хүн</span>
+                <span className="text-sm text-gray-900">-</span>
+              </div>
+            </div>
+            
+            {/* Address section - show below if address exists */}
+            {order.address && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-xs text-gray-500 mb-2">Хаяг</p>
+                <p className="text-sm text-gray-900">
+                  {order.address.provinceOrDistrict}, {order.address.khorooOrSoum}
+                  {order.address.street && `, ${order.address.street}`}
+                  {order.address.building && `, ${order.address.building}`}
+                  {order.address.apartmentNumber &&
+                    `, ${order.address.apartmentNumber}`}
+                </p>
+                {order.address.addressNote && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs font-medium text-blue-900 mb-1">Тэмдэглэл:</p>
+                    <p className="text-sm text-blue-800">{order.address.addressNote}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        orderId={orderId}
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
+        onPaymentSuccess={() => {
+          // Refresh the page or refetch order data
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }
