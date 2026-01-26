@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useToast } from '@/components/ui/toast';
+import { toast } from 'sonner';
 import {
   Loader2,
   CheckCircle2,
@@ -38,7 +38,6 @@ export function PaymentModal({
   onOpenChange,
   onPaymentSuccess,
 }: PaymentModalProps) {
-  const { toast } = useToast();
 
   const { data: orderResponse, isLoading: orderLoading } = useOrder(
     isNaN(orderId) ? 0 : orderId,
@@ -106,10 +105,8 @@ export function PaymentModal({
 
   const handleInitiatePayment = useCallback(async () => {
     if (!orderId || isNaN(orderId)) {
-      toast({
-        title: 'Алдаа',
+      toast.error('Алдаа', {
         description: 'Захиалгын ID олдсонгүй',
-        variant: 'destructive',
       });
       return;
     }
@@ -150,14 +147,11 @@ export function PaymentModal({
             setQrCode(null);
             setExpiryDate(null);
             setTimeRemaining(0);
-            toast({
-              title: 'QR код хүчингүй боллоо',
+            toast.error('QR код хүчингүй боллоо', {
               description: 'QR код хүчингүй болсон. Захиалга цуцлагдсан байна.',
-              variant: 'destructive',
             });
           } else {
-            toast({
-              title: 'Төлбөрийн нэхэмжлэх үүслээ',
+            toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
               description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр QPAY апп ашиглана уу',
             });
           }
@@ -165,10 +159,8 @@ export function PaymentModal({
           // Reset flags so auto-initiation can retry
           initiationAttemptedRef.current = false;
           setHasInitiated(false);
-          toast({
-            title: 'Алдаа гарлаа',
+          toast.error('Алдаа гарлаа', {
             description: 'QR код үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.',
-            variant: 'destructive',
           });
         }
 
@@ -214,13 +206,11 @@ export function PaymentModal({
         errorMessage = 'Захиалга олдсонгүй.';
       }
 
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: errorMessage,
-        variant: 'destructive',
       });
     }
-  }, [orderId, toast, initiatePaymentMutation]);
+  }, [orderId, initiatePaymentMutation]);
 
   // Auto-initiate payment when modal opens
   useEffect(() => {
@@ -307,7 +297,7 @@ export function PaymentModal({
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [expiryDate, qrCode, toast]);
+  }, [expiryDate, qrCode]);
 
   // Auto-open QPAY app on mobile devices when QR code is available
   useEffect(() => {
@@ -338,16 +328,13 @@ export function PaymentModal({
 
     try {
       await cancelPaymentMutation.mutateAsync(orderId);
-      toast({
-        title: 'Төлбөр цуцлагдлаа',
+      toast.success('Төлбөр цуцлагдлаа', {
         description: 'Төлбөрийн нэхэмжлэх амжилттай цуцлагдлаа',
       });
       onOpenChange(false);
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: error.message || 'Төлбөр цуцлахдаа алдаа гарлаа',
-        variant: 'destructive',
       });
     }
   };

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/toast';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Loader2,
@@ -24,7 +24,6 @@ import { CardSkeleton } from '@/components/skeleton';
 export default function PaymentPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
   const orderId = parseInt(params.id as string);
 
   const { data: orderResponse, isLoading: orderLoading } = useOrder(
@@ -91,10 +90,8 @@ export default function PaymentPage() {
 
   const handleInitiatePayment = useCallback(async () => {
     if (!orderId || isNaN(orderId)) {
-      toast({
-        title: 'Алдаа',
+      toast.error('Алдаа', {
         description: 'Захиалгын ID олдсонгүй',
-        variant: 'destructive',
       });
       return;
     }
@@ -139,16 +136,13 @@ export default function PaymentPage() {
             setQrCode(null);
             setExpiryDate(null);
             setTimeRemaining(0);
-            toast({
-              title: 'QR код хүчингүй боллоо',
+            toast.error('QR код хүчингүй боллоо', {
               description: 'QR код хүчингүй болсон. Захиалга цуцлагдсан байна.',
-              variant: 'destructive',
             });
           }
           
           // Show success toast
-          toast({
-            title: 'Төлбөрийн нэхэмжлэх үүслээ',
+          toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
             description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр QPAY апп ашиглана уу',
           });
         } else {
@@ -156,10 +150,8 @@ export default function PaymentPage() {
           // Reset flags so auto-initiation can retry
           initiationAttemptedRef.current = false;
           setHasInitiated(false);
-          toast({
-            title: 'Алдаа гарлаа',
+          toast.error('Алдаа гарлаа', {
             description: 'QR код үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.',
-            variant: 'destructive',
           });
         }
         
@@ -185,13 +177,11 @@ export default function PaymentPage() {
         errorMessage = 'Захиалга олдсонгүй.';
       }
       
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: errorMessage,
-        variant: 'destructive',
       });
     }
-  }, [orderId, toast, initiatePaymentMutation]);
+  }, [orderId, initiatePaymentMutation]);
 
   // Auto-initiate payment when component mounts
   useEffect(() => {
@@ -256,10 +246,8 @@ export default function PaymentPage() {
         setQrCode(null);
         setExpiryDate(null);
         // Order will be automatically cancelled by backend after expiry
-        toast({
-          title: 'QR код хүчингүй боллоо',
+        toast.error('QR код хүчингүй боллоо', {
           description: 'QR код 1 цагийн дараа хүчингүй болсон. Захиалга автоматаар цуцлагдсан байна.',
-          variant: 'destructive',
         });
         // Refetch order status to get updated cancellation status
         setTimeout(() => {
@@ -275,7 +263,7 @@ export default function PaymentPage() {
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [expiryDate, qrCode, toast, router]);
+  }, [expiryDate, qrCode, router]);
 
   // Auto-open QPAY app on mobile devices when QR code is available
   useEffect(() => {
@@ -299,16 +287,13 @@ export default function PaymentPage() {
 
     try {
       await cancelPaymentMutation.mutateAsync(orderId);
-      toast({
-        title: 'Төлбөр цуцлагдлаа',
+      toast.success('Төлбөр цуцлагдлаа', {
         description: 'Төлбөрийн нэхэмжлэх амжилттай цуцлагдлаа',
       });
       router.push(`/orders/${orderId}`);
     } catch (error: any) {
-      toast({
-        title: 'Алдаа гарлаа',
+      toast.error('Алдаа гарлаа', {
         description: error.message || 'Төлбөр цуцлахдаа алдаа гарлаа',
-        variant: 'destructive',
       });
     }
   };
