@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Force dynamic rendering to prevent build errors
+export const dynamic = 'force-dynamic';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -152,7 +155,7 @@ export default function OrderCreatePage() {
       const defaultAddress = addresses.find(addr => addr.isDefault) || addresses[0];
       setSelectedAddressId(defaultAddress.id);
     }
-  }, [addresses, router, toast, selectedAddressId, isAuthenticated, cartItems.length]);
+  }, [addresses, router, selectedAddressId, isAuthenticated, cartItems.length]);
 
   const validateAddress = (address: {
     fullName: string;
@@ -224,11 +227,8 @@ export default function OrderCreatePage() {
         });
 
         if (response.data) {
-          toast({
-            title: 'Захиалга үүслээ',
-            description: 'Захиалга амжилттай үүслээ. Төлбөр төлөх хуудас руу шилжиж байна...',
-          });
-          router.push(`/orders/${response.data.id}/payment`);
+          toast.success('Захиалга үүслээ');
+          router.push(`/orders/${response.data.id}`);
         }
       } catch (error: any) {
         toast.error(error.message || 'Захиалга үүсгэхэд алдаа гарлаа');
@@ -259,11 +259,8 @@ export default function OrderCreatePage() {
         });
 
         if (response.data) {
-          toast({
-            title: 'Захиалга үүслээ',
-            description: 'Захиалга амжилттай үүслээ. Төлбөр төлөх хуудас руу шилжиж байна...',
-          });
-          router.push(`/orders/${response.data.id}/payment`);
+          toast.success('Захиалга үүслээ');
+          router.push(`/orders/${response.data.id}`);
         }
       } catch (error: any) {
         toast.error(error.message || 'Захиалга үүсгэхэд алдаа гарлаа');
@@ -812,6 +809,8 @@ export default function OrderCreatePage() {
                           width={80}
                           height={80}
                           className="w-full h-full object-cover"
+                          loading="lazy"
+                          quality={75}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-2xl">
