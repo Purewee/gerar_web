@@ -122,6 +122,8 @@ export default function CartPage() {
     const originalPrice = item.product?.originalPrice ? parseFloat(item.product.originalPrice) : 0;
     return sum + (originalPrice > price ? (originalPrice - price) * item.quantity : 0);
   }, 0);
+  const deliveryFee = 6000;
+  const total = subtotal + deliveryFee;
   const totalItems = mounted ? cartItems.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
   const handleCheckout = () => {
@@ -136,9 +138,9 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6  py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8 sm:mb-10">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -149,16 +151,16 @@ export default function CartPage() {
               <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
               <span>Буцах</span>
             </Button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-xl">
-                <ShoppingBag className="w-6 h-6 text-primary" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
+                <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                   Сагс
                 </h1>
                 {mounted && totalItems > 0 && (
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
                     {totalItems} {totalItems === 1 ? 'зүйл' : 'зүйл'} сагсанд байна
                   </p>
                 )}
@@ -291,51 +293,51 @@ export default function CartPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-4 sm:space-y-5">
+            <div className="lg:col-span-2 space-y-3 sm:space-y-4">
               {cartItems.map(item => (
                 <Card
                   key={item.id}
-                  className="border border-gray-200 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden bg-white"
+                  className="border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden bg-white"
                 >
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row gap-5">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                       {/* Product Image */}
                       <div className="shrink-0">
-                        <div className="w-full sm:w-28 h-28 bg-linear-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow">
+                        <div className="w-full sm:w-20 h-20 bg-linear-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center overflow-hidden shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow">
                           {item.product?.firstImage || item.product?.images?.[0] ? (
                             <Image
                               src={item.product.firstImage || item.product.images[0]}
                               alt={item.product.name}
-                              width={112}
-                              height={112}
+                              width={80}
+                              height={80}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
-                            <span className="text-5xl">📦</span>
+                            <span className="text-3xl">📦</span>
                           )}
                         </div>
                       </div>
 
                       {/* Product Details */}
-                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1.5 line-clamp-2">
                             {item.product?.name || 'Бүтээгдэхүүн'}
                           </h3>
-                          <div className="flex flex-wrap items-center gap-3 mb-3">
-                            <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="text-lg sm:text-xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                               {parseFloat(item.product?.price || '0').toLocaleString()}₮
                             </span>
                             {item.product?.originalPrice &&
                               parseFloat(item.product.originalPrice) >
                                 parseFloat(item.product.price || '0') && (
                                 <>
-                                  <span className="text-sm text-gray-400 line-through">
+                                  <span className="text-xs sm:text-sm text-gray-400 line-through">
                                     {parseFloat(item.product.originalPrice).toLocaleString()}₮
                                   </span>
-                                  <span className="text-xs sm:text-sm text-white bg-linear-to-r from-green-500 to-green-600 font-semibold px-2.5 py-1 rounded-full">
+                                  <span className="text-xs text-white bg-linear-to-r from-green-500 to-green-600 font-semibold px-2 py-0.5 rounded-full">
                                     {(
                                       (parseFloat(item.product.originalPrice) -
                                         parseFloat(item.product.price || '0')) *
@@ -349,28 +351,28 @@ export default function CartPage() {
                         </div>
 
                         {/* Quantity Controls */}
-                        <div className="flex items-center justify-between sm:justify-end gap-4">
-                          <div className="flex items-center gap-1 bg-gray-50 border-2 border-gray-200 rounded-lg p-1 shadow-inner">
+                        <div className="flex items-center justify-between sm:justify-end gap-3">
+                          <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-lg p-0.5 shadow-inner">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 rounded-lg hover:bg-white hover:shadow-sm transition-all"
+                              className="h-7 w-7 rounded-md hover:bg-white hover:shadow-sm transition-all"
                               onClick={() => handleQuantityChange(item.productId, -1)}
                               disabled={updateCartMutation.isPending}
                             >
-                              <Minus className="w-4 h-4" />
+                              <Minus className="w-3.5 h-3.5" />
                             </Button>
-                            <span className="w-9 text-center font-bold text-gray-900 text-lg">
+                            <span className="w-8 text-center font-bold text-gray-900 text-base">
                               {item.quantity}
                             </span>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 rounded-lg hover:bg-white hover:shadow-sm transition-all"
+                              className="h-7 w-7 rounded-md hover:bg-white hover:shadow-sm transition-all"
                               onClick={() => handleQuantityChange(item.productId, 1)}
                               disabled={updateCartMutation.isPending}
                             >
-                              <Plus className="w-4 h-4" />
+                              <Plus className="w-3.5 h-3.5" />
                             </Button>
                           </div>
 
@@ -378,23 +380,23 @@ export default function CartPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl h-10 w-10 transition-all"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg h-8 w-8 transition-all"
                             onClick={() => handleRemoveItem(item.productId)}
                             disabled={removeCartMutation.isPending}
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
                     </div>
 
                     {/* Item Total */}
-                    <div className="mt-5 flex justify-end">
+                    <div className="mt-3 flex justify-end">
                       <div className="text-right">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide mb-0.5">
                           Нийт дүн
                         </p>
-                        <p className="text-xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                        <p className="text-lg font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                           {(
                             parseFloat(item.product?.price || '0') * item.quantity
                           ).toLocaleString()}
@@ -409,41 +411,41 @@ export default function CartPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <Card className="sticky top-24 shadow-xl bg-linear-to-br from-white to-gray-50/50 backdrop-blur-sm border border-gray-200">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
-                      <ShoppingBag className="w-5 h-5 text-primary" />
+              <Card className="sticky top-20 shadow-lg bg-linear-to-br from-white to-gray-50/50 backdrop-blur-sm border border-gray-200">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="p-1.5 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
+                      <ShoppingBag className="w-4 h-4 text-primary" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">Захиалгын хураангуй</h2>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900">Захиалгын хураангуй</h2>
                   </div>
 
-                  <div className="space-y-4 mb-6 bg-white/60 rounded-2xl p-5 border border-gray-100">
+                  <div className="space-y-2.5 mb-4 bg-white/60 rounded-xl p-3 sm:p-4 border border-gray-100">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600 text-sm">Дэд дүн</span>
-                      <span className="font-semibold text-gray-900">
+                      <span className="text-gray-600 text-xs sm:text-sm">Дэд дүн</span>
+                      <span className="font-semibold text-gray-900 text-sm sm:text-base">
                         {subtotal.toLocaleString()}₮
                       </span>
                     </div>
                     {totalSavings > 0 && (
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600 text-sm">Нийт хэмнэлт</span>
-                        <span className="font-bold text-green-600 text-lg">
+                        <span className="text-gray-600 text-xs sm:text-sm">Нийт хэмнэлт</span>
+                        <span className="font-bold text-green-600 text-sm sm:text-base">
                           -{totalSavings.toLocaleString()}₮
                         </span>
                       </div>
                     )}
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600 text-sm">Хүргэлтийн төлбөр</span>
-                      <span className="font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full text-xs">
-                        ҮНЭГҮЙ
+                      <span className="text-gray-600 text-xs sm:text-sm">Хүргэлтийн төлбөр</span>
+                      <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                        {deliveryFee.toLocaleString()}₮
                       </span>
                     </div>
-                    <div className="border-t-2 border-gray-200 pt-4 mt-4">
+                    <div className="border-t border-gray-200 pt-2.5 mt-2.5">
                       <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-gray-900">Нийт</span>
-                        <span className="text-2xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                          {subtotal.toLocaleString()}₮
+                        <span className="text-base sm:text-lg font-bold text-gray-900">Нийт</span>
+                        <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                          {total.toLocaleString()}₮
                         </span>
                       </div>
                     </div>
@@ -451,7 +453,7 @@ export default function CartPage() {
 
                   <Button
                     onClick={handleCheckout}
-                    className="w-full mb-3 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02] text-base h-12 font-semibold"
+                    className="w-full mb-2 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all transform hover:scale-[1.01] text-sm sm:text-base h-10 sm:h-11 font-semibold"
                     size="lg"
                     disabled={createOrderMutation.isPending || cartItems.length === 0}
                   >
@@ -461,7 +463,7 @@ export default function CartPage() {
                   <Button
                     variant="outline"
                     onClick={() => router.push('/')}
-                    className="w-full mb-3 border-2 hover:bg-gray-50 transition-all h-11"
+                    className="w-full mb-2 border hover:bg-gray-50 transition-all h-9 sm:h-10 text-sm"
                   >
                     Дэлгүүрт үргэлжлүүлэх
                   </Button>
@@ -470,18 +472,18 @@ export default function CartPage() {
                     <Button
                       variant="outline"
                       onClick={handleClearCart}
-                      className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 transition-all h-11"
+                      className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300 transition-all h-9 sm:h-10 text-sm"
                       disabled={clearCartMutation.isPending}
                     >
                       {clearCartMutation.isPending ? 'Цэвэрлэж байна...' : 'Сагс хоослох'}
                     </Button>
                   )}
 
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <div className="flex items-start gap-3 bg-linear-to-br from-green-50 to-green-50/50 rounded-lg p-4 border border-green-100">
-                      <div className="p-1.5 bg-green-100 rounded-lg shrink-0">
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-start gap-2 bg-linear-to-br from-green-50 to-green-50/50 rounded-lg p-3 border border-green-100">
+                      <div className="p-1 bg-green-100 rounded-lg shrink-0">
                         <svg
-                          className="w-5 h-5 text-green-600"
+                          className="w-4 h-4 text-green-600"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -495,7 +497,7 @@ export default function CartPage() {
                         </svg>
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900 mb-1">Аюулгүй төлбөр</p>
+                        <p className="font-bold text-gray-900 text-xs sm:text-sm mb-0.5">Аюулгүй төлбөр</p>
                         <p className="text-xs text-gray-600 leading-relaxed">
                           100% Жинхэнэ бүтээгдэхүүн
                         </p>

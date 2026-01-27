@@ -290,7 +290,7 @@ export default function Home() {
                       <div
                         role="button"
                         tabIndex={0}
-                        className="flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer group h-full min-h-[180px] lg:min-h-[250px] px-4 sm:px-8 lg:px-20 pb-3 sm:pb-0"
+                        className="carousel-slide-item flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer h-full min-h-[180px] lg:min-h-[250px] px-4 sm:px-8 lg:px-20 pb-3 sm:pb-0 [&:hover_.carousel-image-container]:scale-105"
                         onClick={() => handleItemClick(item.link)}
                         onKeyDown={e => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -315,7 +315,7 @@ export default function Home() {
                           </div>
                         </div>
                         <div className="flex-1 flex justify-center lg:justify-end w-full lg:w-auto order-1 lg:order-2">
-                          <div className="relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 group-hover:scale-105 transition-transform duration-500">
+                          <div className="carousel-image-container relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 transition-transform duration-500">
                             {item.imageUrl ? (
                               <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/20">
                                 <Image
@@ -326,6 +326,7 @@ export default function Home() {
                                   priority={item.id === carouselItems[0]?.id}
                                   fill
                                   fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
+                                  unoptimized={item.imageUrl?.includes('localhost') || item.imageUrl?.includes('127.0.0.1') || item.imageUrl?.includes('192.168.1.3')}
                                 />
                               </div>
                             ) : (

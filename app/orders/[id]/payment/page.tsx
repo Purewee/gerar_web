@@ -32,16 +32,20 @@ export default function PaymentPage() {
   const order = orderResponse?.data;
 
   const [qrCode, setQrCode] = useState<string | null>(null);
-  const [paymentUrls, setPaymentUrls] = useState<{
-    web: string;
-    deeplink: string;
-  } | null>(null);
-  const [expiryDate, setExpiryDate] = useState<Date | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [qrText, setQrText] = useState<string | null>(null);
+  const [paymentUrls, setPaymentUrls] = useState<Array<{
+    name: string;
+    description: string;
+    logo: string;
+    link: string;
+  }>>([]);
+  const [webUrl, setWebUrl] = useState<string | null>(null);
   const [hasInitiated, setHasInitiated] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
   const initiationAttemptedRef = useRef(false);
   const pollingStartTimeRef = useRef<number | null>(null);
+  
 
   const initiatePaymentMutation = usePaymentInitiate();
   const {
@@ -49,7 +53,7 @@ export default function PaymentPage() {
     refetch: refetchPaymentStatus,
     isFetching: isFetchingPaymentStatus,
   } = usePaymentStatus(orderId, {
-    stopPollingAfter: 60 * 60 * 1000, // Stop polling after 1 hour (QR code expiry time)
+    stopPollingAfter: 60 * 60 * 1000, // Stop polling after 1 hour
   });
   const cancelPaymentMutation = usePaymentCancel();
 
@@ -62,6 +66,17 @@ export default function PaymentPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Check if mobile device
+  useEffect(() => {
+    if (!mounted) return;
+    const checkMobile = () => {
+      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [mounted]);
 
   // Reset initiation state when order loads with existing invoice but no QR code
   useEffect(() => {
@@ -117,28 +132,22 @@ export default function PaymentPage() {
           setQrCode(response.data.qrCode);
           console.log('QR code state should be set now');
           
-          // Store payment URLs for mobile auto-open
-          if (response.data.urls) {
+          // Store QR text (short URL) if available
+          if (response.data.qrText) {
+            setQrText(response.data.qrText);
+          }
+          
+          // Store payment URLs (array of bank/wallet options)
+          if (response.data.urls && Array.isArray(response.data.urls)) {
+            console.log('Payment URLs received:', response.data.urls);
             setPaymentUrls(response.data.urls);
+          } else {
+            console.warn('No payment URLs in response:', response.data);
           }
-          
-          // Store expiry date if provided
-          if (response.data.expiryDate) {
-            const expiry = new Date(response.data.expiryDate);
-            setExpiryDate(expiry);
-            // Calculate initial time remaining
-            const remaining = Math.max(0, expiry.getTime() - Date.now());
-            setTimeRemaining(remaining);
-          }
-          
-          // Check if already expired from backend
-          if (response.data.isExpired) {
-            setQrCode(null);
-            setExpiryDate(null);
-            setTimeRemaining(0);
-            toast.error('QR код хүчингүй боллоо', {
-              description: 'QR код хүчингүй болсон. Захиалга цуцлагдсан байна.',
-            });
+
+          // Store web URL
+          if (response.data.webUrl) {
+            setWebUrl(response.data.webUrl);
           }
           
           // Show success toast
@@ -156,8 +165,11 @@ export default function PaymentPage() {
         }
         
         // Store payment URLs even if no QR code (for fallback)
-        if (response.data.urls && !response.data.qrCode) {
+        if (response.data.urls && Array.isArray(response.data.urls) && !response.data.qrCode) {
           setPaymentUrls(response.data.urls);
+        }
+        if (response.data.webUrl && !response.data.qrCode) {
+          setWebUrl(response.data.webUrl);
         }
       }
     } catch (error: any) {
@@ -228,57 +240,30 @@ export default function PaymentPage() {
     }
   }, [isPaid, orderId, router]);
 
-  // Countdown timer for QR code expiry
-  useEffect(() => {
-    if (!expiryDate || !qrCode) {
-      setTimeRemaining(null);
-      return;
-    }
-
-    const updateTimer = () => {
-      const now = Date.now();
-      const expiry = expiryDate.getTime();
-      const remaining = Math.max(0, expiry - now);
-      setTimeRemaining(remaining);
-
-      // If expired, clear QR code and stop polling
-      if (remaining === 0) {
-        setQrCode(null);
-        setExpiryDate(null);
-        // Order will be automatically cancelled by backend after expiry
-        toast.error('QR код хүчингүй боллоо', {
-          description: 'QR код 1 цагийн дараа хүчингүй болсон. Захиалга автоматаар цуцлагдсан байна.',
-        });
-        // Refetch order status to get updated cancellation status
-        setTimeout(() => {
-          router.refresh();
-        }, 1000);
-      }
-    };
-
-    // Update immediately
-    updateTimer();
-
-    // Update every second
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
-  }, [expiryDate, qrCode, router]);
 
   // Auto-open QPAY app on mobile devices when QR code is available
   useEffect(() => {
-    if (qrCode && paymentUrls?.deeplink && !isPaid && !isCancelled && timeRemaining !== null && timeRemaining > 0) {
+    if (
+      qrCode &&
+      paymentUrls.length > 0 &&
+      !isPaid &&
+      !isCancelled
+    ) {
       // Check if mobile device
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
-        // Small delay to ensure QR code is visible first
-        const timer = setTimeout(() => {
-          window.location.href = paymentUrls.deeplink!;
-        }, 500);
-        return () => clearTimeout(timer);
+        // Find qPay wallet deeplink
+        const qpayWallet = paymentUrls.find(url => url.name.toLowerCase().includes('qpay') || url.name.toLowerCase().includes('wallet'));
+        if (qpayWallet) {
+          // Small delay to ensure QR code is visible first
+          const timer = setTimeout(() => {
+            window.location.href = qpayWallet.link;
+          }, 500);
+          return () => clearTimeout(timer);
+        }
       }
     }
-  }, [qrCode, paymentUrls?.deeplink, isPaid, isCancelled, timeRemaining]);
+  }, [qrCode, paymentUrls, isPaid, isCancelled]);
 
   const handleCancelPayment = async () => {
     if (!confirm('Та төлбөрийг цуцлахдаа итгэлтэй байна уу?')) {
@@ -425,44 +410,8 @@ export default function PaymentPage() {
                     <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
                     <p className="text-gray-600">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
                   </div>
-                ) : qrCode && timeRemaining !== null && timeRemaining > 0 ? (
+                ) : qrCode ? (
                   <div className="space-y-6">
-                    {/* Expiry Countdown Timer */}
-                    {timeRemaining !== null && (
-                      <div className={`text-center p-3 rounded-lg ${
-                        timeRemaining < 5 * 60 * 1000 
-                          ? 'bg-red-50 border-2 border-red-200' 
-                          : timeRemaining < 15 * 60 * 1000
-                          ? 'bg-yellow-50 border-2 border-yellow-200'
-                          : 'bg-blue-50 border-2 border-blue-200'
-                      }`}>
-                        <p className={`text-sm font-semibold ${
-                          timeRemaining < 5 * 60 * 1000 
-                            ? 'text-red-800' 
-                            : timeRemaining < 15 * 60 * 1000
-                            ? 'text-yellow-800'
-                            : 'text-blue-800'
-                        }`}>
-                          {timeRemaining < 5 * 60 * 1000 
-                            ? '⚠️ QR код удах гэж байна!'
-                            : 'QR код хүчинтэй хугацаа:'}
-                        </p>
-                        <p className={`text-lg font-bold mt-1 ${
-                          timeRemaining < 5 * 60 * 1000 
-                            ? 'text-red-600' 
-                            : timeRemaining < 15 * 60 * 1000
-                            ? 'text-yellow-600'
-                            : 'text-blue-600'
-                        }`}>
-                          {Math.floor(timeRemaining / 60000)}:{String(Math.floor((timeRemaining % 60000) / 1000)).padStart(2, '0')}
-                        </p>
-                        {timeRemaining < 5 * 60 * 1000 && (
-                          <p className="text-xs text-red-700 mt-1">
-                            QR код хүчингүй болсны дараа захиалга автоматаар цуцлагдана
-                          </p>
-                        )}
-                      </div>
-                    )}
 
                     <div className="flex flex-col items-center">
                       <div className="p-4 bg-white rounded-lg border-2 border-gray-200 mb-4 flex items-center justify-center min-h-[300px] min-w-[300px]">
@@ -484,10 +433,90 @@ export default function PaymentPage() {
                       <p className="text-sm text-gray-600 text-center mb-4">
                         QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
                       </p>
+                      
+                      {/* Bank/Wallet Buttons - Mobile Only */}
+                      {isMobile && paymentUrls.length > 0 && (
+                        <div className="w-full max-w-[340px] mt-2">
+                          {/* Section Header */}
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
+                              Банкны апп сонгох
+                            </span>
+                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                          </div>
+                          
+                          {/* Bank Apps Grid */}
+                          <div className="grid grid-cols-4 gap-3">
+                            {paymentUrls.map((url, index) => (
+                              <button
+                                key={index}
+                                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border-2 border-gray-100 hover:border-primary/30 hover:bg-primary/5 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+                                onClick={() => {
+                                  console.log('Opening bank/wallet:', url.name, url.link);
+                                  window.location.href = url.link;
+                                }}
+                              >
+                                <div className="w-12 h-12 rounded-xl bg-gray-50 group-hover:bg-white flex items-center justify-center overflow-hidden transition-colors shadow-inner">
+                                  {url.logo ? (
+                                    <img
+                                      src={url.logo}
+                                      alt={url.name}
+                                      className="w-10 h-10 object-contain"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = `<span class="text-lg font-bold text-gray-400">${url.name.charAt(0)}</span>`;
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <span className="text-lg font-bold text-gray-400">{url.name.charAt(0)}</span>
+                                  )}
+                                </div>
+                                <span className="text-[10px] font-medium text-gray-600 text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                                  {url.name}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Web URL Button */}
+                          {webUrl && (
+                            <Button
+                              variant="ghost"
+                              className="w-full mt-4 text-gray-500 hover:text-gray-700"
+                              size="sm"
+                              onClick={() => {
+                                console.log('Opening web URL:', webUrl);
+                                window.open(webUrl, '_blank', 'noopener,noreferrer');
+                              }}
+                            >
+                              <span className="text-xs">Веб хуудсаар төлөх →</span>
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {isMobile && !paymentUrls.length && webUrl && (
+                        <div className="w-full max-w-[300px] mt-2">
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              console.log('Opening web URL:', webUrl);
+                              window.open(webUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                          >
+                            Веб хуудас нээх
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Refresh Status Button */}
-                    {!shouldStopPolling && timeRemaining !== null && timeRemaining > 0 && (
+                    {!shouldStopPolling && (
                       <div className="flex justify-center">
                         <Button
                           variant="outline"
@@ -510,31 +539,6 @@ export default function PaymentPage() {
                         </p>
                       </div>
                     )}
-                  </div>
-                ) : qrCode && timeRemaining !== null && timeRemaining === 0 ? (
-                  <div className="text-center py-12">
-                    <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-red-800 mb-2">
-                      QR код хүчингүй боллоо
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      QR код 1 цагийн дараа хүчингүй болсон. Захиалга автоматаар цуцлагдсан байна.
-                    </p>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Шинэ захиалга үүсгэх бол дахин оролдоно уу.
-                    </p>
-                    <Button
-                      onClick={() => {
-                        initiationAttemptedRef.current = false;
-                        setHasInitiated(false);
-                        setQrCode(null);
-                        setExpiryDate(null);
-                        setTimeRemaining(null);
-                        handleInitiatePayment();
-                      }}
-                    >
-                      Шинэ QR код үүсгэх
-                    </Button>
                   </div>
                 ) : (
                   <div className="text-center py-12">

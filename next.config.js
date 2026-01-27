@@ -9,7 +9,25 @@ const nextConfig = {
           protocol: "https",
           hostname: "cdn.emartmall.mn",
         },
+        {
+          protocol: "https",
+          hostname: "api.gerar.mn",
+        },
+        {
+          protocol: "http",
+          hostname: "localhost",
+        },
+        {
+          protocol: "http",
+          hostname: "127.0.0.1",
+        },
+        {
+          protocol: "http",
+          hostname: "192.168.1.3",
+        },
       ],
+      // Disable optimization for development to avoid localhost private IP resolution issues
+      unoptimized: process.env.NODE_ENV === 'development',
     },
     // Optimize build size
     compress: true,

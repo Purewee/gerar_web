@@ -4,8 +4,50 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOrders } from '@/lib/api';
-import { MapPin, ShoppingBag } from 'lucide-react';
+import { MapPin, ShoppingBag, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { OrderCardSkeleton } from '@/components/skeleton';
+
+// Mongolian month names
+const MONTHS_MN = [
+  '1 сарын',
+  '2 сарын',
+  '3 сарын',
+  '4 сарын',
+  '5 сарын',
+  '6 сарын',
+  '7 сарын',
+  '8 сарын',
+  '9 сарын',
+  '10 сарын',
+  '11 сарын',
+  '12 сарын',
+];
+
+// Format date in Mongolian
+function formatDateMongolian(date: Date): string {
+  const day = date.getDate();
+  const month = MONTHS_MN[date.getMonth()];
+  const year = date.getFullYear();
+  return `${year} оны ${month} ${day}`;
+}
+
+const ORDER_STATUS: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; className: string }> = {
+  PENDING: {
+    label: 'Хүлээгдэж байна',
+    icon: Clock,
+    className: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  },
+  PAID: {
+    label: 'Төлөгдсөн',
+    icon: CheckCircle2,
+    className: 'bg-green-50 text-green-700 border-green-200',
+  },
+  CANCELLED: {
+    label: 'Цуцлагдсан',
+    icon: XCircle,
+    className: 'bg-red-50 text-red-700 border-red-200',
+  },
+};
 
 export default function ProfileOrdersPage() {
   const { data: ordersResponse, isLoading, error } = useOrders();
@@ -82,56 +124,68 @@ export default function ProfileOrdersPage() {
       <CardContent className="p-6 lg:p-8">
         <div className="flex flex-col space-y-4">
           {orders.map(order => (
-            <Link key={order.id} href={`/orders/${order.id}`}>
-              <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200 hover:border-primary/30">
-                <CardContent className="p-5 sm:p-6">
+            <Link key={order.id} href={`/orders/${order.id}`} className="group">
+              <Card className="relative overflow-hidden transition-all duration-300 border border-gray-200 hover:border-primary/40 hover:shadow-xl hover:-translate-y-0.5">
+                
+                {/* hover glow */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-linear-to-r from-primary/5 to-transparent" />
+            
+                <CardContent className="relative p-5 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex-1 space-y-2">
+                    
+                    {/* LEFT */}
+                    <div className="space-y-2">
                       <div className="flex items-center gap-3 flex-wrap">
                         <h3 className="text-lg font-semibold text-gray-900">
                           Захиалга #{order.id}
                         </h3>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            order.status === 'PENDING'
-                              ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                              : order.status === 'COMPLETED'
-                              ? 'bg-green-100 text-green-800 border border-green-200'
-                              : order.status === 'CANCELLED'
-                              ? 'bg-red-100 text-red-800 border border-red-200'
-                              : 'bg-gray-100 text-gray-800 border border-gray-200'
-                          }`}
-                        >
-                          {order.status}
-                        </span>
+            
+                        {(() => {
+                          const status = ORDER_STATUS[order.status];
+                          const IconComponent = status?.icon;
+                          return (
+                            <span
+                              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${status?.className || 'bg-gray-50 text-gray-700 border-gray-200'}`}
+                            >
+                              {IconComponent && <IconComponent className="w-3 h-3" />}
+                              {status?.label ?? order.status}
+                            </span>
+                          );
+                        })()}
                       </div>
-                      <p className="text-sm text-gray-600 flex items-center gap-1">
-                        <span>📅</span>
-                        {new Date(order.createdAt).toLocaleDateString('mn-MN', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
+            
+                      <p className="text-sm text-gray-500 flex items-center gap-1">
+                        📅{' '}
+                        {formatDateMongolian(new Date(order.createdAt))}
                       </p>
+            
                       {order.address && (
-                        <p className="text-sm text-gray-600 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
+                        <p className="text-sm text-gray-500 flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5" />
                           {order.address.provinceOrDistrict}, {order.address.khorooOrSoum}
                         </p>
                       )}
+            
                       {order.items && order.items.length > 0 && (
-                        <p className="text-sm text-gray-500">{order.items.length} зүйл</p>
+                        <p className="text-xs text-gray-400">
+                          {order.items?.length ?? 0} бүтээгдэхүүн
+                        </p>
                       )}
                     </div>
-                    <div className="text-right sm:text-left sm:min-w-[120px]">
+            
+                    {/* RIGHT */}
+                    <div className="sm:text-right">
                       <p className="text-2xl font-bold text-primary">
-                        {parseFloat(order.totalAmount).toLocaleString()}₮
+                        {Number(order.totalAmount).toLocaleString()}₮
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Дэлгэрэнгүй харах →
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </Link>
+          </Link>
           ))}
         </div>
       </CardContent>

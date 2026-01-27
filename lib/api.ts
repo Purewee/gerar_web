@@ -84,7 +84,7 @@ function clearAuthAndUserData(): void {
 function requireAuth(): void {
   const token = getAuthToken();
   if (!token) {
-    throw new Error('Authentication required. Please log in.');
+    throw new Error('Та нэвтэрч орно уу.');
   }
 }
 
@@ -1110,6 +1110,7 @@ export interface CreateOrderRequest {
   sessionToken?: string;
   address?: GuestAddress;
   // Common
+  deliveryDate?: string;
   deliveryTimeSlot?: '10-14' | '14-18' | '18-21' | '21-00';
 }
 
@@ -1187,19 +1188,22 @@ export const ordersApi = ordersApiFunctions;
 
 // ==================== PAYMENT ====================
 
+export interface PaymentUrl {
+  name: string;
+  description: string;
+  logo: string;
+  link: string;
+}
+
 export interface PaymentInitiateResponse {
   orderId: number;
   qpayInvoiceId: string;
   qrCode: string;
   qrText: string;
-  urls: {
-    web: string;
-    deeplink: string;
-  };
+  urls: PaymentUrl[];
+  webUrl: string;
   paymentStatus: string;
   amount: number;
-  expiryDate?: string; // ISO 8601 timestamp when QR code expires
-  isExpired?: boolean; // Whether QR code is already expired
 }
 
 export interface PaymentStatusResponse {
@@ -1217,6 +1221,8 @@ export interface PaymentStatusResponse {
   };
   ebarimtId?: string | null;
   shouldStopPolling?: boolean; // Backend signals when to stop polling
+  cached?: boolean; // Optional: true if response came from cache
+  rateLimited?: boolean; // Optional: true if QPAY API check was skipped due to rate limiting
 }
 
 export interface PaymentCancelResponse {
@@ -1300,6 +1306,9 @@ export const usePaymentInitiate = () => {
   });
 };
 
+// Module-level tracking for polling state per orderId
+const pollingStateMap = new Map<number, { startTime: number; attemptCount: number }>();
+
 export const usePaymentStatus = (
   orderId: number,
   options?: {
@@ -1312,35 +1321,73 @@ export const usePaymentStatus = (
 
   return useQuery({
     queryKey: queryKeys.orders.paymentStatus(orderId),
-    queryFn: () => paymentApiFunctions.getStatus(orderId),
+    queryFn: () => {
+      // Initialize or get polling state for this orderId
+      if (!pollingStateMap.has(orderId)) {
+        pollingStateMap.set(orderId, { startTime: Date.now(), attemptCount: 0 });
+      }
+      const state = pollingStateMap.get(orderId)!;
+      state.attemptCount += 1;
+      return paymentApiFunctions.getStatus(orderId);
+    },
     enabled: !!orderId && (!!token || !!sessionToken),
     refetchInterval: (query) => {
       const data = query.state.data?.data;
       
       // Stop polling if backend signals to stop
       if (data?.shouldStopPolling) {
+        pollingStateMap.delete(orderId);
         return false;
       }
 
       // Stop polling if payment is paid or cancelled
       if (data?.paymentStatus === 'PAID' || data?.paymentStatus === 'CANCELLED') {
+        pollingStateMap.delete(orderId);
         return false;
       }
 
-      // Stop polling if timeout reached (using dataUpdatedAt from React Query)
-      if (query.state.dataUpdatedAt) {
-        const elapsed = Date.now() - query.state.dataUpdatedAt;
-        if (elapsed >= stopPollingAfter) {
-          return false;
-        }
+      // Get polling state
+      const pollingState = pollingStateMap.get(orderId);
+      if (!pollingState) {
+        return false;
       }
 
-      // Poll every 8 seconds if payment is pending (increased from 3 seconds)
-      if (data?.paymentStatus === 'PENDING') {
-        return 8000; // 8 seconds
+      // Stop polling if timeout reached
+      const elapsed = Date.now() - pollingState.startTime;
+      if (elapsed >= stopPollingAfter) {
+        pollingStateMap.delete(orderId);
+        return false;
       }
 
-      return false;
+      // Only poll if payment is pending
+      if (data?.paymentStatus !== 'PENDING') {
+        return false;
+      }
+
+      // Exponential backoff strategy:
+      // First 5 checks: 8 seconds
+      // Next 5 checks: 15 seconds
+      // After 10 checks: 30 seconds
+      // Maximum: 60 seconds
+      let interval: number;
+      const attemptCount = pollingState.attemptCount;
+      
+      if (attemptCount <= 5) {
+        interval = 8000; // 8 seconds
+      } else if (attemptCount <= 10) {
+        interval = 15000; // 15 seconds
+      } else {
+        // After 10 checks, use 30 seconds, then gradually increase to max 60s
+        const additionalChecks = attemptCount - 10;
+        interval = Math.min(30000 + (additionalChecks * 5000), 60000); // Max 60 seconds
+      }
+
+      // If rate limited, increase interval temporarily (double it, max 60s)
+      if (data?.rateLimited) {
+        interval = Math.min(interval * 2, 60000);
+      }
+
+      return interval;
     },
   });
 };
