@@ -80,6 +80,8 @@ export interface Product {
   categoryId: number | null;
   category?: Category | null;
   isFavorite?: boolean;
+  /** false = visible (default), true = hidden from catalog (still shown in order history) */
+  isHidden?: boolean;
   createdAt: string;
   updatedAt: string;
 }

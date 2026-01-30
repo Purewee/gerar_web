@@ -46,7 +46,9 @@ export default function CartPage() {
     refetch: refetchCart,
   } = useCart();
 
-  const cartItems = cartResponse?.data || [];
+  const cartItems = (cartResponse?.data || []).filter(
+    (item) => item.product == null || item.product.isHidden !== true,
+  );
 
   // Treat certain errors (like 401/403) as empty cart for better UX
   const isAuthError =
@@ -63,7 +65,7 @@ export default function CartPage() {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   });
-  const suggestedProducts = productsResponse?.data || [];
+  const suggestedProducts = (productsResponse?.data || []).filter((p) => p.isHidden !== true);
 
   const updateCartMutation = useCartUpdate();
   const removeCartMutation = useCartRemove();

@@ -437,6 +437,8 @@ export interface Product {
   categories: Category[];
   categoryId: number | null;
   category?: Category;
+  /** false = visible (default), true = hidden from catalog (still shown in order history) */
+  isHidden?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -452,6 +454,8 @@ export interface ProductsQueryParams {
   maxStock?: number;
   createdAfter?: string;
   createdBefore?: string;
+  /** 0 = only visible, 1 = only hidden (for admin). Omit or 0 for catalog. */
+  isHidden?: number;
   sortBy?: 'name' | 'price' | 'stock' | 'createdAt' | 'updatedAt';
   sortOrder?: 'asc' | 'desc';
   page?: number;
@@ -507,6 +511,9 @@ const productsApiFunctions = {
     if (params?.limit) {
       queryParams.append('limit', params.limit.toString());
     }
+    // Only load visible products by default (exclude hidden). Backend may expect 0/1.
+    const isHiddenParam = params?.isHidden !== undefined ? params.isHidden : 0;
+    queryParams.append('isHidden', isHiddenParam === 1 ? '1' : '0');
 
     const queryString = queryParams.toString();
     return apiFetch<Product[]>(`/products${queryString ? `?${queryString}` : ''}`);
@@ -561,8 +568,11 @@ const categoriesApiFunctions = {
     id: number,
     includeSubcategories?: boolean,
   ): Promise<ApiResponse<Product[]>> => {
-    const query = includeSubcategories ? `?includeSubcategories=true` : '';
-    return apiFetch<Product[]>(`/categories/${id}/products${query}`);
+    const params = new URLSearchParams();
+    if (includeSubcategories) params.append('includeSubcategories', 'true');
+    params.append('isHidden', '0'); // Only visible products
+    const query = params.toString();
+    return apiFetch<Product[]>(`/categories/${id}/products?${query}`);
   },
 };
 

@@ -45,7 +45,7 @@ function CategoryProductsSection({ category }: { category: Category }) {
       enabled: isVisible, // Only fetch when section is visible (lazy loading)
     });
 
-  const categoryProducts = categoryProductsResponse?.data || [];
+  const categoryProducts = (categoryProductsResponse?.data || []).filter((p) => p.isHidden !== true);
 
   // Don't render until section is visible (lazy loading)
   if (!isVisible) {
@@ -163,7 +163,7 @@ export default function Home() {
   // Get categories from store (hydrated by CategoriesProvider)
   const categories = useCategoriesStore(state => state.categories);
 
-  const products = productsResponse?.data || [];
+  const products = (productsResponse?.data || []).filter((p) => p.isHidden !== true);
 
   // Create carousel items from products with discounts
   const carouselItems = useMemo(() => {

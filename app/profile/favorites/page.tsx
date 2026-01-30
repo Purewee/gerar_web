@@ -10,7 +10,7 @@ import { ProductGridSkeleton } from '@/components/skeleton';
 
 export default function ProfileFavoritesPage() {
   const { data: favoritesResponse, isLoading, error } = useFavorites();
-  const favorites = favoritesResponse?.data || [];
+  const favorites = (favoritesResponse?.data || []).filter((p) => p.isHidden !== true);
 
   if (isLoading) {
     return (

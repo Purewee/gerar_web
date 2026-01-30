@@ -62,7 +62,8 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (productError || !product) {
+  // Don't show product if not found, error, or hidden (hidden = not loaded for catalog)
+  if (productError || !product || product.isHidden === true) {
     return (
       <div className="bg-gray-50 flex items-center justify-center min-h-[calc(100vh-525px)]">
         <div className="text-center">

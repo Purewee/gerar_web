@@ -113,7 +113,7 @@ function ProductsContent() {
     isLoading: loading,
     error: productsError,
   } = useProducts(queryParams);
-  const products = productsResponse?.data || [];
+  const products = (productsResponse?.data || []).filter((p) => p.isHidden !== true);
   const searchQuery = searchParams.get("search");
 
   // Count active filters
