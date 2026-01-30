@@ -48,6 +48,7 @@ export default function OrderCreatePage() {
   const [isMounted, setIsMounted] = useState(false);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [savedEmailPlaceholder, setSavedEmailPlaceholder] = useState('');
   const [userPhone, setUserPhone] = useState('');
 
   // Set authentication state after mount to avoid hydration issues
@@ -125,9 +126,11 @@ export default function OrderCreatePage() {
 
   // Load user info from localStorage
   useEffect(() => {
+    const email = localStorage.getItem('profile_email') || localStorage.getItem('user_email') || '';
+    setSavedEmailPlaceholder(email);
+
     if (isAuthenticated) {
       const name = localStorage.getItem('user_name') || localStorage.getItem('profile_name') || '';
-      const email = localStorage.getItem('profile_email') || '';
       const phone = localStorage.getItem('mobile') || '';
       setUserName(name);
       setUserEmail(email);
@@ -506,7 +509,7 @@ export default function OrderCreatePage() {
     (sum, item) => sum + parseFloat(item.product?.price || '0') * item.quantity,
     0,
   );
-  const deliveryFee = 6000;
+  const deliveryFee = 0; // Set to 0 for testing (e.g. 6000 for production)
   const walletBalance = 0;
   const total = subtotal + deliveryFee - walletBalance;
 
@@ -592,7 +595,7 @@ export default function OrderCreatePage() {
                       type="email"
                       value={userEmail}
                       onChange={e => setUserEmail(e.target.value)}
-                      placeholder="Имэйл"
+                      placeholder={savedEmailPlaceholder || 'Имэйл'}
                       required
                     />
                   </div>
@@ -625,7 +628,7 @@ export default function OrderCreatePage() {
                     onChange={e =>
                       setGuestAddress({ ...guestAddress, email: e.target.value })
                     }
-                    placeholder="Имэйл"
+                    placeholder={savedEmailPlaceholder || 'Имэйл'}
                     required
                   />
                 </div>
@@ -793,21 +796,6 @@ export default function OrderCreatePage() {
                       </div>
                       <div>
                         <label className="text-sm font-medium text-gray-700 mb-1 block">
-                          Хороолол
-                        </label>
-                        <Input
-                          value={newAddress.neighborhood || ''}
-                          onChange={e =>
-                            setNewAddress({ ...newAddress, neighborhood: e.target.value })
-                          }
-                          placeholder="Хороолол"
-                          disabled={
-                            createAddressMutation.isPending || updateAddressMutation.isPending
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
                           Хотхон
                         </label>
                         <Input
@@ -816,19 +804,6 @@ export default function OrderCreatePage() {
                             setNewAddress({ ...newAddress, residentialComplex: e.target.value })
                           }
                           placeholder="Хотхон"
-                          disabled={
-                            createAddressMutation.isPending || updateAddressMutation.isPending
-                          }
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
-                          Гудамж
-                        </label>
-                        <Input
-                          value={newAddress.street || ''}
-                          onChange={e => setNewAddress({ ...newAddress, street: e.target.value })}
-                          placeholder="Гудамж"
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
@@ -894,8 +869,8 @@ export default function OrderCreatePage() {
                       />
                     </div>
 
-                    {/* Save/Cancel Buttons */}
-                    {showAddAddressForm && (
+                    {/* Save/Cancel Buttons - show when form is visible: adding new, editing, or user has no addresses */}
+                    {(showAddAddressForm || addresses.length === 0) && (
                       <div className="flex gap-3 pt-4">
                         <Button
                           onClick={handleSaveAddress}
@@ -929,8 +904,8 @@ export default function OrderCreatePage() {
                       </div>
                     )}
 
-                    {/* Show Add Address Button if no addresses and form not shown */}
-                    {addresses.length === 0 && !showAddAddressForm && (
+                    {/* Show Add Address Button only when user has addresses and form is closed */}
+                    {addresses.length > 0 && !showAddAddressForm && (
                       <button
                         onClick={() => {
                           setShowAddAddressForm(true);
@@ -1067,16 +1042,6 @@ export default function OrderCreatePage() {
                           setGuestAddress({ ...guestAddress, residentialComplex: e.target.value })
                         }
                         placeholder="Хотхон"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Гудамж
-                      </label>
-                      <Input
-                        value={guestAddress.street}
-                        onChange={e => setGuestAddress({ ...guestAddress, street: e.target.value })}
-                        placeholder="Гудамж"
                       />
                     </div>
                     <div>
@@ -1233,8 +1198,8 @@ export default function OrderCreatePage() {
                 </div>
               </div>
 
-              {/* Navigation Buttons */}
-              <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+              {/* Navigation */}
+              <div className="flex items-center mt-6 pt-6 border-t border-gray-200">
                 <a
                   href="/cart"
                   className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors group"
@@ -1242,40 +1207,6 @@ export default function OrderCreatePage() {
                   <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                   Сагс руу буцах
                 </a>
-                <Button
-                  onClick={handleCreateOrder}
-                  disabled={
-                    !deliveryDate ||
-                    !deliveryTimeSlot ||
-                    (isAuthenticated &&
-                      (!userName || !userPhone || !userEmail || userPhone.length !== 8)) ||
-                    (isAuthenticated && addresses.length > 0 && !selectedAddressId) ||
-                    (isAuthenticated &&
-                      addresses.length === 0 &&
-                      (!newAddress.provinceOrDistrict ||
-                        !newAddress.khorooOrSoum)) ||
-                    (!isAuthenticated &&
-                      (!guestAddress.fullName ||
-                        !guestAddress.phoneNumber ||
-                        guestAddress.phoneNumber.length !== 8 ||
-                        !guestAddress.email ||
-                        !guestAddress.provinceOrDistrict ||
-                        !guestAddress.khorooOrSoum)) ||
-                    createOrderMutation.isPending ||
-                    createAddressMutation.isPending
-                  }
-                  className="bg-primary hover:bg-primary/90"
-                  size="lg"
-                >
-                  {createOrderMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Захиалга үүсгэж байна...
-                    </>
-                  ) : (
-                    'Төлбөр хийх'
-                  )}
-                </Button>
               </div>
             </div>
           </div>
@@ -1335,10 +1266,6 @@ export default function OrderCreatePage() {
                   <span className="text-gray-600">Хүргэлт</span>
                   <span className="font-semibold">{deliveryFee.toLocaleString()}₮</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Хэтэвч</span>
-                  <span className="font-semibold">{walletBalance.toLocaleString()}₮</span>
-                </div>
                 <div className="border-t border-gray-200 pt-3 mt-3">
                   <div className="flex justify-between">
                     <span className="text-lg font-semibold">Нийт төлөх дүн</span>
@@ -1348,6 +1275,42 @@ export default function OrderCreatePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Pay button */}
+              <Button
+                onClick={handleCreateOrder}
+                disabled={
+                  !deliveryDate ||
+                  !deliveryTimeSlot ||
+                  (isAuthenticated &&
+                    (!userName || !userPhone || !userEmail || userPhone.length !== 8)) ||
+                  (isAuthenticated && addresses.length > 0 && !selectedAddressId) ||
+                  (isAuthenticated &&
+                    addresses.length === 0 &&
+                    (!newAddress.provinceOrDistrict ||
+                      !newAddress.khorooOrSoum)) ||
+                  (!isAuthenticated &&
+                    (!guestAddress.fullName ||
+                      !guestAddress.phoneNumber ||
+                      guestAddress.phoneNumber.length !== 8 ||
+                      !guestAddress.email ||
+                      !guestAddress.provinceOrDistrict ||
+                      !guestAddress.khorooOrSoum)) ||
+                  createOrderMutation.isPending ||
+                  createAddressMutation.isPending
+                }
+                className="w-full mt-4 bg-primary hover:bg-primary/90"
+                size="lg"
+              >
+                {createOrderMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Захиалга үүсгэж байна...
+                  </>
+                ) : (
+                  'Төлбөр төлөх'
+                )}
+              </Button>
             </div>
           </div>
         </div>

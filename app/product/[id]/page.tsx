@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ShoppingCart, ArrowLeft, Plus, Minus, Heart } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, Plus, Minus, Heart, Loader2 } from 'lucide-react';
 import {
   useProduct,
+  useCart,
   useCartAdd,
   useFavoriteAdd,
   useFavoriteRemove,
@@ -22,6 +23,7 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [isBuyNowLoading, setIsBuyNowLoading] = useState(false);
 
   const productId = parseInt(params.id as string);
   const {
@@ -31,6 +33,12 @@ export default function ProductDetailPage() {
   } = useProduct(isNaN(productId) ? 0 : productId);
   const product = productResponse?.data;
 
+  const { data: cartResponse } = useCart();
+  const cartItems = cartResponse?.data || [];
+  const cartItem = product ? cartItems.find((item) => item.productId === product.id) : null;
+  const isInCart = !!cartItem;
+  const cartQuantity = cartItem?.quantity ?? 0;
+
   const addToCartMutation = useCartAdd();
   const addFavoriteMutation = useFavoriteAdd();
   const removeFavoriteMutation = useFavoriteRemove();
@@ -38,7 +46,7 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-525px)] bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6  py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="h-10 w-24 bg-gray-200 rounded animate-pulse mb-6" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             <div className="space-y-4">
@@ -94,14 +102,27 @@ export default function ProductDetailPage() {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     const token = getAuthToken();
     if (!token) {
       window.dispatchEvent(new CustomEvent('authRequired'));
       return;
     }
 
-    toast.info('Төлбөр төлөх рүү шилжиж байна');
+    if (!product) return;
+
+    setIsBuyNowLoading(true);
+    try {
+      await addToCartMutation.mutateAsync({ productId: product.id, quantity });
+      window.dispatchEvent(new Event('cartUpdated'));
+      router.push('/orders/create');
+    } catch (error: any) {
+      toast.error('Алдаа гарлаа', {
+        description: error.message || 'Сагсанд нэмэхэд алдаа гарлаа',
+      });
+    } finally {
+      setIsBuyNowLoading(false);
+    }
   };
 
   const handleToggleFavorite = async () => {
@@ -246,7 +267,7 @@ export default function ProductDetailPage() {
               <p className="text-gray-600">{product.description}</p>
             </div>
 
-            <div className="mb-2 md:mb-6 flex items-end gap-20">
+            <div className="mb-4 md:mb-6 flex items-end gap-20">
               <div>
                 <label className="block text-sm font-medium mb-2">Тоо ширхэг</label>
                 <div className="flex items-center gap-3">
@@ -293,28 +314,46 @@ export default function ProductDetailPage() {
               </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
               <Button
                 onClick={handleAddToCart}
                 variant="outline"
-                className="flex-1"
+                size="lg"
+                className="flex-1 min-h-[48px] py-3 sm:py-2 px-4 sm:px-6"
                 disabled={addToCartMutation.isPending || product.stock === 0}
                 aria-label={
-                  addToCartMutation.isPending
-                    ? 'Сагсанд нэмэж байна...'
-                    : `${product.name} сагсанд нэмэх`
+                  isInCart
+                    ? `${product.name} сагсанд байна`
+                    : addToCartMutation.isPending
+                      ? 'Сагсанд нэмэж байна...'
+                      : `${product.name} сагсанд нэмэх`
                 }
               >
                 <ShoppingCart className="w-4 h-4 mr-2" aria-hidden="true" />
-                <span>{addToCartMutation.isPending ? 'Нэмэж байна...' : 'Сагсанд нэмэх'}</span>
+                <span>
+                  {addToCartMutation.isPending
+                    ? 'Нэмэж байна...'
+                    : isInCart
+                      ? `Сагслагдсан${cartQuantity > 1 ? ` (${cartQuantity})` : ''}`
+                      : 'Сагсанд нэмэх'}
+                </span>
               </Button>
               <Button
                 onClick={handleBuyNow}
-                className="flex-1"
-                disabled={product.stock === 0}
-                aria-label={`${product.name} одоо худалдаж авах`}
+                size="lg"
+                className="flex-1 min-h-[48px] py-3 sm:py-2 px-4 sm:px-6 transition-transform active:scale-[0.98]"
+                disabled={product.stock === 0 || addToCartMutation.isPending || isBuyNowLoading}
+                aria-label={isBuyNowLoading ? 'Шилжиж байна' : `${product.name} одоо худалдаж авах`}
+                aria-busy={isBuyNowLoading}
               >
-                Одоо худалдаж авах
+                {isBuyNowLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                    <span className="animate-pulse">Шилжиж байна...</span>
+                  </>
+                ) : (
+                  'Одоо худалдаж авах'
+                )}
               </Button>
             </div>
           </div>

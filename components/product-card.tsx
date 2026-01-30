@@ -137,7 +137,7 @@ export function ProductCard({
                 onClick={handleToggleFavorite}
                 disabled={isProcessingFavorite}
                 className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
-                aria-label={isFavorited ? 'Дурсамжаас хасах' : 'Дурсамжид нэмэх'}
+                aria-label={isFavorited ? 'Хадгалах' : 'Хасах'}
               >
                 <Heart
                   className={`w-3.5 h-3.5 transition-colors ${
