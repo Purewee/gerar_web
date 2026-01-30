@@ -62,7 +62,6 @@ export default function OrderCreatePage() {
   const [deliveryTimeSlot, setDeliveryTimeSlot] = useState<
     '10-14' | '14-18' | '18-21' | '21-00' | ''
   >('');
-  const [receiveByOrganization, setReceiveByOrganization] = useState(false);
   const [showAddAddressForm, setShowAddAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
 
@@ -219,7 +218,12 @@ export default function OrderCreatePage() {
   const validateAddress = (address: {
     provinceOrDistrict: string;
     khorooOrSoum: string;
+    label?: string;
   }): boolean => {
+    if (address.label !== undefined && !address.label.trim()) {
+      toast.warning('Хаягийн нэр оруулна уу');
+      return false;
+    }
     if (!address.provinceOrDistrict.trim()) {
       toast.warning('Аймаг/Дүүрэг оруулна уу');
       return false;
@@ -324,6 +328,9 @@ export default function OrderCreatePage() {
       try {
         const response = await createOrderMutation.mutateAsync({
           addressId: addressIdToUse,
+          fullName: userName.trim(),
+          phoneNumber: userPhone.trim(),
+          email: userEmail.trim(),
           deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
           deliveryDate: deliveryDate,
         });
@@ -348,6 +355,10 @@ export default function OrderCreatePage() {
       }
     } else {
       // Guest user flow
+      if (!guestAddress.label?.trim()) {
+        toast.warning('Хаягийн нэр оруулна уу');
+        return;
+      }
       if (!validateAddress(guestAddress)) {
         return;
       }
@@ -366,8 +377,11 @@ export default function OrderCreatePage() {
             entrance: guestAddress.entrance?.trim() || undefined,
             apartmentNumber: guestAddress.apartmentNumber?.trim() || undefined,
             addressNote: guestAddress.addressNote?.trim() || undefined,
-            label: guestAddress.label?.trim() || undefined,
+            label: guestAddress.label.trim(),
           },
+          fullName: guestAddress.fullName.trim(),
+          phoneNumber: guestAddress.phoneNumber.trim(),
+          email: (guestAddress.email || '').trim(),
           deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
           deliveryDate: deliveryDate,
         });
@@ -455,6 +469,10 @@ export default function OrderCreatePage() {
   };
 
   const handleSaveAddress = async () => {
+    if (!newAddress.label?.trim()) {
+      toast.warning('Хаягийн нэр оруулна уу');
+      return;
+    }
     if (!validateAddress(newAddress)) {
       return;
     }
@@ -464,6 +482,7 @@ export default function OrderCreatePage() {
       ...newAddress,
       fullName: userName,
       phoneNumber: userPhone,
+      label: newAddress.label?.trim() || undefined,
     };
 
     try {
@@ -548,6 +567,10 @@ export default function OrderCreatePage() {
             </a>
             <ChevronRight className="w-4 h-4" />
             <span className="text-gray-900">Захиалгын хаяг</span>
+            <ChevronRight className="w-4 h-4 text-gray-300" />
+            <span className="text-gray-400 cursor-default" aria-disabled="true">
+              Төлбөр
+            </span>
           </div>
         </div>
 
@@ -603,34 +626,61 @@ export default function OrderCreatePage() {
               ) : (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        Нэр <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        value={guestAddress.fullName}
+                        onChange={e => setGuestAddress({ ...guestAddress, fullName: e.target.value })}
+                        placeholder="Нэр"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        Утасны дугаар <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        value={guestAddress.phoneNumber}
+                        onChange={e =>
+                          setGuestAddress({
+                            ...guestAddress,
+                            phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
+                          })
+                        }
+                        placeholder={userPhone || 'Утасны дугаар'}
+                        maxLength={8}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      И-мэйл хаяг <span className="text-red-500">*</span>
+                    </label>
                     <Input
-                      value={guestAddress.fullName}
-                      onChange={e => setGuestAddress({ ...guestAddress, fullName: e.target.value })}
-                      placeholder="Нэр"
-                      required
-                    />
-                    <Input
-                      value={guestAddress.phoneNumber}
+                      type="email"
+                      value={guestAddress.email || ''}
                       onChange={e =>
-                        setGuestAddress({
-                          ...guestAddress,
-                          phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
-                        })
+                        setGuestAddress({ ...guestAddress, email: e.target.value })
                       }
-                      placeholder={userPhone || 'Утасны дугаар'}
-                      maxLength={8}
+                      placeholder={savedEmailPlaceholder || 'Имэйл'}
                       required
                     />
                   </div>
-                  <Input
-                    type="email"
-                    value={guestAddress.email || ''}
-                    onChange={e =>
-                      setGuestAddress({ ...guestAddress, email: e.target.value })
-                    }
-                    placeholder={savedEmailPlaceholder || 'Имэйл'}
-                    required
-                  />
+                  <p className="text-sm text-gray-600 mt-3">
+                    Бүртгэлтэй хэрэглэгч?{' '}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        window.dispatchEvent(new CustomEvent('openLoginModal'))
+                      }
+                      className="text-primary font-medium hover:underline"
+                    >
+                      Нэвтрэх
+                    </button>
+                  </p>
                 </div>
               )}
             </div>
@@ -726,12 +776,13 @@ export default function OrderCreatePage() {
                     {/* Label input at the top */}
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Хаягийн нэр
+                        Хаягийн нэр <span className="text-red-500">*</span>
                       </label>
                       <Input
                         value={newAddress.label || ''}
                         onChange={e => setNewAddress({ ...newAddress, label: e.target.value })}
                         placeholder="Жишээ: Гэр, Ажил, Орон сууц"
+                        required
                         disabled={
                           createAddressMutation.isPending || updateAddressMutation.isPending
                         }
@@ -741,7 +792,7 @@ export default function OrderCreatePage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium text-gray-700 mb-1 block">
-                          Аймаг/Дүүрэг <span className="text-red-500">*</span>
+                          Дүүрэг <span className="text-red-500">*</span>
                         </label>
                         <select
                           value={selectedDistrict}
@@ -755,7 +806,7 @@ export default function OrderCreatePage() {
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
                         >
-                          <option value="">Аймаг/Дүүрэг сонгох</option>
+                          <option value="">Дүүрэг сонгох</option>
                           {districts.map(district => (
                             <option key={district} value={district}>
                               {district}
@@ -829,7 +880,7 @@ export default function OrderCreatePage() {
                         <Input
                           value={newAddress.entrance || ''}
                           onChange={e => setNewAddress({ ...newAddress, entrance: e.target.value })}
-                          placeholder="Орц"
+                          placeholder="Орцны дугаар"
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
@@ -877,6 +928,7 @@ export default function OrderCreatePage() {
                           disabled={
                             createAddressMutation.isPending ||
                             updateAddressMutation.isPending ||
+                            !newAddress.label?.trim() ||
                             !newAddress.provinceOrDistrict ||
                             !newAddress.khorooOrSoum
                           }
@@ -927,51 +979,23 @@ export default function OrderCreatePage() {
                 )
               ) : (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="organization"
-                      checked={receiveByOrganization}
-                      onChange={e => setReceiveByOrganization(e.target.checked)}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="organization" className="text-sm text-gray-700">
-                      Байгууллагаар авах
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      Хаягийн нэр <span className="text-red-500">*</span>
                     </label>
+                    <Input
+                      value={guestAddress.label || ''}
+                      onChange={e =>
+                        setGuestAddress({ ...guestAddress, label: e.target.value })
+                      }
+                      placeholder="Жишээ: Гэр, Ажил, Орон сууц"
+                      required
+                    />
                   </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Нэр <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        value={guestAddress.fullName}
-                        onChange={e => setGuestAddress({ ...guestAddress, fullName: e.target.value })}
-                        placeholder="Нэр"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Утасны дугаар <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        value={guestAddress.phoneNumber}
-                        onChange={e =>
-                          setGuestAddress({
-                            ...guestAddress,
-                            phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
-                          })
-                        }
-                        placeholder={userPhone || 'Утасны дугаар'}
-                        maxLength={8}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Аймаг/Дүүрэг <span className="text-red-500">*</span>
+                        Дүүрэг <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={selectedDistrict}
@@ -983,7 +1007,7 @@ export default function OrderCreatePage() {
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         required
                       >
-                        <option value="">Аймаг/Дүүрэг сонгох</option>
+                        <option value="">Дүүрэг сонгох</option>
                         {districts.map(district => (
                           <option key={district} value={district}>
                             {district}
@@ -1022,18 +1046,6 @@ export default function OrderCreatePage() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Хороолол
-                      </label>
-                      <Input
-                        value={guestAddress.neighborhood}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, neighborhood: e.target.value })
-                        }
-                        placeholder="Хороолол"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
                         Хотхон
                       </label>
                       <Input
@@ -1051,7 +1063,7 @@ export default function OrderCreatePage() {
                       <Input
                         value={guestAddress.building}
                         onChange={e => setGuestAddress({ ...guestAddress, building: e.target.value })}
-                        placeholder="Барилга"
+                        placeholder="Барилгын дугаар"
                       />
                     </div>
                     <div>
@@ -1066,20 +1078,20 @@ export default function OrderCreatePage() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Орон сууцны дугаар
+                        Тоот
                       </label>
                       <Input
                         value={guestAddress.apartmentNumber}
                         onChange={e =>
                           setGuestAddress({ ...guestAddress, apartmentNumber: e.target.value })
                         }
-                        placeholder="Орон сууцны дугаар"
+                        placeholder="Тоотоо оруулна уу"
                       />
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Нэмэлт тэмдэглэл
+                      Дэлгэрэнгүй хаяг
                     </label>
                     <Textarea
                       value={guestAddress.addressNote || ''}
@@ -1089,7 +1101,7 @@ export default function OrderCreatePage() {
                           addressNote: e.target.value.slice(0, 500),
                         })
                       }
-                      placeholder="Нэмэлт тэмдэглэл (500 тэмдэгт хүртэл)"
+                      placeholder="Хаягийн дэлгэрэнгүй мэдээлэл"
                       maxLength={500}
                       rows={3}
                     />
@@ -1287,13 +1299,15 @@ export default function OrderCreatePage() {
                   (isAuthenticated && addresses.length > 0 && !selectedAddressId) ||
                   (isAuthenticated &&
                     addresses.length === 0 &&
-                    (!newAddress.provinceOrDistrict ||
+                    (!newAddress.label?.trim() ||
+                      !newAddress.provinceOrDistrict ||
                       !newAddress.khorooOrSoum)) ||
                   (!isAuthenticated &&
                     (!guestAddress.fullName ||
                       !guestAddress.phoneNumber ||
                       guestAddress.phoneNumber.length !== 8 ||
                       !guestAddress.email ||
+                      !guestAddress.label?.trim() ||
                       !guestAddress.provinceOrDistrict ||
                       !guestAddress.khorooOrSoum)) ||
                   createOrderMutation.isPending ||

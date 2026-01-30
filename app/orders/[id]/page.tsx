@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, QrCode, CheckCircle2, Phone, Loader2, XCircle, RefreshCw } from 'lucide-react';
-import { useOrder, usePaymentStatus, usePaymentInitiate, usePaymentCancel } from '@/lib/api';
+import { ArrowLeft, QrCode, CheckCircle2, Phone, Loader2, XCircle, RefreshCw, ChevronRight } from 'lucide-react';
+import { useOrder, usePaymentStatus, usePaymentInitiate, usePaymentCancel, getAuthToken } from '@/lib/api';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { CardSkeleton } from '@/components/skeleton';
@@ -45,11 +45,15 @@ export default function OrderDetailPage() {
   const initiatePaymentMutation = usePaymentInitiate();
   const cancelPaymentMutation = usePaymentCancel();
 
-  // Prevent hydration mismatch
+  // Prevent hydration mismatch + guest-aware back links
   const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
+  useEffect(() => {
+    if (mounted) setIsAuthenticated(!!getAuthToken());
+  }, [mounted]);
 
   // Check if mobile device
   useEffect(() => {
@@ -251,14 +255,17 @@ export default function OrderDetailPage() {
     );
   }
 
+  const ordersBackHref = isAuthenticated ? '/profile/orders' : '/cart';
+  const ordersBackLabel = isAuthenticated ? 'Захиалгууд' : 'Сагс';
+
   // Only show error state after mount to prevent hydration mismatch
   if (mounted && (error || !order)) {
     return (
       <div className="min-h-[calc(100vh-525px)] bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Захиалга олдсонгүй</p>
-          <Button onClick={() => router.push('/profile/orders')}>
-            Миний захиалгууд руу буцах
+          <Button onClick={() => router.push(ordersBackHref)}>
+            {isAuthenticated ? 'Миний захиалгууд руу буцах' : 'Сагс руу буцах'}
           </Button>
         </div>
       </div>
@@ -271,11 +278,11 @@ export default function OrderDetailPage() {
         {/* Header */}
         <Button
           variant="ghost"
-          onClick={() => router.push('/profile/orders')}
+          onClick={() => router.push(ordersBackHref)}
           className="group px-2 py-1 text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" />
-          <span className="text-sm font-medium">Захиалгууд</span>
+          <span className="text-sm font-medium">{ordersBackLabel}</span>
         </Button>
 
         {/* QR Code Payment Section - Show at top if pending */}

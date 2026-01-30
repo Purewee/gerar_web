@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, ShoppingCart, User, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, User, ChevronDown, Menu } from 'lucide-react';
 import { useCart, authApi } from '@/lib/api';
 import { useCategoriesStore } from '@/lib/stores/categories';
 import { LoginModal } from '@/components/auth/login-modal';
@@ -50,8 +50,12 @@ export function Navigation() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  // Hide categories on payment page
-  const hideCategories = pathname?.includes('/payment') || false;
+  // Hide categories on payment, cart, and order create pages
+  const hideCategories =
+    pathname?.includes('/payment') ||
+    pathname === '/cart' ||
+    pathname === '/orders/create' ||
+    false;
 
   // Fetch cart data from API
   const { data: cartResponse } = useCart();
@@ -110,6 +114,13 @@ export function Navigation() {
     };
     window.addEventListener('authRequired', onAuthRequired);
     return () => window.removeEventListener('authRequired', onAuthRequired);
+  }, []);
+
+  // Open login modal when requested from other components (e.g. bottom nav "Нэвтрэх")
+  useEffect(() => {
+    const onOpenLogin = () => setLoginModalOpen(true);
+    window.addEventListener('openLoginModal', onOpenLogin);
+    return () => window.removeEventListener('openLoginModal', onOpenLogin);
   }, []);
 
   const handleLogout = async () => {
@@ -235,22 +246,7 @@ export function Navigation() {
       <header className="bg-white backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between py-2 sm:py-3 md:py-5 gap-4">
-            {/* Profile Icon - Mobile/Small Screens (Left Side) */}
-            <button
-              onClick={() => setMobileProfileMenuOpen(!mobileProfileMenuOpen)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              aria-label="Профайл цэс нээх"
-            >
-              {mounted && isAuthenticated && userName ? (
-                <div className="w-8 h-8 rounded-full bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center text-primary font-semibold text-sm">
-                  {getUserInitials(userName)}
-                </div>
-              ) : (
-                <User className="w-6 h-6 text-gray-600" />
-              )}
-            </button>
-
-            {/* Logo */}
+            {/* Logo - start of nav bar */}
             <Link href="/" className="shrink-0 flex items-center">
               <Image
                 src="/logo3.svg"
@@ -285,6 +281,22 @@ export function Navigation() {
 
             {/* Right Icons */}
             <div className="flex items-center gap-3">
+              {/* Search icon - left of sidebar button; mobile only */}
+              <button
+                onClick={() => setMobileProfileMenuOpen(true)}
+                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                aria-label="Хайх"
+              >
+                <Search className="w-6 h-6 text-gray-600" aria-hidden="true" />
+              </button>
+              {/* Hamburger menu - mobile only, right side */}
+              <button
+                onClick={() => setMobileProfileMenuOpen(!mobileProfileMenuOpen)}
+                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                aria-label="Цэс нээх"
+              >
+                <Menu className="w-6 h-6 text-gray-600" aria-hidden="true" />
+              </button>
               {mounted && isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -324,18 +336,19 @@ export function Navigation() {
                   Нэвтрэх
                 </Button>
               )}
+              {/* Cart - hidden on mobile (cart is in bottom nav) */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative hover:bg-gray-100 rounded-lg transition-all duration-200"
+                className="relative hidden md:flex hover:bg-gray-100 rounded-lg transition-all duration-200"
                 asChild
               >
                 <Link
                   href="/cart"
-                  aria-label={`Сагс ${cartCount > 0 ? `(${cartCount} зүйл)` : ''}`}
+                  aria-label={mounted && cartCount > 0 ? `Сагс (${cartCount} зүйл)` : 'Сагс'}
                 >
                   <ShoppingCart className="w-6 h-6 text-gray-700" aria-hidden="true" />
-                  {cartCount > 0 && (
+                  {mounted && cartCount > 0 && (
                     <span
                       className="absolute -top-1 -right-1 bg-primary text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center shadow-md animate-in zoom-in-50"
                       aria-hidden="true"
@@ -554,15 +567,15 @@ export function Navigation() {
       {/* Mobile Drawer Overlay */}
       {mobileProfileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-101"
+          className="md:hidden fixed inset-0 bg-black/50 z-101"
           onClick={() => setMobileProfileMenuOpen(false)}
         />
       )}
 
-      {/* Mobile Profile Drawer - Slides from left */}
+      {/* Mobile Profile Drawer - Slides from right */}
       <div
-        className={`lg:hidden fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white z-101 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          mobileProfileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`md:hidden fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white z-101 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          mobileProfileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">

@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/lib/providers';
 import { CategoriesProvider } from '@/components/categories-provider';
 import { Navigation } from '@/components/navigation';
+import { BottomNav } from '@/components/bottom-nav';
 import { FontLoader } from '@/components/font-loader';
 import dynamic from 'next/dynamic';
 import { Toaster } from '@/components/ui/sonner';
@@ -42,8 +43,11 @@ export default function RootLayout({
             <Suspense fallback={<div className="h-16 bg-white border-b border-gray-200" />}>
               <Navigation />
             </Suspense>
-            {children}
-            <Footer />
+            <div className="pb-20 md:pb-0">
+              {children}
+              <Footer />
+            </div>
+            <BottomNav />
           </CategoriesProvider>
           <Toaster />
         </Providers>

@@ -182,7 +182,12 @@ export interface Order {
 }
 
 export interface CreateOrderRequest {
-  addressId: number;
+  addressId?: number;
+  address?: unknown;
+  fullName: string;
+  phoneNumber: string;
+  email: string;
+  deliveryDate?: string;
   deliveryTimeSlot?: "10-14" | "14-18" | "18-21" | "21-00";
 }
 

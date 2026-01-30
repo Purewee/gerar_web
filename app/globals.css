@@ -119,6 +119,11 @@
     display: none;
   }
 
+  /* Bottom nav safe area for notched devices */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
   /* Hero carousel pagination bullets - match old design */
   .hero-carousel .swiper-pagination {
     position: static !important;

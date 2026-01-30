@@ -12,12 +12,14 @@ import {
   XCircle,
   QrCode,
   RefreshCw,
+  ChevronRight,
 } from 'lucide-react';
 import {
   usePaymentInitiate,
   usePaymentStatus,
   usePaymentCancel,
   useOrder,
+  getAuthToken,
 } from '@/lib/api';
 import { CardSkeleton } from '@/components/skeleton';
 
@@ -43,6 +45,7 @@ export default function PaymentPage() {
   const [hasInitiated, setHasInitiated] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const initiationAttemptedRef = useRef(false);
   const pollingStartTimeRef = useRef<number | null>(null);
   
@@ -62,10 +65,13 @@ export default function PaymentPage() {
   const isPaid = paymentStatus === 'PAID';
   const isCancelled = paymentStatus === 'CANCELLED';
 
-  // Prevent hydration mismatch
+  // Prevent hydration mismatch + guest-aware back links
   useEffect(() => {
     setMounted(true);
   }, []);
+  useEffect(() => {
+    if (mounted) setIsAuthenticated(!!getAuthToken());
+  }, [mounted]);
 
   // Check if mobile device
   useEffect(() => {
@@ -292,13 +298,15 @@ export default function PaymentPage() {
     );
   }
 
+  const ordersBackHref = isAuthenticated ? '/profile/orders' : '/cart';
+
   if (!order) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Захиалга олдсонгүй</p>
-          <Button onClick={() => router.push('/profile/orders')}>
-            Захиалгууд руу буцах
+          <Button onClick={() => router.push(ordersBackHref)}>
+            {isAuthenticated ? 'Захиалгууд руу буцах' : 'Сагс руу буцах'}
           </Button>
         </div>
       </div>
@@ -308,6 +316,20 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Breadcrumbs */}
+        <div className="mb-4 text-sm text-gray-600">
+          <div className="flex items-center gap-2 flex-wrap">
+            <a href="/" className="hover:text-primary">Нүүр хуудас</a>
+            <ChevronRight className="w-4 h-4 shrink-0" />
+            <a href="/cart" className="hover:text-primary">Сагс</a>
+            <ChevronRight className="w-4 h-4 shrink-0" />
+            <a href="/orders/create" className="hover:text-primary">Захиалга үүсгэх</a>
+            <ChevronRight className="w-4 h-4 shrink-0" />
+            <a href={`/orders/${orderId}`} className="hover:text-primary">Захиалга #{orderId}</a>
+            <ChevronRight className="w-4 h-4 shrink-0" />
+            <span className="text-gray-900">Төлбөр</span>
+          </div>
+        </div>
         <Button
           variant="ghost"
           onClick={() => router.push(`/orders/${orderId}`)}

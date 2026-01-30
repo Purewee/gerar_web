@@ -17,6 +17,7 @@ import {
   Package,
   Heart,
   X,
+  ChevronRight,
 } from 'lucide-react';
 import {
   useCart,
@@ -238,6 +239,20 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Breadcrumbs */}
+        <div className="mb-6 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <a href="/" className="hover:text-primary">
+              Нүүр хуудас
+            </a>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-gray-900">Сагс</span>
+            <ChevronRight className="w-4 h-4 text-gray-300" />
+            <span className="text-gray-400 cursor-default" aria-disabled="true">
+              Захиалгын хаяг
+            </span>
+          </div>
+        </div>
 
         {!mounted || loading ? (
           <div className="space-y-4">

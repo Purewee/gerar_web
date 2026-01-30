@@ -5,30 +5,88 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit } from 'lucide-react';
+import { Edit, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCurrentUser, useUpdateProfile } from '@/lib/api';
+
+function formatPhoneDisplay(phoneNumber: string): string {
+  if (!phoneNumber) return '';
+  const digits = phoneNumber.replace(/\D/g, '');
+  if (digits.startsWith('976')) return digits.slice(3);
+  return digits;
+}
 
 export default function ProfilePage() {
-  const [mobile, setMobile] = useState('');
+  const { data: userResponse, isLoading, isError, error } = useCurrentUser();
+  const updateProfile = useUpdateProfile();
+  const user = userResponse?.data;
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
-    const storedMobile = localStorage.getItem('mobile');
-    const savedName = localStorage.getItem('user_name');
-    const savedEmail = localStorage.getItem('user_email');
-    if (storedMobile) setMobile(storedMobile);
-    if (savedName) setName(savedName);
-    if (savedEmail) setEmail(savedEmail);
-  }, []);
+    if (user) {
+      setName(user.name ?? '');
+      setEmail(user.email ?? '');
+    }
+  }, [user]);
 
-  const handleSave = () => {
-    localStorage.setItem('user_name', name);
-    localStorage.setItem('user_email', email);
-    setEditMode(false);
-    toast.success('Амжилттай шинэчлэгдлээ');
+  const mobile = user ? formatPhoneDisplay(user.phoneNumber) : '';
+
+  const handleSave = async () => {
+    const nameTrim = name.trim();
+    const emailTrim = email.trim();
+    if (!nameTrim && emailTrim === '') {
+      toast.error('Нэр эсвэл имэйлээс дор хаяж нэгийг оруулна уу');
+      return;
+    }
+    try {
+      const payload: { name?: string; email?: string } = {};
+      if (nameTrim !== (user?.name ?? '')) payload.name = nameTrim;
+      if (emailTrim !== (user?.email ?? '')) payload.email = emailTrim;
+      if (Object.keys(payload).length === 0) {
+        setEditMode(false);
+        toast.info('Өөрчлөлт оруулаагүй');
+        return;
+      }
+      await updateProfile.mutateAsync(payload);
+      setEditMode(false);
+      toast.success('Амжилттай шинэчлэгдлээ');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Шинэчлэхэд алдаа гарлаа');
+    }
   };
+
+  const handleCancel = () => {
+    setEditMode(false);
+    if (user) {
+      setName(user.name ?? '');
+      setEmail(user.email ?? '');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+        <CardContent className="p-12 flex items-center justify-center min-h-[200px]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError || !user) {
+    return (
+      <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <p className="text-destructive">
+            {error instanceof Error ? error.message : 'Профайл ачааллахад алдаа гарлаа'}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
@@ -51,22 +109,21 @@ export default function ProfilePage() {
           ) : (
             <div className="flex gap-2">
               <Button
-                onClick={() => {
-                  setEditMode(false);
-                  const savedName = localStorage.getItem('user_name') || '';
-                  const savedEmail = localStorage.getItem('user_email') || '';
-                  setName(savedName);
-                  setEmail(savedEmail);
-                }}
+                onClick={handleCancel}
                 variant="outline"
                 className="shadow-sm"
+                disabled={updateProfile.isPending}
               >
                 Цуцлах
               </Button>
               <Button
                 onClick={handleSave}
                 className="shadow-md hover:shadow-lg transition-all duration-200"
+                disabled={updateProfile.isPending}
               >
+                {updateProfile.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
                 Хадгалах
               </Button>
             </div>

@@ -56,10 +56,35 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-50 pb-20 lg:pb-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-12">
+        {/* Mobile: horizontal card grid (menus) */}
+        <div className="lg:hidden mb-6">
+          <nav className="grid grid-cols-4 gap-3">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 shadow-sm transition-all duration-200 min-h-[88px] ${
+                    active
+                      ? 'bg-primary/10 border-primary text-primary shadow-md'
+                      : 'bg-white border-transparent text-gray-700 hover:bg-gray-50 hover:border-gray-200 hover:shadow-md active:scale-[0.98]'
+                  }`}
+                >
+                  <Icon className={`w-6 h-6 shrink-0 ${active ? 'text-primary' : 'text-gray-600'}`} />
+                  <span className="text-xs font-medium text-center leading-tight">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-          <aside className="lg:col-span-1">
+          {/* Desktop: vertical sidebar */}
+          <aside className="hidden lg:block lg:col-span-1">
             <Card className="sticky top-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardContent className="p-4 lg:p-6">
                 <nav className="space-y-2">
@@ -70,13 +95,13 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                       <Link
                         key={item.id}
                         href={item.href}
-                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 ${
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 border-2 ${
                           active
-                            ? 'bg-linear-to-r from-primary to-primary/90 text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]'
-                            : 'hover:bg-gray-100/80 text-gray-700 hover:scale-[1.01] hover:shadow-sm'
+                            ? 'bg-primary/10 border-primary text-primary shadow-sm'
+                            : 'border-transparent hover:bg-gray-100/80 text-gray-700 hover:border-gray-200 hover:scale-[1.01] hover:shadow-sm'
                         }`}
                       >
-                        <Icon className={`w-5 h-5 ${active ? 'text-primary-foreground' : ''}`} />
+                        <Icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} />
                         <span className="font-medium">{item.label}</span>
                       </Link>
                     );
@@ -85,7 +110,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 hover:bg-red-50/80 text-red-600 hover:scale-[1.01] hover:shadow-sm"
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 hover:bg-red-50/80 text-red-600 hover:scale-[1.01] hover:shadow-sm cursor-pointer"
                     >
                       <LogOut className="w-5 h-5" />
                       <span className="font-medium">Гарах</span>
@@ -98,6 +123,18 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           <main className="lg:col-span-3">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">{children}</div>
           </main>
+        </div>
+
+        {/* Mobile: Гарах at bottom of page (after tab content) */}
+        <div className="lg:hidden mt-6">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-600 bg-red-100 hover:bg-red-50/80 transition-all duration-200 text-sm font-medium cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            Гарах
+          </button>
         </div>
       </div>
     </div>

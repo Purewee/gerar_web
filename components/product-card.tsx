@@ -19,6 +19,7 @@ export interface ProductCardProps {
   featured?: boolean;
   className?: string;
   inGrid?: boolean; // If true, card will fill grid cell instead of using fixed width
+  compact?: boolean; // Tighter layout for mobile grids (e.g. favorites)
 }
 
 export function ProductCard({
@@ -31,6 +32,7 @@ export function ProductCard({
   featured = false,
   className = '',
   inGrid = false,
+  compact = false,
 }: ProductCardProps) {
   const addToCartMutation = useCartAdd();
   const addFavoriteMutation = useFavoriteAdd();
@@ -114,7 +116,7 @@ export function ProductCard({
             {/* Image Section */}
             <div
               className="relative bg-gray-100 w-full overflow-hidden"
-              style={{ aspectRatio: '4/3' }}
+              style={{ aspectRatio: compact ? '1' : '4/3' }}
             >
               {isImageUrl ? (
                 <Image
@@ -127,7 +129,7 @@ export function ProductCard({
                   fetchPriority="high"
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl">
+                <div className={`absolute inset-0 flex items-center justify-center ${compact ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'}`}>
                   {displayImage}
                 </div>
               )}
@@ -136,11 +138,11 @@ export function ProductCard({
               <button
                 onClick={handleToggleFavorite}
                 disabled={isProcessingFavorite}
-                className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
+                className={`absolute z-10 rounded-full bg-white/90 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50 ${compact ? 'top-1 right-1 p-1' : 'top-2 right-2 p-1.5'}`}
                 aria-label={isFavorited ? 'Хадгалах' : 'Хасах'}
               >
                 <Heart
-                  className={`w-3.5 h-3.5 transition-colors ${
+                  className={`transition-colors ${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'} ${
                     isFavorited
                       ? 'fill-red-500 text-red-500'
                       : 'text-gray-600 group-hover:text-red-500'
@@ -150,26 +152,26 @@ export function ProductCard({
 
               {/* Discount Badge */}
               {hasDiscount && discountPercentage > 0 && (
-                <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-md shadow-md">
+                <div className={`absolute z-10 bg-red-500 text-white font-bold rounded-md shadow-md ${compact ? 'top-1 left-1 px-1.5 py-0.5 text-[10px]' : 'top-2 left-2 px-2 py-1 text-xs'}`}>
                   -{discountPercentage}%
                 </div>
               )}
             </div>
 
             {/* Content Section */}
-            <div className="flex flex-col flex-1 p-3">
-              <h3 className="font-medium text-xs sm:text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+            <div className={`flex flex-col flex-1 ${compact ? 'p-2' : 'p-3'}`}>
+              <h3 className={`font-medium line-clamp-2 group-hover:text-primary transition-colors ${compact ? 'text-xs mb-1' : 'text-xs sm:text-sm mb-2'}`}>
                 {name}
               </h3>
 
               {/* Price Section */}
-              <div className="flex flex-col gap-1 mb-2">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm sm:text-base font-bold text-primary">
+              <div className={`flex flex-col gap-0.5 ${compact ? 'mb-1' : 'mb-2'}`}>
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span className={`font-bold text-primary ${compact ? 'text-xs' : 'text-sm sm:text-base'}`}>
                     {price.toLocaleString()}₮
                   </span>
                   {hasDiscount && (
-                    <span className="text-xs sm:text-sm text-gray-500 line-through">
+                    <span className={`text-gray-500 line-through ${compact ? 'text-[10px]' : 'text-xs sm:text-sm'}`}>
                       {original.toLocaleString()}₮
                     </span>
                   )}
@@ -177,16 +179,16 @@ export function ProductCard({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 mt-auto">
+              <div className={`flex gap-1.5 mt-auto ${compact ? 'gap-1' : ''}`}>
                 <Button
                   onClick={handleAddToCart}
                   disabled={isProcessingCart}
-                  className="flex-1 h-8 text-xs sm:text-sm font-medium bg-primary-light text-primary-light-foreground"
+                  className={`flex-1 font-medium bg-primary-light text-primary-light-foreground ${compact ? 'h-7 text-[10px] px-1.5' : 'h-8 text-xs sm:text-sm'}`}
                   size="sm"
                   aria-label={`${name} сагсанд нэмэх`}
                 >
-                  <ShoppingCart className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
-                  <span>Сагслах</span>
+                  <ShoppingCart className={`mr-1 shrink-0 ${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} aria-hidden="true" />
+                  <span className={compact ? 'truncate' : ''}>Сагслах</span>
                 </Button>
               </div>
             </div>

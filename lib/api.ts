@@ -149,6 +149,7 @@ export const queryKeys = {
   // Auth
   auth: {
     all: ['auth'] as const,
+    me: () => [...queryKeys.auth.all, 'me'] as const,
   },
 
   // Categories
@@ -334,6 +335,34 @@ const authApiFunctions = {
     localStorage.removeItem('user_email');
     window.dispatchEvent(new CustomEvent('authStateChanged'));
   },
+
+  getMe: async (): Promise<ApiResponse<User>> => {
+    const res = await apiFetch<User>('/auth/me', { method: 'POST' }, true);
+    if (res.data && typeof window !== 'undefined') {
+      localStorage.setItem('mobile', res.data.phoneNumber || '');
+      localStorage.setItem('user_name', res.data.name ?? '');
+      localStorage.setItem('user_email', res.data.email ?? '');
+    }
+    return res;
+  },
+
+  updateProfile: async (data: { name?: string; email?: string }): Promise<ApiResponse<User>> => {
+    if (data.name === undefined && data.email === undefined) {
+      throw new Error('Name эсвэл email-ээс дор хаяж нэгийг оруулна уу.');
+    }
+    const body: { name?: string; email?: string } = {};
+    if (data.name !== undefined) body.name = data.name;
+    if (data.email !== undefined) body.email = data.email;
+    const res = await apiFetch<User>('/auth/me/update', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }, true);
+    if (res.data && typeof window !== 'undefined') {
+      localStorage.setItem('user_name', res.data.name ?? '');
+      localStorage.setItem('user_email', res.data.email ?? '');
+    }
+    return res;
+  },
 };
 
 // Auth hooks
@@ -358,6 +387,25 @@ export const useAuthForgotPassword = () => {
 export const useAuthResetPassword = () => {
   return useMutation({
     mutationFn: authApiFunctions.resetPassword,
+  });
+};
+
+export const useCurrentUser = () => {
+  const token = getAuthToken();
+  return useQuery({
+    queryKey: queryKeys.auth.me(),
+    queryFn: () => authApiFunctions.getMe(),
+    enabled: !!token,
+  });
+};
+
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name?: string; email?: string }) => authApiFunctions.updateProfile(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+    },
   });
 };
 
@@ -1119,7 +1167,10 @@ export interface CreateOrderRequest {
   // For guest users
   sessionToken?: string;
   address?: GuestAddress;
-  // Common
+  // Common (required for both auth and guest) – contact info from current inputs
+  fullName: string;
+  phoneNumber: string;
+  email: string;
   deliveryDate?: string;
   deliveryTimeSlot?: '10-14' | '14-18' | '18-21' | '21-00';
 }
@@ -1132,8 +1183,12 @@ const ordersApiFunctions = {
   },
 
   getById: async (id: number): Promise<ApiResponse<Order>> => {
-    requireAuth();
-    return apiFetch<Order>(`/orders/${id}`, {}, true);
+    const token = getAuthToken();
+    const sessionToken = getSessionToken();
+    if (!token && !sessionToken) {
+      throw new Error('Authentication or session required to view order.');
+    }
+    return apiFetch<Order>(`/orders/${id}`, {}, !!token);
   },
 
   create: async (data: CreateOrderRequest): Promise<ApiResponse<Order>> => {
@@ -1176,10 +1231,11 @@ export const useOrders = () => {
 
 export const useOrder = (id: number) => {
   const token = getAuthToken();
+  const sessionToken = getSessionToken();
   return useQuery({
     queryKey: queryKeys.orders.detail(id),
     queryFn: () => ordersApiFunctions.getById(id),
-    enabled: !!id && !!token, // Only enable if authenticated and id exists
+    enabled: !!id && (!!token || !!sessionToken), // Enable for authenticated or guest with session
   });
 };
 
