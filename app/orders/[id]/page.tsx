@@ -277,7 +277,7 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-525px)] bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-[calc(100vh-525px)] bg-linear-to-b from-gray-50 to-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-5">
         {/* Header */}
         <Button
@@ -294,7 +294,7 @@ export default function OrderDetailPage() {
           !isCancelled &&
           order?.status !== 'CANCELLED' &&
           paymentStatus !== 'CANCELLED' && (
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-primary/5 via-white to-white">
+            <Card className="border-0 shadow-xl bg-linear-to-br from-primary/5 via-white to-white">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base font-bold">
                   <QrCode className="w-5 h-5 text-primary" />

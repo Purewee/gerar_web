@@ -1220,7 +1220,7 @@ export default function OrderCreatePage() {
               <div className="space-y-4 mb-6">
                 {cartItems.map(item => (
                   <div key={item.id} className="flex gap-4">
-                    <div className="relative w-20 h-20 flex-shrink-0">
+                    <div className="relative w-20 h-20 shrink-0">
                       <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
                         {item.product?.firstImage || item.product?.images?.[0] ? (
                           <Image

@@ -312,7 +312,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b border-gray-200">
+        <div className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b border-gray-200">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <div>
@@ -342,7 +342,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
         <div className="p-6">
           {/* Payment Success */}
           {isPaid && (
-            <Card className="mb-6 border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg">
+            <Card className="mb-6 border-2 border-green-300 bg-linear-to-br from-green-50 to-emerald-50 shadow-lg">
               <CardContent className="p-8">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -365,7 +365,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
 
           {/* Payment Cancelled */}
           {isCancelled && (
-            <Card className="mb-6 border-2 border-red-300 bg-gradient-to-br from-red-50 to-rose-50 shadow-lg">
+            <Card className="mb-6 border-2 border-red-300 bg-linear-to-br from-red-50 to-rose-50 shadow-lg">
               <CardContent className="p-8">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -384,7 +384,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
           {!isPaid && !isCancelled && (
             <>
               <Card className="mb-6 border-2 border-gray-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-transparent border-b border-gray-200">
+                <CardHeader className="bg-linear-to-r from-gray-50 to-transparent border-b border-gray-200">
                   <CardTitle className="flex items-center gap-3 text-xl">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                       <QrCode className="w-6 h-6 text-primary" />
@@ -405,7 +405,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
                   ) : qrCode ? (
                     <div className="space-y-6">
                       <div className="flex flex-col items-center">
-                        <div className="p-6 bg-white rounded-2xl border-4 border-gray-200 shadow-xl mb-6 flex items-center justify-center min-h-[320px] min-w-[320px] bg-gradient-to-br from-white to-gray-50">
+                        <div className="p-6 bg-white rounded-2xl border-4 border-gray-200 shadow-xl mb-6 flex items-center justify-center min-h-[320px] min-w-[320px] bg-linear-to-br from-white to-gray-50">
                           <Image
                             width={280}
                             height={280}
@@ -425,11 +425,11 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
                           <div className="w-full max-w-[340px] mt-2">
                             {/* Section Header */}
                             <div className="flex items-center gap-2 mb-4">
-                              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                              <div className="flex-1 h-px bg-linear-to-r from-transparent via-gray-300 to-transparent"></div>
                               <span className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
                                 Банкны апп сонгох
                               </span>
-                              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                              <div className="flex-1 h-px bg-linear-to-r from-transparent via-gray-300 to-transparent"></div>
                             </div>
 
                             {/* Bank Apps Grid */}

@@ -466,11 +466,11 @@ export default function PaymentPage() {
                         <div className="w-full max-w-[340px] mt-2">
                           {/* Section Header */}
                           <div className="flex items-center gap-2 mb-4">
-                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                            <div className="flex-1 h-px bg-linear-to-r from-transparent via-gray-300 to-transparent"></div>
                             <span className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
                               Банкны апп сонгох
                             </span>
-                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                            <div className="flex-1 h-px bg-linear-to-r from-transparent via-gray-300 to-transparent"></div>
                           </div>
 
                           {/* Bank Apps Grid */}
