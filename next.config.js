@@ -25,6 +25,10 @@ const nextConfig = {
           protocol: "http",
           hostname: "192.168.1.3",
         },
+        {
+          protocol: "http",
+          hostname: "192.168.1.4",
+        },
       ],
       // Disable optimization for development to avoid localhost private IP resolution issues
       unoptimized: process.env.NODE_ENV === 'development',

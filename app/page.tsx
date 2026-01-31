@@ -326,7 +326,7 @@ export default function Home() {
                                   priority={item.id === carouselItems[0]?.id}
                                   fill
                                   fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
-                                  unoptimized={item.imageUrl?.includes('localhost') || item.imageUrl?.includes('127.0.0.1') || item.imageUrl?.includes('192.168.1.3')}
+                                  unoptimized={item.imageUrl?.includes('localhost') || item.imageUrl?.includes('127.0.0.1') || item.imageUrl?.includes('192.168.1.4')}
                                 />
                               </div>
                             ) : (
