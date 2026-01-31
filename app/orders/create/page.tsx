@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, User, LogOut, MapPin, ChevronRight, ChevronLeft, Plus, Edit, Trash2, X } from 'lucide-react';
+import { Loader2, ChevronRight, ChevronLeft, Plus, Edit, Trash2 } from 'lucide-react';
 import { MongolianDatePicker } from '@/components/mongolian-date-picker';
 import {
   useOrderCreate,
@@ -27,6 +27,7 @@ import {
 } from '@/lib/api';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 export default function OrderCreatePage() {
   const router = useRouter();
@@ -101,7 +102,9 @@ export default function OrderCreatePage() {
 
   // Address form state for authenticated users without addresses
   // fullName and phoneNumber come from contact section (userName, userPhone)
-  const [newAddress, setNewAddress] = useState<Omit<CreateAddressRequest, 'fullName' | 'phoneNumber'>>({
+  const [newAddress, setNewAddress] = useState<
+    Omit<CreateAddressRequest, 'fullName' | 'phoneNumber'>
+  >({
     provinceOrDistrict: '',
     khorooOrSoum: '',
   });
@@ -125,11 +128,11 @@ export default function OrderCreatePage() {
 
   // Load user info from localStorage
   useEffect(() => {
-    const email = localStorage.getItem('profile_email') || localStorage.getItem('user_email') || '';
+    const email = localStorage.getItem('user_email') || '';
     setSavedEmailPlaceholder(email);
 
     if (isAuthenticated) {
-      const name = localStorage.getItem('user_name') || localStorage.getItem('profile_name') || '';
+      const name = localStorage.getItem('user_name') || '';
       const phone = localStorage.getItem('mobile') || '';
       setUserName(name);
       setUserEmail(email);
@@ -155,7 +158,7 @@ export default function OrderCreatePage() {
     if (editingAddressId) {
       return;
     }
-    
+
     if (selectedDistrict) {
       setNewAddress(prev => ({ ...prev, khorooOrSoum: '' }));
       setGuestAddress(prev => ({ ...prev, khorooOrSoum: '' }));
@@ -164,6 +167,14 @@ export default function OrderCreatePage() {
       setGuestAddress(prev => ({ ...prev, provinceOrDistrict: '' }));
     }
   }, [selectedDistrict, editingAddressId]);
+
+  // Helper: today's date string in local time (used by effects below)
+  const getTodayDateString = (): string => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+      d.getDate(),
+    ).padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     // Set default address if available (for authenticated users)
@@ -187,8 +198,8 @@ export default function OrderCreatePage() {
       const slotEndHour = parseInt(endHour === '00' ? '24' : endHour);
       const currentHour = today.getHours();
       const currentMinute = today.getMinutes();
-      const currentTimeInHours = currentHour + (currentMinute / 60);
-      
+      const currentTimeInHours = currentHour + currentMinute / 60;
+
       // Check if slot has already ended
       if (slotEndHour === 24) {
         if (currentTimeInHours >= 24) {
@@ -199,7 +210,7 @@ export default function OrderCreatePage() {
         setDeliveryTimeSlot('');
         return;
       }
-      
+
       // Calculate hours until slot starts
       let hoursUntilSlot;
       if (slotStartHour === 24) {
@@ -207,7 +218,7 @@ export default function OrderCreatePage() {
       } else {
         hoursUntilSlot = slotStartHour - currentTimeInHours;
       }
-      
+
       // Clear slot if it has already started (current slot)
       if (hoursUntilSlot <= 0) {
         setDeliveryTimeSlot('');
@@ -336,17 +347,14 @@ export default function OrderCreatePage() {
         });
 
         if (response.data && response.data.id) {
-          // Save email and name to user's profile
           if (userEmail && userEmail.trim()) {
             localStorage.setItem('user_email', userEmail.trim());
-            localStorage.setItem('profile_email', userEmail.trim());
           }
           if (userName && userName.trim()) {
             localStorage.setItem('user_name', userName.trim());
-            localStorage.setItem('profile_name', userName.trim());
           }
-          toast.success('Захиалга үүслээ');
           router.push(`/orders/${response.data.id}`);
+          toast.success('Захиалга үүслээ');
         } else {
           toast.error('Захиалгын ID олдсонгүй');
         }
@@ -354,7 +362,6 @@ export default function OrderCreatePage() {
         toast.error(error.message || 'Захиалга үүсгэхэд алдаа гарлаа');
       }
     } else {
-      // Guest user flow
       if (!guestAddress.label?.trim()) {
         toast.warning('Хаягийн нэр оруулна уу');
         return;
@@ -390,10 +397,9 @@ export default function OrderCreatePage() {
           // Save email to localStorage for guest users (in case they register later)
           if (guestAddress.email && guestAddress.email.trim()) {
             localStorage.setItem('user_email', guestAddress.email.trim());
-            localStorage.setItem('profile_email', guestAddress.email.trim());
           }
-          toast.success('Захиалга үүслээ');
           router.push(`/orders/${response.data.id}`);
+          toast.success('Захиалга үүслээ');
         } else {
           toast.error('Захиалгын ID олдсонгүй');
         }
@@ -403,7 +409,7 @@ export default function OrderCreatePage() {
     }
   };
 
-  const handleLogout = async () => {
+  const _handleLogout = async () => {
     try {
       await authApi.logout();
       window.location.href = '/';
@@ -532,16 +538,7 @@ export default function OrderCreatePage() {
   const walletBalance = 0;
   const total = subtotal + deliveryFee - walletBalance;
 
-  const selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
-
-  // Helper function to get today's date string in local time
-  const getTodayDateString = (): string => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const _selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
 
   // Show loading only after mount to avoid hydration mismatch
   if (!isMounted || (isAuthenticated && addressesLoading)) {
@@ -558,13 +555,13 @@ export default function OrderCreatePage() {
         {/* Breadcrumbs */}
         <div className="mb-6 text-sm text-gray-600">
           <div className="flex items-center gap-2">
-            <a href="/" className="hover:text-primary">
+            <Link href="/" className="hover:text-primary">
               Нүүр хуудас
-            </a>
+            </Link>
             <ChevronRight className="w-4 h-4" />
-            <a href="/cart" className="hover:text-primary">
+            <Link href="/cart" className="hover:text-primary">
               Сагс
-            </a>
+            </Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-gray-900">Захиалгын хаяг</span>
             <ChevronRight className="w-4 h-4 text-gray-300" />
@@ -601,9 +598,7 @@ export default function OrderCreatePage() {
                       </label>
                       <Input
                         value={userPhone}
-                        onChange={e =>
-                          setUserPhone(e.target.value.replace(/\D/g, '').slice(0, 8))
-                        }
+                        onChange={e => setUserPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
                         placeholder="Утасны дугаар"
                         maxLength={8}
                         required
@@ -632,7 +627,9 @@ export default function OrderCreatePage() {
                       </label>
                       <Input
                         value={guestAddress.fullName}
-                        onChange={e => setGuestAddress({ ...guestAddress, fullName: e.target.value })}
+                        onChange={e =>
+                          setGuestAddress({ ...guestAddress, fullName: e.target.value })
+                        }
                         placeholder="Нэр"
                         required
                       />
@@ -662,9 +659,7 @@ export default function OrderCreatePage() {
                     <Input
                       type="email"
                       value={guestAddress.email || ''}
-                      onChange={e =>
-                        setGuestAddress({ ...guestAddress, email: e.target.value })
-                      }
+                      onChange={e => setGuestAddress({ ...guestAddress, email: e.target.value })}
                       placeholder={savedEmailPlaceholder || 'Имэйл'}
                       required
                     />
@@ -673,9 +668,7 @@ export default function OrderCreatePage() {
                     Бүртгэлтэй хэрэглэгч?{' '}
                     <button
                       type="button"
-                      onClick={() =>
-                        window.dispatchEvent(new CustomEvent('openLoginModal'))
-                      }
+                      onClick={() => window.dispatchEvent(new CustomEvent('openLoginModal'))}
                       className="text-primary font-medium hover:underline"
                     >
                       Нэвтрэх
@@ -874,9 +867,7 @@ export default function OrderCreatePage() {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
-                          Орц
-                        </label>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">Орц</label>
                         <Input
                           value={newAddress.entrance || ''}
                           onChange={e => setNewAddress({ ...newAddress, entrance: e.target.value })}
@@ -887,9 +878,7 @@ export default function OrderCreatePage() {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
-                          Тоот
-                        </label>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">Тоот</label>
                         <Input
                           value={newAddress.apartmentNumber || ''}
                           onChange={e =>
@@ -909,7 +898,10 @@ export default function OrderCreatePage() {
                       <Textarea
                         value={newAddress.addressNote || ''}
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                          setNewAddress({ ...newAddress, addressNote: e.target.value.slice(0, 500) })
+                          setNewAddress({
+                            ...newAddress,
+                            addressNote: e.target.value.slice(0, 500),
+                          })
                         }
                         placeholder="Дэлгэрэнгүй хаягийн мэдээлэл"
                         maxLength={500}
@@ -985,9 +977,7 @@ export default function OrderCreatePage() {
                     </label>
                     <Input
                       value={guestAddress.label || ''}
-                      onChange={e =>
-                        setGuestAddress({ ...guestAddress, label: e.target.value })
-                      }
+                      onChange={e => setGuestAddress({ ...guestAddress, label: e.target.value })}
                       placeholder="Жишээ: Гэр, Ажил, Орон сууц"
                       required
                     />
@@ -1045,9 +1035,7 @@ export default function OrderCreatePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Хотхон
-                      </label>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">Хотхон</label>
                       <Input
                         value={guestAddress.residentialComplex}
                         onChange={e =>
@@ -1062,24 +1050,24 @@ export default function OrderCreatePage() {
                       </label>
                       <Input
                         value={guestAddress.building}
-                        onChange={e => setGuestAddress({ ...guestAddress, building: e.target.value })}
+                        onChange={e =>
+                          setGuestAddress({ ...guestAddress, building: e.target.value })
+                        }
                         placeholder="Барилгын дугаар"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Орц
-                      </label>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">Орц</label>
                       <Input
                         value={guestAddress.entrance}
-                        onChange={e => setGuestAddress({ ...guestAddress, entrance: e.target.value })}
+                        onChange={e =>
+                          setGuestAddress({ ...guestAddress, entrance: e.target.value })
+                        }
                         placeholder="Орц"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Тоот
-                      </label>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">Тоот</label>
                       <Input
                         value={guestAddress.apartmentNumber}
                         onChange={e =>
@@ -1140,15 +1128,15 @@ export default function OrderCreatePage() {
                     // Check if time slot is available (disable current and past slots, enable all future slots)
                     const isTimeSlotAvailable = (): boolean => {
                       if (!deliveryDate) return false;
-                      
+
                       const today = new Date();
                       const todayDateStr = getTodayDateString();
-                      
+
                       // If delivery date is in the future, all slots are available
                       if (deliveryDate > todayDateStr) {
                         return true;
                       }
-                      
+
                       // If delivery date is today, check if slot is available
                       if (deliveryDate === todayDateStr) {
                         const [startHour, endHour] = slot.split('-');
@@ -1156,8 +1144,8 @@ export default function OrderCreatePage() {
                         const slotEndHour = parseInt(endHour === '00' ? '24' : endHour);
                         const currentHour = today.getHours();
                         const currentMinute = today.getMinutes();
-                        const currentTimeInHours = currentHour + (currentMinute / 60);
-                        
+                        const currentTimeInHours = currentHour + currentMinute / 60;
+
                         // Check if slot has already ended - disable past slots
                         if (slotEndHour === 24) {
                           // Midnight slot (21-00) - ends at midnight
@@ -1165,7 +1153,7 @@ export default function OrderCreatePage() {
                         } else if (currentTimeInHours >= slotEndHour) {
                           return false; // Slot has already ended
                         }
-                        
+
                         // Calculate hours until slot starts
                         let hoursUntilSlot;
                         if (slotStartHour === 24) {
@@ -1174,17 +1162,17 @@ export default function OrderCreatePage() {
                         } else {
                           hoursUntilSlot = slotStartHour - currentTimeInHours;
                         }
-                        
+
                         // Disable current slot (slot that has started but not ended)
                         if (hoursUntilSlot <= 0) {
                           // Slot has started or is starting now - disable it
                           return false;
                         }
-                        
+
                         // Slot is in the future - enable it
                         return true;
                       }
-                      
+
                       return false;
                     };
 
@@ -1232,7 +1220,7 @@ export default function OrderCreatePage() {
               <div className="space-y-4 mb-6">
                 {cartItems.map(item => (
                   <div key={item.id} className="flex gap-4">
-                    <div className="relative w-20 h-20 flex-shrink-0">
+                    <div className="relative w-20 h-20 shrink-0">
                       <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
                         {item.product?.firstImage || item.product?.images?.[0] ? (
                           <Image

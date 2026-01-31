@@ -11,11 +11,9 @@ import {
   useCartAdd,
   useFavoriteAdd,
   useFavoriteRemove,
-  useFavoriteStatus,
   getAuthToken,
 } from '@/lib/api';
 import Image from 'next/image';
-import { CardSkeleton, Spinner } from '@/components/skeleton';
 import { toast } from 'sonner';
 
 export default function ProductDetailPage() {
@@ -31,12 +29,14 @@ export default function ProductDetailPage() {
     isLoading: loading,
     error: productError,
   } = useProduct(isNaN(productId) ? 0 : productId);
+
   const product = productResponse?.data;
 
   const { data: cartResponse } = useCart();
   const cartItems = cartResponse?.data || [];
-  const cartItem = product ? cartItems.find((item) => item.productId === product.id) : null;
+  const cartItem = product ? cartItems.find(item => item.productId === product.id) : null;
   const isInCart = !!cartItem;
+  const isFavorite = product?.isFavorite;
   const cartQuantity = cartItem?.quantity ?? 0;
 
   const addToCartMutation = useCartAdd();
@@ -135,23 +135,15 @@ export default function ProductDetailPage() {
     }
 
     try {
-      // if (isFavorited) {
-      //   await removeFavoriteMutation.mutateAsync(product.id);
-      //   toast({
-      //     title: "Дуртай жагсаалтаас устгагдсан",
-      //     description: `${product.name} дуртай жагсаалтаас устгагдлаа`,
-      //   });
-      // } else {
-      //   await addFavoriteMutation.mutateAsync(product.id);
-      //   toast({
-      //     title: "Дуртай жагсаалтад нэмэгдсэн",
-      //     description: `${product.name} дуртай жагсаалтад нэмэгдлээ`,
-      //   });
-      // }
+      if (isFavorite) {
+        await removeFavoriteMutation.mutateAsync(product.id);
+        toast.success(`Жагсаалтаас устгагдлаа`);
+      } else {
+        await addFavoriteMutation.mutateAsync(product.id);
+        toast.success(`Жагсаалтад нэмэгдлээ`);
+      }
     } catch (error: any) {
-      toast.error('Алдаа гарлаа', {
-        description: error.message || 'Дуртай жагсаалт шинэчлэхэд алдаа гарлаа',
-      });
+      toast.error(error.message || 'Алдаа гарлаа');
     }
   };
 
@@ -303,12 +295,14 @@ export default function ProductDetailPage() {
                 aria-label={
                   addFavoriteMutation.isPending || removeFavoriteMutation.isPending
                     ? 'Хүлээж байна...'
+                    : isFavorite
+                    ? 'Дуртай жагсаалтаас устгах'
                     : 'Дуртай жагсаалтад нэмэх'
                 }
               >
                 <Heart
-                  className={`w-5 h-5 
-                    }`}
+                  fill={isFavorite ? 'red' : 'none'}
+                  className={`w-5 h-5 ${isFavorite ? 'text-red-500' : 'text-gray-500'}`}
                   aria-hidden="true"
                 />
               </Button>
@@ -325,8 +319,8 @@ export default function ProductDetailPage() {
                   isInCart
                     ? `${product.name} сагсанд байна`
                     : addToCartMutation.isPending
-                      ? 'Сагсанд нэмэж байна...'
-                      : `${product.name} сагсанд нэмэх`
+                    ? 'Сагсанд нэмэж байна...'
+                    : `${product.name} сагсанд нэмэх`
                 }
               >
                 <ShoppingCart className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -334,8 +328,8 @@ export default function ProductDetailPage() {
                   {addToCartMutation.isPending
                     ? 'Нэмэж байна...'
                     : isInCart
-                      ? `Сагслагдсан${cartQuantity > 1 ? ` (${cartQuantity})` : ''}`
-                      : 'Сагсанд нэмэх'}
+                    ? `Сагслагдсан${cartQuantity > 1 ? ` (${cartQuantity})` : ''}`
+                    : 'Сагсанд нэмэх'}
                 </span>
               </Button>
               <Button

@@ -3,27 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import {
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  QrCode,
-  RefreshCw,
-  X,
-} from 'lucide-react';
-import {
-  usePaymentInitiate,
-  usePaymentStatus,
-  usePaymentCancel,
-  useOrder,
-} from '@/lib/api';
+import { Loader2, CheckCircle2, XCircle, QrCode, RefreshCw, X } from 'lucide-react';
+import { usePaymentInitiate, usePaymentStatus, usePaymentCancel, useOrder } from '@/lib/api';
+import Image from 'next/image';
 
 interface PaymentModalProps {
   orderId: number;
@@ -32,32 +16,25 @@ interface PaymentModalProps {
   onPaymentSuccess?: () => void;
 }
 
-export function PaymentModal({
-  orderId,
-  open,
-  onOpenChange,
-  onPaymentSuccess,
-}: PaymentModalProps) {
-
-  const { data: orderResponse, isLoading: orderLoading } = useOrder(
-    isNaN(orderId) ? 0 : orderId,
-  );
+export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: PaymentModalProps) {
+  const { data: orderResponse, isLoading: orderLoading } = useOrder(isNaN(orderId) ? 0 : orderId);
   const order = orderResponse?.data;
 
   const [qrCode, setQrCode] = useState<string | null>(null);
-  const [qrText, setQrText] = useState<string | null>(null);
-  const [paymentUrls, setPaymentUrls] = useState<Array<{
-    name: string;
-    description: string;
-    logo: string;
-    link: string;
-  }>>([]);
+  const [, setQrText] = useState<string | null>(null);
+  const [paymentUrls, setPaymentUrls] = useState<
+    Array<{
+      name: string;
+      description: string;
+      logo: string;
+      link: string;
+    }>
+  >([]);
   const [webUrl, setWebUrl] = useState<string | null>(null);
   const [hasInitiated, setHasInitiated] = useState(false);
   const [isWaitingForInitiation, setIsWaitingForInitiation] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const initiationAttemptedRef = useRef(false);
-  
 
   const initiatePaymentMutation = usePaymentInitiate();
   const {
@@ -70,9 +47,7 @@ export function PaymentModal({
   const cancelPaymentMutation = usePaymentCancel();
 
   const paymentStatus =
-    paymentStatusResponse?.data?.paymentStatus ||
-    order?.paymentStatus ||
-    'PENDING';
+    paymentStatusResponse?.data?.paymentStatus || order?.paymentStatus || 'PENDING';
   const shouldStopPolling = paymentStatusResponse?.data?.shouldStopPolling || false;
   const isPaid = paymentStatus === 'PAID';
   const isCancelled = paymentStatus === 'CANCELLED';
@@ -103,14 +78,7 @@ export function PaymentModal({
 
   // Reset initiation state when order loads with existing invoice but no QR code
   useEffect(() => {
-    if (
-      open &&
-      order &&
-      order.qpayInvoiceId &&
-      !qrCode &&
-      !isPaid &&
-      !isCancelled
-    ) {
+    if (open && order && order.qpayInvoiceId && !qrCode && !isPaid && !isCancelled) {
       // Reset flags to allow fetching QR code for existing invoice
       initiationAttemptedRef.current = false;
       setHasInitiated(false);
@@ -276,20 +244,17 @@ export function PaymentModal({
     }
   }, [isPaid, open, onPaymentSuccess, onOpenChange]);
 
-
   // Auto-open QPAY app on mobile devices when QR code is available
   useEffect(() => {
-    if (
-      qrCode &&
-      paymentUrls.length > 0 &&
-      !isPaid &&
-      !isCancelled
-    ) {
+    if (qrCode && paymentUrls.length > 0 && !isPaid && !isCancelled) {
       // Check if mobile device
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
         // Find qPay wallet deeplink
-        const qpayWallet = paymentUrls.find(url => url.name.toLowerCase().includes('qpay') || url.name.toLowerCase().includes('wallet'));
+        const qpayWallet = paymentUrls.find(
+          url =>
+            url.name.toLowerCase().includes('qpay') || url.name.toLowerCase().includes('wallet'),
+        );
         if (qpayWallet) {
           // Small delay to ensure QR code is visible first
           const timer = setTimeout(() => {
@@ -347,13 +312,11 @@ export function PaymentModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b border-gray-200">
+        <div className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent p-6 border-b border-gray-200">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <div>
-                <span className="text-2xl font-bold text-gray-900">
-                  Захиалга #{order.id}
-                </span>
+                <span className="text-2xl font-bold text-gray-900">Захиалга #{order.id}</span>
                 <p className="text-sm text-gray-600 mt-1">Төлбөр төлөх</p>
               </div>
               <Button
@@ -377,10 +340,9 @@ export function PaymentModal({
         </div>
 
         <div className="p-6">
-
           {/* Payment Success */}
           {isPaid && (
-            <Card className="mb-6 border-2 border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg">
+            <Card className="mb-6 border-2 border-green-300 bg-linear-to-br from-green-50 to-emerald-50 shadow-lg">
               <CardContent className="p-8">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -394,9 +356,7 @@ export function PaymentModal({
                   </p>
                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 rounded-full">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-green-800">
-                      Хүлээж байна...
-                    </span>
+                    <span className="text-sm font-medium text-green-800">Хүлээж байна...</span>
                   </div>
                 </div>
               </CardContent>
@@ -405,18 +365,15 @@ export function PaymentModal({
 
           {/* Payment Cancelled */}
           {isCancelled && (
-            <Card className="mb-6 border-2 border-red-300 bg-gradient-to-br from-red-50 to-rose-50 shadow-lg">
+            <Card className="mb-6 border-2 border-red-300 bg-linear-to-br from-red-50 to-rose-50 shadow-lg">
               <CardContent className="p-8">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                     <XCircle className="w-12 h-12 text-white" />
                   </div>
-                  <h3 className="text-3xl font-bold text-red-900 mb-3">
-                    Төлбөр цуцлагдсан
-                  </h3>
+                  <h3 className="text-3xl font-bold text-red-900 mb-3">Төлбөр цуцлагдсан</h3>
                   <p className="text-gray-700 text-lg mb-6">
-                    Төлбөрийн нэхэмжлэх цуцлагдсан байна. Шинээр төлбөр төлөх бол
-                    дахин оролдоно уу.
+                    Төлбөрийн нэхэмжлэх цуцлагдсан байна. Шинээр төлбөр төлөх бол дахин оролдоно уу.
                   </p>
                 </div>
               </CardContent>
@@ -427,7 +384,7 @@ export function PaymentModal({
           {!isPaid && !isCancelled && (
             <>
               <Card className="mb-6 border-2 border-gray-200 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-gray-50 to-transparent border-b border-gray-200">
+                <CardHeader className="bg-linear-to-r from-gray-50 to-transparent border-b border-gray-200">
                   <CardTitle className="flex items-center gap-3 text-xl">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                       <QrCode className="w-6 h-6 text-primary" />
@@ -435,226 +392,231 @@ export function PaymentModal({
                     QR кодоор төлбөр төлөх
                   </CardTitle>
                 </CardHeader>
-              <CardContent>
-                {(initiatePaymentMutation.isPending || isWaitingForInitiation) &&
-                !qrCode ? (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-                    <p className="text-gray-600">
-                      {isWaitingForInitiation
-                        ? 'Төлбөрийн нэхэмжлэх үүсгэж байна. Хүлээж байна...'
-                        : 'Төлбөрийн нэхэмжлэх үүсгэж байна...'}
-                    </p>
-                  </div>
-                ) : qrCode ? (
-                  <div className="space-y-6">
+                <CardContent>
+                  {(initiatePaymentMutation.isPending || isWaitingForInitiation) && !qrCode ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+                      <p className="text-gray-600">
+                        {isWaitingForInitiation
+                          ? 'Төлбөрийн нэхэмжлэх үүсгэж байна. Хүлээж байна...'
+                          : 'Төлбөрийн нэхэмжлэх үүсгэж байна...'}
+                      </p>
+                    </div>
+                  ) : qrCode ? (
+                    <div className="space-y-6">
+                      <div className="flex flex-col items-center">
+                        <div className="p-6 bg-white rounded-2xl border-4 border-gray-200 shadow-xl mb-6 flex items-center justify-center min-h-[320px] min-w-[320px] bg-linear-to-br from-white to-gray-50">
+                          <Image
+                            width={280}
+                            height={280}
+                            src={qrCode}
+                            alt="QR Code"
+                            className="w-full max-w-[280px] h-auto drop-shadow-lg"
+                          />
+                        </div>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
+                          <p className="text-sm text-blue-900 text-center font-medium">
+                            📱 QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
+                          </p>
+                        </div>
 
-                    <div className="flex flex-col items-center">
-                      <div className="p-6 bg-white rounded-2xl border-4 border-gray-200 shadow-xl mb-6 flex items-center justify-center min-h-[320px] min-w-[320px] bg-gradient-to-br from-white to-gray-50">
-                        <img
-                          src={qrCode}
-                          alt="QR Code"
-                          className="w-full max-w-[280px] h-auto drop-shadow-lg"
-                          style={{ maxWidth: '280px', height: 'auto', display: 'block' }}
-                        />
-                      </div>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
-                        <p className="text-sm text-blue-900 text-center font-medium">
-                          📱 QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
-                        </p>
-                      </div>
-                      
-                      {/* Bank/Wallet Buttons - Mobile Only */}
-                      {isMobile && paymentUrls.length > 0 && (
-                        <div className="w-full max-w-[340px] mt-2">
-                          {/* Section Header */}
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
-                              Банкны апп сонгох
-                            </span>
-                            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                          </div>
-                          
-                          {/* Bank Apps Grid */}
-                          <div className="grid grid-cols-4 gap-3">
-                            {paymentUrls.map((url, index) => (
-                              <button
-                                key={index}
-                                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border-2 border-gray-100 hover:border-primary/30 hover:bg-primary/5 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+                        {/* Bank/Wallet Buttons - Mobile Only */}
+                        {isMobile && paymentUrls.length > 0 && (
+                          <div className="w-full max-w-[340px] mt-2">
+                            {/* Section Header */}
+                            <div className="flex items-center gap-2 mb-4">
+                              <div className="flex-1 h-px bg-linear-to-r from-transparent via-gray-300 to-transparent"></div>
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
+                                Банкны апп сонгох
+                              </span>
+                              <div className="flex-1 h-px bg-linear-to-r from-transparent via-gray-300 to-transparent"></div>
+                            </div>
+
+                            {/* Bank Apps Grid */}
+                            <div className="grid grid-cols-4 gap-3">
+                              {paymentUrls.map((url, index) => (
+                                <button
+                                  key={index}
+                                  className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border-2 border-gray-100 hover:border-primary/30 hover:bg-primary/5 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md"
+                                  onClick={() => {
+                                    console.log('Opening bank/wallet:', url.name, url.link);
+                                    window.location.href = url.link;
+                                  }}
+                                >
+                                  <div className="w-12 h-12 rounded-xl bg-gray-50 group-hover:bg-white flex items-center justify-center overflow-hidden transition-colors shadow-inner">
+                                    {url.logo ? (
+                                      <Image
+                                        src={url.logo}
+                                        alt={url.name}
+                                        className="w-10 h-10 object-contain"
+                                        width={40}
+                                        height={40}
+                                        onError={e => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                          const parent = target.parentElement;
+                                          if (parent) {
+                                            parent.innerHTML = `<span class="text-lg font-bold text-gray-400">${url.name.charAt(
+                                              0,
+                                            )}</span>`;
+                                          }
+                                        }}
+                                      />
+                                    ) : (
+                                      <span className="text-lg font-bold text-gray-400">
+                                        {url.name.charAt(0)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] font-medium text-gray-600 text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                                    {url.name}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* Web URL Button */}
+                            {webUrl && (
+                              <Button
+                                variant="ghost"
+                                className="w-full mt-4 text-gray-500 hover:text-gray-700"
+                                size="sm"
                                 onClick={() => {
-                                  console.log('Opening bank/wallet:', url.name, url.link);
-                                  window.location.href = url.link;
+                                  console.log('Opening web URL:', webUrl);
+                                  window.open(webUrl, '_blank', 'noopener,noreferrer');
                                 }}
                               >
-                                <div className="w-12 h-12 rounded-xl bg-gray-50 group-hover:bg-white flex items-center justify-center overflow-hidden transition-colors shadow-inner">
-                                  {url.logo ? (
-                                    <img
-                                      src={url.logo}
-                                      alt={url.name}
-                                      className="w-10 h-10 object-contain"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                        const parent = target.parentElement;
-                                        if (parent) {
-                                          parent.innerHTML = `<span class="text-lg font-bold text-gray-400">${url.name.charAt(0)}</span>`;
-                                        }
-                                      }}
-                                    />
-                                  ) : (
-                                    <span className="text-lg font-bold text-gray-400">{url.name.charAt(0)}</span>
-                                  )}
-                                </div>
-                                <span className="text-[10px] font-medium text-gray-600 text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-                                  {url.name}
-                                </span>
-                              </button>
-                            ))}
+                                <span className="text-xs">Веб хуудсаар төлөх →</span>
+                              </Button>
+                            )}
                           </div>
-
-                          {/* Web URL Button */}
-                          {webUrl && (
+                        )}
+                        {isMobile && !paymentUrls.length && webUrl && (
+                          <div className="w-full max-w-[280px] mt-2">
                             <Button
-                              variant="ghost"
-                              className="w-full mt-4 text-gray-500 hover:text-gray-700"
+                              variant="outline"
+                              className="w-full"
                               size="sm"
                               onClick={() => {
                                 console.log('Opening web URL:', webUrl);
                                 window.open(webUrl, '_blank', 'noopener,noreferrer');
                               }}
                             >
-                              <span className="text-xs">Веб хуудсаар төлөх →</span>
+                              Веб хуудас нээх
                             </Button>
-                          )}
-                        </div>
-                      )}
-                      {isMobile && !paymentUrls.length && webUrl && (
-                        <div className="w-full max-w-[280px] mt-2">
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Refresh Status Button */}
+                      {!shouldStopPolling && (
+                        <div className="flex justify-center">
                           <Button
                             variant="outline"
-                            className="w-full"
-                            size="sm"
-                            onClick={() => {
-                              console.log('Opening web URL:', webUrl);
-                              window.open(webUrl, '_blank', 'noopener,noreferrer');
-                            }}
+                            onClick={() => refetchPaymentStatus()}
+                            disabled={isFetchingPaymentStatus}
+                            className="border-2 hover:bg-gray-50"
                           >
-                            Веб хуудас нээх
+                            <RefreshCw
+                              className={`w-4 h-4 mr-2 ${
+                                isFetchingPaymentStatus ? 'animate-spin' : ''
+                              }`}
+                            />
+                            Төлбөрийн статус шалгах
                           </Button>
                         </div>
                       )}
-                    </div>
-
-                    {/* Refresh Status Button */}
-                    {!shouldStopPolling && (
-                      <div className="flex justify-center">
-                        <Button
-                          variant="outline"
-                          onClick={() => refetchPaymentStatus()}
-                          disabled={isFetchingPaymentStatus}
-                          className="border-2 hover:bg-gray-50"
-                        >
-                          <RefreshCw
-                            className={`w-4 h-4 mr-2 ${
-                              isFetchingPaymentStatus ? 'animate-spin' : ''
-                            }`}
-                          />
-                          Төлбөрийн статус шалгах
-                        </Button>
-                      </div>
-                    )}
-                    {shouldStopPolling && (
-                      <div className="text-center py-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-sm text-gray-600 font-medium">
-                          🔄 Төлбөрийн статус автоматаар шалгагдаж байна...
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    {initiatePaymentMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto mb-4" />
-                        <p className="text-gray-700 mb-4 font-medium text-lg">
-                          Төлбөрийн нэхэмжлэх үүсгэж байна...
-                        </p>
-                      </>
-                    ) : initiatePaymentMutation.isError ? (
-                      <>
-                        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                          <XCircle className="w-12 h-12 text-red-600" />
+                      {shouldStopPolling && (
+                        <div className="text-center py-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-sm text-gray-600 font-medium">
+                            🔄 Төлбөрийн статус автоматаар шалгагдаж байна...
+                          </p>
                         </div>
-                        <p className="text-gray-900 mb-2 font-bold text-lg">
-                          Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа
-                        </p>
-                        <p className="text-sm text-gray-600 mb-6">
-                          Серверийн алдаа гарсан байна. Админтай холбогдох эсвэл
-                          дахин оролдоно уу.
-                        </p>
-                        <Button
-                          onClick={() => {
-                            initiationAttemptedRef.current = false;
-                            setHasInitiated(false);
-                            handleInitiatePayment();
-                          }}
-                          size="lg"
-                          className="shadow-lg"
-                        >
-                          Дахин оролдох
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-gray-700 mb-6 font-medium text-lg">
-                          Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа
-                        </p>
-                        <Button
-                          onClick={() => {
-                            initiationAttemptedRef.current = false;
-                            setHasInitiated(false);
-                            handleInitiatePayment();
-                          }}
-                          size="lg"
-                          className="shadow-lg"
-                        >
-                          Дахин оролдох
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      {initiatePaymentMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto mb-4" />
+                          <p className="text-gray-700 mb-4 font-medium text-lg">
+                            Төлбөрийн нэхэмжлэх үүсгэж байна...
+                          </p>
+                        </>
+                      ) : initiatePaymentMutation.isError ? (
+                        <>
+                          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <XCircle className="w-12 h-12 text-red-600" />
+                          </div>
+                          <p className="text-gray-900 mb-2 font-bold text-lg">
+                            Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа
+                          </p>
+                          <p className="text-sm text-gray-600 mb-6">
+                            Серверийн алдаа гарсан байна. Админтай холбогдох эсвэл дахин оролдоно
+                            уу.
+                          </p>
+                          <Button
+                            onClick={() => {
+                              initiationAttemptedRef.current = false;
+                              setHasInitiated(false);
+                              handleInitiatePayment();
+                            }}
+                            size="lg"
+                            className="shadow-lg"
+                          >
+                            Дахин оролдох
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-gray-700 mb-6 font-medium text-lg">
+                            Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа
+                          </p>
+                          <Button
+                            onClick={() => {
+                              initiationAttemptedRef.current = false;
+                              setHasInitiated(false);
+                              handleInitiatePayment();
+                            }}
+                            size="lg"
+                            className="shadow-lg"
+                          >
+                            Дахин оролдох
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Cancel Payment */}
-            <Card className="border-2 border-gray-200">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <p className="text-gray-600 mb-4 font-medium">
-                    Төлбөр төлөхгүй бол цуцлах боломжтой
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={handleCancelPayment}
-                    disabled={cancelPaymentMutation.isPending}
-                    className="text-red-600 border-2 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all"
-                  >
-                    {cancelPaymentMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Цуцлаж байна...
-                      </>
-                    ) : (
-                      'Төлбөр цуцлах'
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+              {/* Cancel Payment */}
+              <Card className="border-2 border-gray-200">
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <p className="text-gray-600 mb-4 font-medium">
+                      Төлбөр төлөхгүй бол цуцлах боломжтой
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelPayment}
+                      disabled={cancelPaymentMutation.isPending}
+                      className="text-red-600 border-2 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all"
+                    >
+                      {cancelPaymentMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Цуцлаж байна...
+                        </>
+                      ) : (
+                        'Төлбөр цуцлах'
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

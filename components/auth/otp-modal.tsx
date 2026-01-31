@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -38,7 +37,7 @@ export function OTPModal({
   const [mobile, setMobile] = useState('');
   const [mobileInput, setMobileInput] = useState('');
   const [timer, setTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
+  const [_canResend, setCanResend] = useState(false);
   const [showMobileInput, setShowMobileInput] = useState(true);
   const [errors, setErrors] = useState<{ mobile?: string; otp?: string }>({});
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -238,11 +237,6 @@ export function OTPModal({
                   ? 'Нэвтрэх'
                   : 'OTP баталгаажуулах'}
               </DialogTitle>
-              <DialogDescription className="text-white/90 text-sm">
-                {showMobileInput
-                  ? 'Утасны дугаараа оруулаад OTP код аваарай'
-                  : `${otpLength} оронтой OTP кодыг оруулна уу`}
-              </DialogDescription>
             </DialogHeader>
           </div>
         </div>
@@ -346,8 +340,8 @@ export function OTPModal({
                         onKeyDown={e => handleKeyDown(index, e)}
                         onPaste={handlePaste}
                         className={`${
-                          otpLength === 4 ? 'w-16 h-16' : 'w-14 h-14'
-                        } text-center text-xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                          otpLength === 4 ? 'w-14 h-14' : 'w-11 h-11'
+                        } text-center text-xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                           errors.otp
                             ? 'border-2 border-red-300 focus:border-red-400'
                             : 'border-2 border-gray-300 focus:border-primary'

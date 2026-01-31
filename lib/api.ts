@@ -316,23 +316,16 @@ const authApiFunctions = {
   },
 
   logout: async (): Promise<void> => {
-    // Clear cart before logging out
     try {
       await cartApiFunctions.clear();
-      // Dispatch cart update event so UI updates immediately
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
-      // Don't block logout if cart clear fails
       console.error('Failed to clear cart on logout:', error);
     }
 
     removeAuthToken();
-    // Remove session token to clear guest cart
     removeSessionToken();
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('mobile');
-    localStorage.removeItem('user_name');
-    localStorage.removeItem('user_email');
+    localStorage.clear();
     window.dispatchEvent(new CustomEvent('authStateChanged'));
   },
 
@@ -353,10 +346,14 @@ const authApiFunctions = {
     const body: { name?: string; email?: string } = {};
     if (data.name !== undefined) body.name = data.name;
     if (data.email !== undefined) body.email = data.email;
-    const res = await apiFetch<User>('/auth/me/update', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }, true);
+    const res = await apiFetch<User>(
+      '/auth/me/update',
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      true,
+    );
     if (res.data && typeof window !== 'undefined') {
       localStorage.setItem('user_name', res.data.name ?? '');
       localStorage.setItem('user_email', res.data.email ?? '');
@@ -1326,11 +1323,7 @@ const paymentApiFunctions = {
     if (!token && !sessionToken) {
       throw new Error('Authentication or session required to check payment status.');
     }
-    return apiFetch<PaymentStatusResponse>(
-      `/orders/${orderId}/payment-status`,
-      {},
-      !!token,
-    );
+    return apiFetch<PaymentStatusResponse>(`/orders/${orderId}/payment-status`, {}, !!token);
   },
 
   cancel: async (orderId: number): Promise<ApiResponse<PaymentCancelResponse>> => {
@@ -1397,9 +1390,9 @@ export const usePaymentStatus = (
       return paymentApiFunctions.getStatus(orderId);
     },
     enabled: !!orderId && (!!token || !!sessionToken),
-    refetchInterval: (query) => {
+    refetchInterval: query => {
       const data = query.state.data?.data;
-      
+
       // Stop polling if backend signals to stop
       if (data?.shouldStopPolling) {
         pollingStateMap.delete(orderId);
@@ -1437,7 +1430,7 @@ export const usePaymentStatus = (
       // Maximum: 60 seconds
       let interval: number;
       const attemptCount = pollingState.attemptCount;
-      
+
       if (attemptCount <= 5) {
         interval = 8000; // 8 seconds
       } else if (attemptCount <= 10) {
@@ -1445,7 +1438,7 @@ export const usePaymentStatus = (
       } else {
         // After 10 checks, use 30 seconds, then gradually increase to max 60s
         const additionalChecks = attemptCount - 10;
-        interval = Math.min(30000 + (additionalChecks * 5000), 60000); // Max 60 seconds
+        interval = Math.min(30000 + additionalChecks * 5000, 60000); // Max 60 seconds
       }
 
       // If rate limited, increase interval temporarily (double it, max 60s)

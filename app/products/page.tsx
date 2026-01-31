@@ -1,22 +1,16 @@
-"use client";
+'use client';
 
-import { Suspense, useMemo, useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Filter, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useProducts, type ProductsQueryParams } from "@/lib/api";
-import { ProductCard } from "@/components/product-card";
-import { ProductGridSkeleton, Spinner } from "@/components/skeleton";
-import { FilterSidebar } from "@/components/filter-sidebar";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Suspense, useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, Filter } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useProducts, type ProductsQueryParams } from '@/lib/api';
+import { ProductCard } from '@/components/product-card';
+import { ProductGridSkeleton } from '@/components/skeleton';
+import { FilterSidebar } from '@/components/filter-sidebar';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -33,72 +27,75 @@ function ProductsContent() {
   const queryParams: ProductsQueryParams = useMemo(() => {
     const params: ProductsQueryParams = {};
 
-    const categoryId = searchParams.get("categoryId");
+    const categoryId = searchParams.get('categoryId');
     if (categoryId) {
       const id = parseInt(categoryId, 10);
       if (!isNaN(id)) params.categoryId = id;
     }
 
-    const categoryIds = searchParams.get("categoryIds");
+    const categoryIds = searchParams.get('categoryIds');
     if (categoryIds) {
-      const ids = categoryIds.split(",").map((id) => parseInt(id.trim(), 10)).filter((id) => !isNaN(id));
+      const ids = categoryIds
+        .split(',')
+        .map(id => parseInt(id.trim(), 10))
+        .filter(id => !isNaN(id));
       if (ids.length > 0) params.categoryIds = ids;
     }
 
-    const search = searchParams.get("search");
+    const search = searchParams.get('search');
     if (search) params.search = search;
 
-    const inStock = searchParams.get("inStock");
-    if (inStock === "true") params.inStock = true;
-    if (inStock === "false") params.inStock = false;
+    const inStock = searchParams.get('inStock');
+    if (inStock === 'true') params.inStock = true;
+    if (inStock === 'false') params.inStock = false;
 
-    const minPrice = searchParams.get("minPrice");
+    const minPrice = searchParams.get('minPrice');
     if (minPrice) {
       const price = parseFloat(minPrice);
       if (!isNaN(price)) params.minPrice = price;
     }
 
-    const maxPrice = searchParams.get("maxPrice");
+    const maxPrice = searchParams.get('maxPrice');
     if (maxPrice) {
       const price = parseFloat(maxPrice);
       if (!isNaN(price)) params.maxPrice = price;
     }
 
-    const minStock = searchParams.get("minStock");
+    const minStock = searchParams.get('minStock');
     if (minStock) {
       const stock = parseInt(minStock, 10);
       if (!isNaN(stock)) params.minStock = stock;
     }
 
-    const maxStock = searchParams.get("maxStock");
+    const maxStock = searchParams.get('maxStock');
     if (maxStock) {
       const stock = parseInt(maxStock, 10);
       if (!isNaN(stock)) params.maxStock = stock;
     }
 
-    const createdAfter = searchParams.get("createdAfter");
+    const createdAfter = searchParams.get('createdAfter');
     if (createdAfter) params.createdAfter = createdAfter;
 
-    const createdBefore = searchParams.get("createdBefore");
+    const createdBefore = searchParams.get('createdBefore');
     if (createdBefore) params.createdBefore = createdBefore;
 
-    const sortBy = searchParams.get("sortBy");
-    if (sortBy && ["name", "price", "stock", "createdAt", "updatedAt"].includes(sortBy)) {
-      params.sortBy = sortBy as ProductsQueryParams["sortBy"];
+    const sortBy = searchParams.get('sortBy');
+    if (sortBy && ['name', 'price', 'stock', 'createdAt', 'updatedAt'].includes(sortBy)) {
+      params.sortBy = sortBy as ProductsQueryParams['sortBy'];
     }
 
-    const sortOrder = searchParams.get("sortOrder");
-    if (sortOrder && ["asc", "desc"].includes(sortOrder)) {
-      params.sortOrder = sortOrder as ProductsQueryParams["sortOrder"];
+    const sortOrder = searchParams.get('sortOrder');
+    if (sortOrder && ['asc', 'desc'].includes(sortOrder)) {
+      params.sortOrder = sortOrder as ProductsQueryParams['sortOrder'];
     }
 
-    const page = searchParams.get("page");
+    const page = searchParams.get('page');
     if (page) {
       const pageNum = parseInt(page, 10);
       if (!isNaN(pageNum) && pageNum > 0) params.page = pageNum;
     }
 
-    const limit = searchParams.get("limit");
+    const limit = searchParams.get('limit');
     if (limit) {
       const limitNum = parseInt(limit, 10);
       if (!isNaN(limitNum) && limitNum > 0) params.limit = limitNum;
@@ -113,15 +110,15 @@ function ProductsContent() {
     isLoading: loading,
     error: productsError,
   } = useProducts(queryParams);
-  const products = (productsResponse?.data || []).filter((p) => p.isHidden !== true);
-  const searchQuery = searchParams.get("search");
+  const products = (productsResponse?.data || []).filter(p => p.isHidden !== true);
+  const searchQuery = searchParams.get('search');
 
   // Count active filters
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    if (searchParams.get("categoryId") || searchParams.get("categoryIds")) count++;
-    if (searchParams.get("minPrice") || searchParams.get("maxPrice")) count++;
-    if (searchParams.get("inStock") === "true") count++;
+    if (searchParams.get('categoryId') || searchParams.get('categoryIds')) count++;
+    if (searchParams.get('minPrice') || searchParams.get('maxPrice')) count++;
+    if (searchParams.get('inStock') === 'true') count++;
     return count;
   }, [searchParams]);
 
@@ -129,32 +126,37 @@ function ProductsContent() {
     <div className="min-h-screen bg-linear-to-b from-gray-50 via-white to-gray-50">
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col gap-4 mb-8 sm:mb-10">
+        <div className="flex flex-col gap-4 mb-8">
           {/* Top Row: Back Button and Title */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <Button 
+            <Button
               variant="outline"
-              onClick={() => router.back()} 
+              onClick={() => router.back()}
               className="flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-gray-200 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-200 rounded-lg shadow-sm hover:shadow-md group"
               aria-label="Өмнөх хуудас руу буцах"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" aria-hidden="true" />
+              <ArrowLeft
+                className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
+                aria-hidden="true"
+              />
               <span className="font-medium hidden sm:inline">Буцах</span>
             </Button>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
                 {mounted && searchQuery ? (
                   <>
-                    Хайлтын үр дүн:{" "}
-                    <span className="text-primary bg-primary/10 px-2 py-1 rounded-lg">"{searchQuery}"</span>
+                    Хайлтын үр дүн:{' '}
+                    <span className="text-primary bg-primary/10 px-2 py-1 rounded-lg">
+                      {searchQuery}
+                    </span>
                   </>
                 ) : (
-                  "Бүх бүтээгдэхүүн"
+                  'Бүх бүтээгдэхүүн'
                 )}
               </h1>
             </div>
           </div>
-          
+
           {/* Bottom Row: Active Filters and Mobile Filter Button */}
           <div className="flex items-center justify-between gap-4">
             {mounted && activeFiltersCount > 0 && !loading && (
@@ -162,7 +164,7 @@ function ProductsContent() {
                 {activeFiltersCount} шүүлт идэвхтэй
               </span>
             )}
-            
+
             {/* Mobile Filter Button */}
             <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
               <SheetTrigger asChild>
@@ -179,7 +181,10 @@ function ProductsContent() {
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[85vw] sm:w-[400px] overflow-y-auto bg-gray-50">
+              <SheetContent
+                side="left"
+                className="w-[85vw] sm:w-[400px] overflow-y-auto bg-gray-50"
+              >
                 <SheetHeader className="border-b border-gray-200 pb-4 mb-4">
                   <SheetTitle className="text-xl font-bold text-gray-900">Шүүлт</SheetTitle>
                 </SheetHeader>
@@ -203,19 +208,17 @@ function ProductsContent() {
           {/* Products Section */}
           <main className="flex-1 min-w-0">
             {!mounted || loading ? (
-              <ProductGridSkeleton count={8} />
+              <ProductGridSkeleton count={8} grid />
             ) : productsError ? (
               <Card className="border-2 border-red-200 bg-red-50/50 shadow-lg">
                 <CardContent className="flex flex-col items-center justify-center py-16 sm:py-24">
                   <div className="text-6xl mb-4 animate-bounce">⚠️</div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
-                    Алдаа гарлаа
-                  </h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Алдаа гарлаа</h2>
                   <p className="text-gray-600 mb-6 text-center max-w-md">
                     Бараа ачаалахад алдаа гарлаа. Дахин оролдоно уу.
                   </p>
-                  <Button 
-                    onClick={() => router.push("/")}
+                  <Button
+                    onClick={() => router.push('/')}
                     className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
                   >
                     Нүүр хуудас руу буцах
@@ -231,11 +234,11 @@ function ProductsContent() {
                   </h2>
                   <p className="text-gray-600 mb-8 text-center max-w-md">
                     {mounted && searchQuery
-                      ? `"${searchQuery}" хайлтад тохирох бараа олдсонгүй`
-                      : "Одоогоор бараа байхгүй байна"}
+                      ? `${searchQuery} хайлтад тохирох бараа олдсонгүй`
+                      : 'Одоогоор бараа байхгүй байна'}
                   </p>
-                  <Button 
-                    onClick={() => router.push("/")}
+                  <Button
+                    onClick={() => router.push('/')}
                     className="bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
                   >
                     Нүүр хуудас руу буцах
@@ -243,22 +246,14 @@ function ProductsContent() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4 sm:gap-5">
                 {products.map((product, index) => (
                   <div
                     key={product.id}
                     className="animate-in fade-in slide-in-from-bottom-4"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <ProductCard
-                      id={product.id}
-                      name={product.name}
-                      price={parseFloat(product.price)}
-                      original={product.originalPrice ? parseFloat(product.originalPrice) : undefined}
-                      imageUrl={product.firstImage || product.images?.[0]}
-                      icon={!product.firstImage && !product.images?.[0] ? "📦" : undefined}
-                      inGrid={true}
-                    />
+                    <ProductCard product={product} inGrid={true} className="h-full" />
                   </div>
                 ))}
               </div>
@@ -271,23 +266,9 @@ function ProductsContent() {
 }
 
 export default function ProductsPage() {
-  const [mounted, setMounted] = useState(false);
-
-  // Prevent hydration mismatch by only rendering dynamic content after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
   return (
-    <Suspense
-      fallback={
-        <div className="h-full bg-gray-50 flex items-center justify-center">
-          <Spinner size="lg" />
-        </div>
-      }
-    >
+    <Suspense>
       <ProductsContent />
     </Suspense>
   );
 }
-

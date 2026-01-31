@@ -74,7 +74,7 @@ export function BottomNav() {
       aria-label="Гол цэс"
     >
       <div className="flex items-stretch justify-around max-w-lg mx-auto">
-        {navItems.map(({ href, label, labelEn, icon: Icon }) => {
+        {navItems.map(({ href, label, labelEn: _labelEn, icon: Icon }) => {
           const isCart = href === '/cart';
           const isBrowse = href === '/products';
           const isProfile = href === '/profile';

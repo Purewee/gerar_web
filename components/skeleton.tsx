@@ -1,9 +1,5 @@
-export function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`animate-pulse bg-gray-200 rounded ${className}`}
-    />
-  );
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
 }
 
 export function ProductSkeleton() {
@@ -29,9 +25,19 @@ export function ProductSkeleton() {
   );
 }
 
-export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
+export function ProductGridSkeleton({
+  count = 8,
+  grid = false,
+}: {
+  count?: number;
+  grid?: boolean;
+}) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+    <div
+      className={`grid ${
+        grid ? 'grid-cols-2' : 'grid-cols-1'
+      } sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6`}
+    >
       {Array.from({ length: count }).map((_, i) => (
         <ProductSkeleton key={i} />
       ))}
@@ -114,13 +120,19 @@ export function AddressCardSkeleton() {
   );
 }
 
-export function Spinner({ size = "md", className = "" }: { size?: "sm" | "md" | "lg"; className?: string }) {
+export function Spinner({
+  size = 'md',
+  className = '',
+}: {
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}) {
   const sizeClasses = {
-    sm: "h-4 w-4 border-2",
-    md: "h-8 w-8 border-2",
-    lg: "h-12 w-12 border-4",
+    sm: 'h-4 w-4 border-2',
+    md: 'h-8 w-8 border-2',
+    lg: 'h-12 w-12 border-4',
   };
-  
+
   return (
     <div
       className={`animate-spin rounded-full border-primary/20 border-t-primary ${sizeClasses[size]} ${className}`}

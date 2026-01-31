@@ -192,7 +192,7 @@ export function ResetPasswordModal({
                       if (errors.newPin) setErrors({ ...errors, newPin: undefined });
                     }}
                     onKeyDown={e => handleKeyDown(index, e)}
-                    className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                    className={`size-13 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                       errors.newPin
                         ? 'border-2 border-red-300 focus:border-red-400'
                         : 'border-2 border-gray-300 focus:border-primary'
@@ -225,7 +225,7 @@ export function ResetPasswordModal({
                       if (errors.confirmPin) setErrors({ ...errors, confirmPin: undefined });
                     }}
                     onKeyDown={e => handleKeyDown(index, e, true)}
-                    className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                    className={`size-13 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                       errors.confirmPin
                         ? 'border-2 border-red-300 focus:border-red-400'
                         : 'border-2 border-gray-300 focus:border-primary'
@@ -247,7 +247,7 @@ export function ResetPasswordModal({
                 newPin.join('').length !== 4 ||
                 confirmPin.join('').length !== 4
               }
-              className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {resetPasswordMutation.isPending ? (
                 <span className="flex items-center gap-2">
@@ -277,7 +277,7 @@ export function ResetPasswordModal({
                 handleClose();
                 onSwitchToLogin?.();
               }}
-              className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-xl transition-all duration-200"
+              className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-md transition-all duration-200"
             >
               Нэвтрэх
             </Button>

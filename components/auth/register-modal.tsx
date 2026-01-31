@@ -204,7 +204,7 @@ export function RegisterModal({
                     if (errors.mobile) setErrors({ ...errors, mobile: undefined });
                   }}
                   placeholder="8 оронтой утасны дугаар"
-                  className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                  className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                     errors.mobile
                       ? 'border-red-300 focus:border-red-400'
                       : 'border-gray-300 focus:border-primary'
@@ -230,7 +230,7 @@ export function RegisterModal({
                   if (errors.name) setErrors({ ...errors, name: undefined });
                 }}
                 placeholder="Бүтэн нэрээ оруулна уу"
-                className={`h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                className={`h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                   errors.name
                     ? 'border-red-300 focus:border-red-400'
                     : 'border-gray-300 focus:border-primary'
@@ -261,7 +261,7 @@ export function RegisterModal({
                       if (errors.password) setErrors({ ...errors, password: undefined });
                     }}
                     onKeyDown={e => handleKeyDown(index, e)}
-                    className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                    className={`size-13 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                       errors.password
                         ? 'border-2 border-red-300 focus:border-red-400'
                         : 'border-2 border-gray-300 focus:border-primary'
@@ -297,7 +297,7 @@ export function RegisterModal({
                         setErrors({ ...errors, confirmPassword: undefined });
                     }}
                     onKeyDown={e => handleKeyDown(index, e, true)}
-                    className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                    className={`size-13 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                       errors.confirmPassword
                         ? 'border-2 border-red-300 focus:border-red-400'
                         : 'border-2 border-gray-300 focus:border-primary'
@@ -321,7 +321,7 @@ export function RegisterModal({
                 password.join('').length !== 4 ||
                 confirmPassword.join('').length !== 4
               }
-              className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {sendOTPMutation.isPending ? (
                 <span className="flex items-center gap-2">
@@ -350,7 +350,7 @@ export function RegisterModal({
               handleClose();
               onSwitchToLogin?.();
             }}
-            className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-xl transition-all duration-200"
+            className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-md transition-all duration-200"
           >
             Аль хэдийн бүртгэлтэй юу? Нэвтрэх
           </Button>
