@@ -79,14 +79,14 @@ function CategoryTreeItem({
   const hasChildren = category.children && category.children.length > 0;
   const isSelected = selectedCategories.includes(category.id);
   const isParent = level === 0;
-  const isSubcategory = level > 0;
+  const _isSubcategory = level > 0;
 
   // Initialize expanded state only on client to avoid hydration mismatch
   useEffect(() => {
     if (level === 0) {
       setIsExpanded(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []); // Only run once on mount
 
   return (
@@ -179,7 +179,7 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   const router = useRouter();
   const searchParams = useSearchParams();
   const allCategories = useCategoriesStore(state => state.categories);
-  const [isMounted, setIsMounted] = useState(false);
+  const [_isMounted, setIsMounted] = useState(false);
 
   // Ensure component is mounted to avoid hydration mismatch
   useEffect(() => {
@@ -210,7 +210,7 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   const sortOrder = searchParams.get('sortOrder') || 'desc';
 
   // Build category tree
-  const categoryTree = useMemo(() => buildCategoryTree(allCategories), [allCategories]);
+  const _categoryTree = useMemo(() => buildCategoryTree(allCategories), [allCategories]);
 
   // Update URL with new params
   const updateFilters = (updates: Record<string, string | null>) => {
@@ -230,7 +230,7 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
     router.push(`/products?${params.toString()}`);
   };
 
-  const handleCategoryToggle = (categoryId: number) => {
+  const _handleCategoryToggle = (categoryId: number) => {
     const newSelected = selectedCategoryIds.includes(categoryId)
       ? selectedCategoryIds.filter(id => id !== categoryId)
       : [...selectedCategoryIds, categoryId];

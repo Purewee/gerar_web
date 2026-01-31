@@ -1,10 +1,9 @@
 'use client';
 
-import { useMemo, useEffect, useState, useRef } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
-import { useProducts, useCategoryProducts, type Product, type Category } from '@/lib/api';
-import { useCategoriesStore } from '@/lib/stores/categories';
+import { useProducts, type Product } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
@@ -16,44 +15,30 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-// Component to display products from a category
-// Uses Intersection Observer to lazy load when section comes into view
-function CategoryProductsSection({ category }: { category: Category }) {
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
-
-  // Lazy load category products when section is visible
-  useEffect(() => {
-    if (!sectionRef.current) return;
-
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '200px' }, // Start loading 200px before section is visible
-    );
-
-    observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const { data: categoryProductsResponse, isLoading: categoryProductsLoading } =
-    useCategoryProducts(category.id, true, {
-      enabled: isVisible, // Only fetch when section is visible (lazy loading)
-    });
-
-  const categoryProducts = (categoryProductsResponse?.data || []).filter((p) => p.isHidden !== true);
-
-  // Don't render until section is visible (lazy loading)
-  if (!isVisible) {
+// Reusable product list section (slider) with title and "view all" link
+function ProductListSection({
+  sectionId,
+  title,
+  description,
+  linkHref,
+  linkLabel,
+  products,
+  isLoading,
+}: {
+  sectionId: string;
+  title: string;
+  description?: string;
+  linkHref: string;
+  linkLabel: string;
+  products: Product[];
+  isLoading: boolean;
+}) {
+  if (isLoading) {
     return (
-      <section ref={sectionRef} className="py-6 sm:py-10 lg:py-14 bg-white">
+      <section className="py-6 sm:py-10 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-3 mb-8">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{category.name}</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{title}</h2>
           </div>
           <ProductSliderSkeleton count={6} />
         </div>
@@ -61,38 +46,22 @@ function CategoryProductsSection({ category }: { category: Category }) {
     );
   }
 
-  // Only show section if there are products
-  if (categoryProductsLoading) {
-    return (
-      <section className="py-6 sm:py-10 lg:py-14 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
-          <div className="flex items-center gap-3 mb-8">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">{category.name}</h2>
-          </div>
-          <ProductSliderSkeleton count={6} />
-        </div>
-      </section>
-    );
-  }
-
-  if (categoryProducts.length === 0) {
+  if (products.length === 0) {
     return null;
   }
 
   return (
-    <section ref={sectionRef} className="py-6 sm:py-10 lg:py-14 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 lg:mb-12 gap-2 sm:gap-4">
+    <section className="py-6 sm:py-10 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 gap-2 sm:gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{category.name}</h2>
-            <p className="text-gray-600 text-sm sm:text-base">
-              {category.description || `${category.name} дэд ангиллын бараа`}
-            </p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">{title}</h2>
+            {description && <p className="text-gray-600 text-sm sm:text-base">{description}</p>}
           </div>
           <Link
-            href={`/products?categoryId=${category.id}`}
+            href={linkHref}
             className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold text-sm sm:text-base group transition-colors"
-            aria-label={`${category.name} ангиллын бүх бараа харах`}
+            aria-label={linkLabel}
           >
             <span>Бүгдийг харах</span>
             <ChevronRight
@@ -103,24 +72,23 @@ function CategoryProductsSection({ category }: { category: Category }) {
         </div>
 
         <div className="relative group">
-          {/* Navigation Buttons - Desktop Only */}
           <button
-            className={`category-swiper-prev-${category.id} hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110`}
-            aria-label={`${category.name} - Өмнөх бараа`}
+            className={`${sectionId}-swiper-prev cursor-pointer hidden lg:flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110`}
+            aria-label={`${title} - Өмнөх бараа`}
           >
             <ChevronLeft className="w-5 h-5 text-gray-700" aria-hidden="true" />
           </button>
           <button
-            className={`category-swiper-next-${category.id} hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110`}
-            aria-label={`${category.name} - Дараагийн бараа`}
+            className={`${sectionId}-swiper-next cursor-pointer hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110`}
+            aria-label={`${title} - Дараагийн бараа`}
           >
             <ChevronRight className="w-5 h-5 text-gray-700" aria-hidden="true" />
           </button>
           <Swiper
             modules={[Navigation]}
             navigation={{
-              prevEl: `.category-swiper-prev-${category.id}`,
-              nextEl: `.category-swiper-next-${category.id}`,
+              prevEl: `.${sectionId}-swiper-prev`,
+              nextEl: `.${sectionId}-swiper-next`,
             }}
             slidesPerView={2}
             spaceBetween={16}
@@ -129,18 +97,11 @@ function CategoryProductsSection({ category }: { category: Category }) {
               768: { slidesPerView: 4, spaceBetween: 16 },
               1024: { slidesPerView: 5, spaceBetween: 16 },
             }}
-            className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4"
+            className={`product-list-swiper -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex [&_.swiper-slide]:flex-col [&_.swiper-slide>*]:flex-1 [&_.swiper-slide>*]:min-h-0 [&_.swiper-slide>*]:flex [&_.swiper-slide>*]:flex-col`}
           >
-            {categoryProducts.slice(0, 12).map(product => (
-              <SwiperSlide key={product.id}>
-                <ProductCard
-                  id={product.id}
-                  name={product.name}
-                  price={parseFloat(product.price)}
-                  original={product.originalPrice ? parseFloat(product.originalPrice) : undefined}
-                  imageUrl={product.firstImage || product.images?.[0]}
-                  inGrid
-                />
+            {products.slice(0, 12).map(product => (
+              <SwiperSlide key={product.id} className="h-auto!">
+                <ProductCard inGrid product={product} />
               </SwiperSlide>
             ))}
           </Swiper>
@@ -160,58 +121,43 @@ export default function Home() {
     limit: 100, // Fetch more products to group by subcategory
   });
 
-  // Get categories from store (hydrated by CategoriesProvider)
-  const categories = useCategoriesStore(state => state.categories);
+  const products = (productsResponse?.data || []).filter(p => p.isHidden !== true);
 
-  const products = (productsResponse?.data || []).filter((p) => p.isHidden !== true);
+  const saleProducts = products.slice(0, 24);
+  const latestProducts = products.slice(0, 24);
+  const popularProducts = products.slice(0, 24);
 
-  // Create carousel items from products with discounts
-  const carouselItems = useMemo(() => {
-    const discountedProducts = products
-      .filter(p => p.hasDiscount && p.discountPercentage && p.discountPercentage >= 30)
-      .slice(0, 5);
-
-    if (discountedProducts.length === 0) {
-      return products.slice(0, 5).map(product => ({
-        id: product.id,
-        title: product.name.toUpperCase(),
-        subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
-        discount:
-          product.hasDiscount && product.discountPercentage
+  // Create carousel items from products with discounts (let React Compiler handle memoization)
+  const discountedProducts = products
+    .filter(p => p.hasDiscount && p.discountPercentage && p.discountPercentage >= 30)
+    .slice(0, 5);
+  const carouselItems =
+    discountedProducts.length === 0
+      ? products.slice(0, 5).map(product => ({
+          id: product.id,
+          title: product.name.toUpperCase(),
+          subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
+          discount:
+            product.hasDiscount && product.discountPercentage
+              ? `${product.discountPercentage}% ХЯМДАРСАН`
+              : 'Онцгой санал',
+          link: `/product/${product.id}`,
+          imageUrl: product.firstImage || product.images?.[0],
+        }))
+      : discountedProducts.map(product => ({
+          id: product.id,
+          title: product.name.toUpperCase(),
+          subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
+          discount: product.discountPercentage
             ? `${product.discountPercentage}% ХЯМДАРСАН`
             : 'Онцгой санал',
-        link: `/product/${product.id}`,
-        imageUrl: product.firstImage || product.images?.[0],
-      }));
-    }
-
-    return discountedProducts.map(product => ({
-      id: product.id,
-      title: product.name.toUpperCase(),
-      subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
-      discount: product.discountPercentage
-        ? `${product.discountPercentage}% ХЯМДАРСАН`
-        : 'Онцгой санал',
-      link: `/product/${product.id}`,
-      imageUrl: product.firstImage || product.images?.[0],
-    }));
-  }, [products]);
+          link: `/product/${product.id}`,
+          imageUrl: product.firstImage || product.images?.[0],
+        }));
 
   const handleItemClick = (link: string) => {
     router.push(link);
   };
-
-  // Get top-level categories only
-  const topCategories = categories.filter(cat => !cat.parentId).slice(0, 8);
-
-  // Create a map of category ID to category for quick lookup
-  const categoryMap = useMemo(() => {
-    const map = new Map<number, Category>();
-    categories.forEach(cat => {
-      map.set(cat.id, cat);
-    });
-    return map;
-  }, [categories]);
 
   // Preload first hero image for LCP optimization
   const firstCarouselImage = carouselItems[0]?.imageUrl;
@@ -253,13 +199,13 @@ export default function Home() {
                 {carouselItems.length > 1 && (
                   <>
                     <button
-                      className="hero-swiper-prev absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
+                      className="hero-swiper-prev cursor-pointer absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
                       aria-label="Өмнөх слайд"
                     >
                       <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                     </button>
                     <button
-                      className="hero-swiper-next absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
+                      className="hero-swiper-next cursor-pointer absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
                       aria-label="Дараагийн слайд"
                     >
                       <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
@@ -326,7 +272,11 @@ export default function Home() {
                                   priority={item.id === carouselItems[0]?.id}
                                   fill
                                   fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
-                                  unoptimized={item.imageUrl?.includes('localhost') || item.imageUrl?.includes('127.0.0.1') || item.imageUrl?.includes('192.168.1.3')}
+                                  unoptimized={
+                                    item.imageUrl?.includes('localhost') ||
+                                    item.imageUrl?.includes('127.0.0.1') ||
+                                    item.imageUrl?.includes('192.168.1.3')
+                                  }
                                 />
                               </div>
                             ) : (
@@ -349,90 +299,38 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Products Section */}
+        {/* Latest products list */}
+        <ProductListSection
+          sectionId="latest"
+          title="Сүүлд нэмэгдсэн бараа"
+          description="Шинэчлэгдсэн барааны жагсаалт"
+          linkHref="/products"
+          linkLabel="Сүүлд нэмэгдсэн бүх бараа харах"
+          products={latestProducts}
+          isLoading={productsLoading}
+        />
 
-        <section className="py-6 sm:py-10 lg:py-14 bg-linear-to-b from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 ">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 lg:mb-12 gap-2 sm:gap-4">
-              <div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
-                  Сүүлд нэмэгдсэн бараа
-                </h2>
-                <p className="text-gray-600 text-sm sm:text-base">Шинэчлэгдсэн барааны жагсаалт</p>
-              </div>
-              <Link
-                href="/products"
-                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 font-semibold text-sm sm:text-base group transition-colors"
-                aria-label="Сүүлд нэмэгдсэн бүх бараа харах"
-              >
-                <span>Бүгдийг харах</span>
-                <ChevronRight
-                  className="w-4 h-4 group-hover:translate-x-1 transition-transform"
-                  aria-hidden="true"
-                />
-              </Link>
-            </div>
+        {/* Sale products list */}
+        <ProductListSection
+          sectionId="sale"
+          title="Хямдралтай бараа"
+          description="Онцгой хямдралтай бараанууд"
+          linkHref="/products"
+          linkLabel="Хямдралтай бүх бараа харах"
+          products={saleProducts}
+          isLoading={productsLoading}
+        />
 
-            {productsLoading ? (
-              <ProductSliderSkeleton count={6} />
-            ) : products.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-gray-600 text-lg">Одоогоор бараа байхгүй байна</p>
-              </div>
-            ) : (
-              <div className="relative group">
-                {/* Navigation Buttons - Desktop Only */}
-                <button
-                  className="products-swiper-prev hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-                  aria-label="Өмнөх бараа"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-700" aria-hidden="true" />
-                </button>
-                <button
-                  className="products-swiper-next hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 p-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-                  aria-label="Дараагийн бараа"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-700" aria-hidden="true" />
-                </button>
-                <Swiper
-                  modules={[Navigation]}
-                  navigation={{
-                    prevEl: '.products-swiper-prev',
-                    nextEl: '.products-swiper-next',
-                  }}
-                  slidesPerView={2}
-                  spaceBetween={16}
-                  breakpoints={{
-                    640: { slidesPerView: 3, spaceBetween: 16 },
-                    768: { slidesPerView: 4, spaceBetween: 16 },
-                    1024: { slidesPerView: 5, spaceBetween: 24 },
-                  }}
-                  className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4"
-                >
-                  {products.slice(0, 12).map(product => (
-                    <SwiperSlide key={product.id}>
-                      <ProductCard
-                        id={product.id}
-                        name={product.name}
-                        price={parseFloat(product.price)}
-                        original={
-                          product.originalPrice ? parseFloat(product.originalPrice) : undefined
-                        }
-                        imageUrl={product.firstImage || product.images?.[0]}
-                        inGrid
-                      />
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Category-based Product Sections */}
-        {topCategories.map((category, index) => (
-          <CategoryProductsSection key={category.id} category={category} />
-        ))}
+        {/* Sale products list */}
+        <ProductListSection
+          sectionId="popular"
+          title="Эрэлттэй бараа"
+          description="Хамгийн эрэлттэй бараанууд"
+          linkHref="/products"
+          linkLabel="Эрэлттэй бүх бараа харах"
+          products={popularProducts}
+          isLoading={productsLoading}
+        />
       </main>
     </div>
   );

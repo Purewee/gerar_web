@@ -11,7 +11,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, ShoppingCart, User, ChevronDown, Menu } from 'lucide-react';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Search, ShoppingCart, User, ChevronDown, Menu, ChevronRight } from 'lucide-react';
 import { useCart, authApi } from '@/lib/api';
 import { useCategoriesStore } from '@/lib/stores/categories';
 import { LoginModal } from '@/components/auth/login-modal';
@@ -19,7 +20,7 @@ import { RegisterModal } from '@/components/auth/register-modal';
 import { OTPModal } from '@/components/auth/otp-modal';
 import { RegisterVerifyModal } from '@/components/auth/register-verify-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
-import { Spinner } from '@/components/skeleton';
+import { Spinner, Skeleton } from '@/components/skeleton';
 import Link from 'next/link';
 
 export function Navigation() {
@@ -46,10 +47,16 @@ export function Navigation() {
     phoneNumber: string;
     otpCode: string;
   } | null>(null);
+  // For desktop ANГИЛАЛ mega menu: which parent category is hovered
+  const [desktopActiveCategory, setDesktopActiveCategory] = useState<{
+    id: number;
+    name: string;
+    children?: { id: number; name: string }[];
+  } | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  
+
   // Hide categories on payment, cart, and order create pages
   const hideCategories =
     pathname?.includes('/payment') ||
@@ -69,7 +76,7 @@ export function Navigation() {
 
     // Load user name from localStorage
     const updateUserName = () => {
-      const name = localStorage.getItem('user_name') || localStorage.getItem('profile_name') || '';
+      const name = localStorage.getItem('user_name') || '';
       setUserName(name);
     };
 
@@ -83,7 +90,7 @@ export function Navigation() {
     updateUserName();
     // Listen for storage changes (when cart is updated in other tabs/components)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'isAuthenticated' || e.key === 'user_name' || e.key === 'profile_name') {
+      if (e.key === 'isAuthenticated' || e.key === 'user_name') {
         updateAuthState();
       }
     };
@@ -129,20 +136,14 @@ export function Navigation() {
       setIsAuthenticated(false);
       setUserName('');
       setMobileProfileMenuOpen(false);
-      localStorage.removeItem('user_name');
-      window.location.href = '/';
+      localStorage.clear();
     } catch (error) {
       console.error('Logout error:', error);
-      // Still proceed with logout even if API call fails
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('mobile');
-      localStorage.removeItem('user_name');
-      localStorage.removeItem('user_email');
+      localStorage.clear();
       setIsAuthenticated(false);
       setUserName('');
       setMobileProfileMenuOpen(false);
       window.dispatchEvent(new CustomEvent('authStateChanged'));
-      window.location.href = '/';
     }
   };
 
@@ -360,214 +361,266 @@ export function Navigation() {
               </Button>
             </div>
           </div>
-          {/* Category Navigation - Desktop */}
           {!hideCategories && (
-          <nav className="hidden sm:flex items-center gap-2 py-3 border-t border-gray-200/80 relative z-40">
-            {categoriesLoading ? (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Spinner size="sm" />
-              </div>
-            ) : categories.length > 0 ? (
-              <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide w-full">
-                {categories.map(category => {
-                  const hasChildren = category.children && category.children.length > 0;
-                  const isCategoryActive = finalActiveCategoryId === category.id;
-                  const hasActiveChild =
-                    activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
-
-                  if (hasChildren) {
-                    return (
-                      <DropdownMenu key={category.id}>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            className={`text-sm font-semibold whitespace-nowrap py-2.5 px-4 bg-white border shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 flex items-center gap-1.5 shrink-0 relative group outline-none focus:outline-none focus-visible:outline-none ${
-                              isCategoryActive || hasActiveChild
-                                ? 'text-primary border-primary/30 bg-linear-to-r from-primary/10 to-primary/5'
-                                : 'text-gray-700 hover:text-primary border-gray-200 hover:border-primary/30 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
-                            }`}
-                            onBlur={e => {
-                              // Remove any lingering focus styles
-                              e.currentTarget.style.outline = 'none';
-                              e.currentTarget.style.boxShadow = 'none';
-                            }}
-                            onMouseDown={e => {
-                              // Prevent focus ring on mouse click
-                              e.currentTarget.style.outline = 'none';
-                              e.currentTarget.style.boxShadow = 'none';
-                            }}
-                          >
-                            <span
-                              className={`relative z-10 ${
-                                isCategoryActive || hasActiveChild
-                                  ? 'text-primary'
-                                  : 'text-gray-700 group-hover:text-primary data-[state=open]:text-primary'
-                              }`}
-                            >
-                              {category.name}
-                            </span>
-                            <ChevronDown
-                              className={`w-3.5 h-3.5 transition-transform duration-300 data-[state=open]:rotate-180 relative z-10 ${
-                                isCategoryActive || hasActiveChild
-                                  ? 'text-primary'
-                                  : 'text-gray-700 group-hover:text-primary data-[state=open]:text-primary'
-                              }`}
-                            />
-                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent duration-300 rounded-lg" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-56 min-w-56">
-                          {category.children?.map(child => {
-                            const isChildActive = activeCategoryId === child.id;
-                            return (
-                              <DropdownMenuItem key={child.id} asChild>
-                                <a
-                                  href={`/products?categoryId=${encodeURIComponent(child.id)}`}
-                                  className={`cursor-pointer w-full ${
-                                    isChildActive ? 'text-primary font-semibold bg-primary/5' : ''
-                                  }`}
-                                  aria-label={`${child.name} ангиллын бараа харах`}
+            <div className="hidden md:block w-full max-w-[1450px] border-t border-gray-200">
+              <nav className="m-0 rounded-none text-black h-11 flex items-center justify-start gap-1">
+                {categoriesLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-400 px-4">
+                    <Spinner size="sm" className="border-white/30 border-t-white" />
+                  </div>
+                ) : categories.length > 0 ? (
+                  <>
+                    <HoverCard openDelay={10} closeDelay={10}>
+                      <HoverCardTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="flex items-center gap-2 p-2 rounded cursor-pointer text-black hover:bg-white/10"
+                          aria-label="Ангилал нээх"
+                        >
+                          <Menu className="size-4" aria-hidden="true" />
+                          <span className="uppercase text-sm font-medium">Ангилал</span>
+                        </Button>
+                      </HoverCardTrigger>
+                      <HoverCardContent
+                        side="bottom"
+                        align="start"
+                        className="bg-white text-primary w-[700px] p-4 rounded-md shadow-lg border-gray-200"
+                      >
+                        <div className="flex gap-6">
+                          <div className="w-1/3 space-y-0.5 border-r border-gray-200 pr-4">
+                            {categories.map(cat => (
+                              <div
+                                key={cat.id}
+                                onMouseEnter={() => setDesktopActiveCategory(cat)}
+                                className={`flex justify-between w-full items-center p-2 rounded cursor-pointer text-sm ${
+                                  desktopActiveCategory?.id === cat.id
+                                    ? 'bg-neutral-100 font-medium'
+                                    : 'hover:bg-neutral-50'
+                                }`}
+                              >
+                                <Link
+                                  href={`/products?categoryId=${cat.id}`}
+                                  className="uppercase w-full text-gray-800 hover:text-primary"
                                 >
-                                  {child.name}
-                                </a>
-                              </DropdownMenuItem>
-                            );
-                          })}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    );
-                  }
+                                  {cat.name}
+                                </Link>
+                                {cat.children && cat.children.length > 0 && (
+                                  <ChevronRight
+                                    className="h-4 w-4 text-neutral-500 shrink-0"
+                                    aria-hidden="true"
+                                  />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="w-2/3">
+                            {desktopActiveCategory?.children &&
+                              desktopActiveCategory.children.length > 0 && (
+                                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                                  {desktopActiveCategory.children.map(child => (
+                                    <div key={child.id}>
+                                      <Link
+                                        href={`/products?categoryId=${child.id}`}
+                                        className="block font-medium text-gray-800 hover:text-primary uppercase mb-1 text-sm"
+                                        aria-label={`${child.name} ангиллын бараа харах`}
+                                      >
+                                        {child.name}
+                                      </Link>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
 
-                  return (
-                    <a
-                      key={category.id}
-                      href={`/products?categoryId=${encodeURIComponent(category.id)}`}
-                      className={`text-sm font-semibold whitespace-nowrap py-2.5 px-4 bg-white border shadow-sm hover:shadow-md rounded-lg transition-colors duration-200 shrink-0 relative group ${
-                        isCategoryActive
-                          ? 'text-primary border-primary/30 bg-linear-to-r from-primary/10 to-primary/5'
-                          : 'text-gray-700 hover:text-primary border-gray-200 hover:border-primary/30 hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
-                      }`}
-                      aria-label={`${category.name} ангиллын бараа харах`}
-                      aria-current={isCategoryActive ? 'page' : undefined}
+                    {/* Each category as HoverCard or Link - first 4 only */}
+                    {categories.slice(0, 4).map(category => {
+                      const hasChildren = category.children && category.children.length > 0;
+                      const isCategoryActive = finalActiveCategoryId === category.id;
+                      const hasActiveChild =
+                        activeCategoryInfo?.isChild &&
+                        activeCategoryInfo?.parent?.id === category.id;
+
+                      if (hasChildren) {
+                        return (
+                          <HoverCard key={category.id} openDelay={10} closeDelay={10}>
+                            <HoverCardTrigger asChild>
+                              <Link
+                                href={`/products?categoryId=${category.id}`}
+                                className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
+                                  isCategoryActive || hasActiveChild ? 'bg-white/10' : ''
+                                }`}
+                                aria-label={`${category.name} ангиллын бараа харах`}
+                                aria-current={isCategoryActive ? 'page' : undefined}
+                              >
+                                {category.name}
+                              </Link>
+                            </HoverCardTrigger>
+                            <HoverCardContent
+                              side="bottom"
+                              align="start"
+                              className="bg-white text-black w-full md:w-[500px] p-4 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6 rounded-md shadow-lg border-gray-200"
+                            >
+                              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 text-sm">
+                                {category.children?.map(child => (
+                                  <div key={child.id}>
+                                    <Link
+                                      href={`/products?categoryId=${child.id}`}
+                                      className="font-medium text-gray-600 hover:text-primary uppercase block py-1"
+                                      aria-label={`${child.name} ангиллын бараа харах`}
+                                    >
+                                      {child.name}
+                                    </Link>
+                                  </div>
+                                ))}
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={category.id}
+                          href={`/products?categoryId=${category.id}`}
+                          className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
+                            isCategoryActive ? 'bg-white/10' : ''
+                          }`}
+                          aria-label={`${category.name} ангиллын бараа харах`}
+                          aria-current={isCategoryActive ? 'page' : undefined}
+                        >
+                          {category.name}
+                        </Link>
+                      );
+                    })}
+
+                    {/* Хямдралтай link */}
+                    <Link
+                      href="/products"
+                      className="flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase"
+                      aria-label="Хямдралтай бараа харах"
                     >
-                      <span className="relative z-10">{category.name}</span>
-                      {!isCategoryActive && (
-                        <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent duration-300 rounded-lg" />
-                      )}
-                    </a>
-                  );
-                })}
-              </div>
-            ) : (
-              <span className="text-sm text-gray-500">Ангилал олдсонгүй</span>
-            )}
-          </nav>
+                      Хямдралтай
+                    </Link>
+                  </>
+                ) : (
+                  <span className="text-sm text-gray-400 px-4">Ангилал олдсонгүй</span>
+                )}
+              </nav>
+            </div>
           )}
         </div>
         {/* Category Navigation - Mobile */}
         {!hideCategories && (
-        <nav className="flex sm:hidden bg-white backdrop-blur-md border-b border-gray-200/80 z-40 shadow-sm">
-          <div className="w-full px-4">
-            {/* Categories Row */}
-            <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
-              {categoriesLoading ? (
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Spinner size="sm" />
-                </div>
-              ) : categories.length > 0 ? (
-                categories.map(category => {
-                  const hasChildren = category.children && category.children.length > 0;
-                  const isExpanded = expandedCategoryId === category.id;
-                  const isActive = finalActiveCategoryId === category.id;
-                  const hasActiveChild =
-                    activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
+          <nav className="block md:hidden bg-white backdrop-blur-md border-b border-gray-200/80 z-40 shadow-sm">
+            <div className="w-full px-4">
+              {/* Categories Row */}
+              <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
+                {categoriesLoading ? (
+                  <div className="flex items-center gap-2 py-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-8 w-20 shrink-0 rounded-lg sm:w-24" />
+                    ))}
+                  </div>
+                ) : categories.length > 0 ? (
+                  categories.map(category => {
+                    const hasChildren = category.children && category.children.length > 0;
+                    const isExpanded = expandedCategoryId === category.id;
+                    const isActive = finalActiveCategoryId === category.id;
+                    const hasActiveChild =
+                      activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
 
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={e => {
-                        if (hasChildren) {
-                          e.preventDefault();
-                          setExpandedCategoryId(category.id);
-                        } else {
-                          router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={e => {
+                          if (hasChildren) {
+                            e.preventDefault();
+                            setExpandedCategoryId(category.id);
+                          } else {
+                            router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
+                          }
+                        }}
+                        onBlur={e => {
+                          // Remove any lingering focus styles
+                          e.currentTarget.style.outline = 'none';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                        onMouseDown={e => {
+                          // Prevent focus ring on mouse click
+                          e.currentTarget.style.outline = 'none';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                        className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-1.5 px-2 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
+                          isExpanded || isActive || hasActiveChild
+                            ? 'text-primary bg-linear-to-r from-primary/15 to-primary/5 shadow-sm'
+                            : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
+                        }`}
+                        aria-label={
+                          hasChildren
+                            ? `${category.name} ангиллын дэд ангилал ${
+                                isExpanded ? 'хаах' : 'нээх'
+                              }`
+                            : `${category.name} ангиллын бараа харах`
                         }
-                      }}
-                      onBlur={e => {
-                        // Remove any lingering focus styles
-                        e.currentTarget.style.outline = 'none';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                      onMouseDown={e => {
-                        // Prevent focus ring on mouse click
-                        e.currentTarget.style.outline = 'none';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                      className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-1.5 px-2 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
-                        isExpanded || isActive || hasActiveChild
-                          ? 'text-primary bg-linear-to-r from-primary/15 to-primary/5 shadow-sm'
-                          : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
-                      }`}
-                      aria-label={
-                        hasChildren
-                          ? `${category.name} ангиллын дэд ангилал ${isExpanded ? 'хаах' : 'нээх'}`
-                          : `${category.name} ангиллын бараа харах`
-                      }
-                      aria-expanded={hasChildren ? isExpanded : undefined}
-                    >
-                      <span className="relative z-10">{category.name}</span>
-                      {hasChildren && (
-                        <ChevronDown
-                          className={`w-3.5 h-3.5 transition-all duration-300 relative z-10 ${
-                            isExpanded || hasActiveChild
-                              ? 'rotate-180 text-primary'
-                              : 'text-gray-700 group-hover:text-primary group-hover:translate-y-0.5'
-                          }`}
-                          aria-hidden="true"
-                        />
-                      )}
-                      {!isExpanded && !isActive && !hasActiveChild && (
-                        <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent duration-300 rounded-lg" />
-                      )}
-                    </button>
-                  );
-                })
-              ) : (
-                <span className="text-xs text-gray-500">Ангилал олдсонгүй</span>
-              )}
-            </div>
+                        aria-expanded={hasChildren ? isExpanded : undefined}
+                      >
+                        <span className="relative z-10">{category.name}</span>
+                        {hasChildren && (
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 transition-all duration-300 relative z-10 ${
+                              isExpanded || hasActiveChild
+                                ? 'rotate-180 text-primary'
+                                : 'text-gray-700 group-hover:text-primary group-hover:translate-y-0.5'
+                            }`}
+                            aria-hidden="true"
+                          />
+                        )}
+                        {!isExpanded && !isActive && !hasActiveChild && (
+                          <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent duration-300 rounded-lg" />
+                        )}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <span className="text-xs text-gray-500">Ангилал олдсонгүй</span>
+                )}
+              </div>
 
-            <div className="flex items-center gap-2 py-2.5 border-t border-gray-200/60 overflow-x-auto scrollbar-hide">
-              {categories
-                .find(cat => cat.id === expandedCategoryId)
-                ?.children?.map(child => {
-                  const isSelected = selectedChildCategoryId === child.id;
-                  const isChildActive = activeCategoryId === child.id;
-                  return (
-                    <Link
-                      key={child.id}
-                      href={`/products?categoryId=${encodeURIComponent(child.id)}`}
-                      className={`text-xs sm:text-sm font-medium whitespace-nowrap py-2 px-3 shrink-0 rounded-lg transition-all duration-200 ${
-                        isSelected || isChildActive
-                          ? 'text-primary bg-primary/10 shadow-sm font-semibold'
-                          : 'text-gray-600 hover:text-primary hover:bg-white hover:shadow-sm'
-                      }`}
-                      aria-label={`${child.name} ангиллын бараа харах`}
-                      aria-current={isChildActive ? 'page' : undefined}
-                    >
-                      {child.name}
-                    </Link>
-                  );
-                })}
+              <div className="flex items-center gap-2 py-2.5 border-t border-gray-200/60 overflow-x-auto scrollbar-hide">
+                {categories
+                  .find(cat => cat.id === expandedCategoryId)
+                  ?.children?.map(child => {
+                    const isSelected = selectedChildCategoryId === child.id;
+                    const isChildActive = activeCategoryId === child.id;
+                    return (
+                      <Link
+                        key={child.id}
+                        href={`/products?categoryId=${encodeURIComponent(child.id)}`}
+                        className={`text-xs sm:text-sm font-medium whitespace-nowrap py-2 px-3 shrink-0 rounded-lg transition-all duration-200 ${
+                          isSelected || isChildActive
+                            ? 'text-primary bg-primary/10 shadow-sm font-semibold'
+                            : 'text-gray-600 hover:text-primary hover:bg-white hover:shadow-sm'
+                        }`}
+                        aria-label={`${child.name} ангиллын бараа харах`}
+                        aria-current={isChildActive ? 'page' : undefined}
+                      >
+                        {child.name}
+                      </Link>
+                    );
+                  })}
+              </div>
             </div>
-          </div>
-        </nav>
+          </nav>
         )}
       </header>
 
       {/* Mobile Drawer Overlay */}
       {mobileProfileMenuOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-101"
+          className="sm:hidden fixed inset-0 bg-black/50 z-101"
           onClick={() => setMobileProfileMenuOpen(false)}
         />
       )}

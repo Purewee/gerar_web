@@ -143,7 +143,7 @@ export function LoginModal({
                     if (errors.password) setErrors({ ...errors, password: undefined });
                   }}
                   placeholder="8 оронтой утасны дугаар"
-                  className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                  className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                     errors.password
                       ? 'border-red-300 focus:border-red-400'
                       : 'border-gray-300 focus:border-primary'
@@ -174,7 +174,7 @@ export function LoginModal({
                       if (errors.password) setErrors({ ...errors, password: undefined });
                     }}
                     onKeyDown={e => handleKeyDown(index, e)}
-                    className={`w-16 h-16 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
+                    className={`size-13 text-center text-2xl font-bold focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                       errors.password
                         ? 'border-2 border-red-300 focus:border-red-400'
                         : 'border-2 border-gray-300 focus:border-primary'
@@ -194,11 +194,11 @@ export function LoginModal({
               disabled={
                 loginMutation.isPending || mobile.length !== 8 || password.join('').length !== 4
               }
-              className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {loginMutation.isPending ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                <span className="flex items-center gap-2 text-white">
+                  <span className="animate-spin rounded-full h-4 w-4 border-2 text-white border-white border-t-transparent"></span>
                   Нэвтэрч байна...
                 </span>
               ) : (
@@ -235,7 +235,7 @@ export function LoginModal({
                 handleClose();
                 onSwitchToRegister?.();
               }}
-              className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-xl transition-all duration-200"
+              className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-md transition-all duration-200"
             >
               Бүртгэл үүсгэх
             </Button>

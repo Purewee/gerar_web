@@ -10,11 +10,9 @@ import {
   Plus,
   Minus,
   ShoppingBag,
-  ArrowLeft,
   Sparkles,
   ArrowRight,
   TrendingUp,
-  Package,
   Heart,
   X,
   ChevronRight,
@@ -50,8 +48,7 @@ function CartItemFavoriteRemove({
   const addFavoriteMutation = useFavoriteAdd();
   const removeFavoriteMutation = useFavoriteRemove();
   const isFavorited = statusRes?.data?.isFavorited ?? false;
-  const isProcessingFavorite =
-    addFavoriteMutation.isPending || removeFavoriteMutation.isPending;
+  const isProcessingFavorite = addFavoriteMutation.isPending || removeFavoriteMutation.isPending;
 
   const handleToggleFavorite = async () => {
     if (isProcessingFavorite) return;
@@ -117,7 +114,7 @@ export default function CartPage() {
   } = useCart();
 
   const cartItems = (cartResponse?.data || []).filter(
-    (item) => item.product == null || item.product.isHidden !== true,
+    item => item.product == null || item.product.isHidden !== true,
   );
 
   // Treat certain errors (like 401/403) as empty cart for better UX
@@ -135,7 +132,7 @@ export default function CartPage() {
     sortBy: 'createdAt',
     sortOrder: 'desc',
   });
-  const suggestedProducts = (productsResponse?.data || []).filter((p) => p.isHidden !== true);
+  const suggestedProducts = (productsResponse?.data || []).filter(p => p.isHidden !== true);
 
   const updateCartMutation = useCartUpdate();
   const removeCartMutation = useCartRemove();
@@ -217,14 +214,8 @@ export default function CartPage() {
     (sum, item) => sum + parseFloat(item.product?.price || '0') * item.quantity,
     0,
   );
-  const totalSavings = cartItems.reduce((sum, item) => {
-    const price = parseFloat(item.product?.price || '0');
-    const originalPrice = item.product?.originalPrice ? parseFloat(item.product.originalPrice) : 0;
-    return sum + (originalPrice > price ? (originalPrice - price) * item.quantity : 0);
-  }, 0);
   const deliveryFee = 6980;
   const total = subtotal + deliveryFee;
-  const totalItems = mounted ? cartItems.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
@@ -242,9 +233,9 @@ export default function CartPage() {
         {/* Breadcrumbs */}
         <div className="mb-6 text-sm text-gray-600">
           <div className="flex items-center gap-2">
-            <a href="/" className="hover:text-primary">
+            <Link href="/" className="hover:text-primary">
               Нүүр хуудас
-            </a>
+            </Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-gray-900">Сагс</span>
             <ChevronRight className="w-4 h-4 text-gray-300" />
@@ -362,16 +353,7 @@ export default function CartPage() {
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {suggestedProducts.map(product => (
-                    <ProductCard
-                      key={product.id}
-                      id={product.id}
-                      name={product.name}
-                      price={parseFloat(product.price)}
-                      original={
-                        product.originalPrice ? parseFloat(product.originalPrice) : undefined
-                      }
-                      imageUrl={product.firstImage || product.images?.[0] || ''}
-                    />
+                    <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
               </div>
@@ -385,10 +367,10 @@ export default function CartPage() {
                 <h1 className="text-2xl font-bold text-gray-900">Таны сагс</h1>
                 {mounted && cartItems.length > 0 && (
                   <button
-                  type="button"
-                  onClick={handleClearCart}
-                  disabled={clearCartMutation.isPending}
-                  className="
+                    type="button"
+                    onClick={handleClearCart}
+                    disabled={clearCartMutation.isPending}
+                    className="
                     inline-flex items-center gap-2
                     rounded-xl px-4 py-2.5 text-sm font-medium
                     text-green-700
@@ -401,11 +383,10 @@ export default function CartPage() {
                     disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
                     cursor-pointer
                   "
-                >
-                  <Trash2 className="w-4 h-4" aria-hidden="true" />
-                  {clearCartMutation.isPending ? 'Цэвэрлэж байна...' : 'Сагс хоослох'}
-                </button>
-                
+                  >
+                    <Trash2 className="w-4 h-4" aria-hidden="true" />
+                    {clearCartMutation.isPending ? 'Цэвэрлэж байна...' : 'Сагс хоослох'}
+                  </button>
                 )}
               </div>
 
@@ -467,7 +448,11 @@ export default function CartPage() {
                                   {originalPrice.toLocaleString()}₮
                                 </span>
                               )}
-                              <span className={`text-base font-bold ${hasDiscount ? 'text-primary' : 'text-gray-900'}`}>
+                              <span
+                                className={`text-base font-bold ${
+                                  hasDiscount ? 'text-primary' : 'text-gray-900'
+                                }`}
+                              >
                                 {price.toLocaleString()}₮
                               </span>
                             </div>
@@ -525,7 +510,10 @@ export default function CartPage() {
                               </Button>
                             </div>
                             <p className="text-sm text-gray-900">
-                              Нийт дүн: <span className="font-bold">{(price * item.quantity).toLocaleString()}₮</span>
+                              Нийт дүн:{' '}
+                              <span className="font-bold">
+                                {(price * item.quantity).toLocaleString()}₮
+                              </span>
                             </p>
                             <CartItemFavoriteRemove
                               productId={item.productId}
@@ -554,12 +542,16 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Хүргэлтийн үнэ</span>
-                    <span className="font-medium text-gray-900">{deliveryFee.toLocaleString()}₮</span>
+                    <span className="font-medium text-gray-900">
+                      {deliveryFee.toLocaleString()}₮
+                    </span>
                   </div>
                   <div className="border-t border-gray-200 pt-3 mt-3">
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-gray-900">Нийт төлөх дүн</span>
-                      <span className="text-lg font-bold text-primary">{total.toLocaleString()}₮</span>
+                      <span className="text-lg font-bold text-primary">
+                        {total.toLocaleString()}₮
+                      </span>
                     </div>
                   </div>
                 </CardContent>

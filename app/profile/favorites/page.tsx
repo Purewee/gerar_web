@@ -10,7 +10,7 @@ import { ProductGridSkeleton } from '@/components/skeleton';
 
 export default function ProfileFavoritesPage() {
   const { data: favoritesResponse, isLoading, error } = useFavorites();
-  const favorites = (favoritesResponse?.data || []).filter((p) => p.isHidden !== true);
+  const favorites = (favoritesResponse?.data || []).filter(p => p.isHidden !== true);
 
   if (isLoading) {
     return (
@@ -85,25 +85,8 @@ export default function ProfileFavoritesPage() {
       </CardHeader>
       <CardContent className="p-3 sm:p-6 lg:p-8">
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">
-          {favorites.map((product) => {
-            const price = parseFloat(product.price);
-            const originalPrice = product.originalPrice
-              ? parseFloat(product.originalPrice)
-              : undefined;
-            const imageUrl = product.firstImage || product.images?.[0];
-            return (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                price={price}
-                original={originalPrice}
-                imageUrl={imageUrl}
-                icon={!imageUrl ? '📦' : undefined}
-                inGrid
-                compact
-              />
-            );
+          {favorites.map(product => {
+            return <ProductCard key={product.id} product={product} inGrid compact />;
           })}
         </div>
       </CardContent>

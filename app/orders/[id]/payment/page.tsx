@@ -22,25 +22,27 @@ import {
   getAuthToken,
 } from '@/lib/api';
 import { CardSkeleton } from '@/components/skeleton';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function PaymentPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = parseInt(params.id as string);
 
-  const { data: orderResponse, isLoading: orderLoading } = useOrder(
-    isNaN(orderId) ? 0 : orderId,
-  );
+  const { data: orderResponse, isLoading: orderLoading } = useOrder(isNaN(orderId) ? 0 : orderId);
   const order = orderResponse?.data;
 
   const [qrCode, setQrCode] = useState<string | null>(null);
-  const [qrText, setQrText] = useState<string | null>(null);
-  const [paymentUrls, setPaymentUrls] = useState<Array<{
-    name: string;
-    description: string;
-    logo: string;
-    link: string;
-  }>>([]);
+  const [, setQrText] = useState<string | null>(null);
+  const [paymentUrls, setPaymentUrls] = useState<
+    Array<{
+      name: string;
+      description: string;
+      logo: string;
+      link: string;
+    }>
+  >([]);
   const [webUrl, setWebUrl] = useState<string | null>(null);
   const [hasInitiated, setHasInitiated] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -48,7 +50,6 @@ export default function PaymentPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const initiationAttemptedRef = useRef(false);
   const pollingStartTimeRef = useRef<number | null>(null);
-  
 
   const initiatePaymentMutation = usePaymentInitiate();
   const {
@@ -60,7 +61,8 @@ export default function PaymentPage() {
   });
   const cancelPaymentMutation = usePaymentCancel();
 
-  const paymentStatus = paymentStatusResponse?.data?.paymentStatus || order?.paymentStatus || 'PENDING';
+  const paymentStatus =
+    paymentStatusResponse?.data?.paymentStatus || order?.paymentStatus || 'PENDING';
   const shouldStopPolling = paymentStatusResponse?.data?.shouldStopPolling || false;
   const isPaid = paymentStatus === 'PAID';
   const isCancelled = paymentStatus === 'CANCELLED';
@@ -130,19 +132,23 @@ export default function PaymentPage() {
       if (response.data) {
         // Debug: Log response to see what we're getting
         console.log('Payment initiation response:', response.data);
-        console.log('QR Code in response:', response.data.qrCode ? 'Present' : 'Missing', response.data.qrCode?.substring(0, 50));
-        
+        console.log(
+          'QR Code in response:',
+          response.data.qrCode ? 'Present' : 'Missing',
+          response.data.qrCode?.substring(0, 50),
+        );
+
         // Set QR code and related data FIRST before any other logic
         if (response.data.qrCode) {
           console.log('Setting QR code state...');
           setQrCode(response.data.qrCode);
           console.log('QR code state should be set now');
-          
+
           // Store QR text (short URL) if available
           if (response.data.qrText) {
             setQrText(response.data.qrText);
           }
-          
+
           // Store payment URLs (array of bank/wallet options)
           if (response.data.urls && Array.isArray(response.data.urls)) {
             console.log('Payment URLs received:', response.data.urls);
@@ -155,7 +161,7 @@ export default function PaymentPage() {
           if (response.data.webUrl) {
             setWebUrl(response.data.webUrl);
           }
-          
+
           // Show success toast
           toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
             description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр QPAY апп ашиглана уу',
@@ -169,7 +175,7 @@ export default function PaymentPage() {
             description: 'QR код үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.',
           });
         }
-        
+
         // Store payment URLs even if no QR code (for fallback)
         if (response.data.urls && Array.isArray(response.data.urls) && !response.data.qrCode) {
           setPaymentUrls(response.data.urls);
@@ -182,19 +188,20 @@ export default function PaymentPage() {
       // Reset flag on error so user can retry manually
       initiationAttemptedRef.current = false;
       setHasInitiated(false);
-      
+
       // Extract error message
       let errorMessage = 'Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа';
       if (error.message) {
         errorMessage = error.message;
       } else if (error?.response?.status === 500) {
-        errorMessage = 'Серверийн алдаа. Төлбөрийн систем тохируулаагүй байна. Админтай холбогдоно уу.';
+        errorMessage =
+          'Серверийн алдаа. Төлбөрийн систем тохируулаагүй байна. Админтай холбогдоно уу.';
       } else if (error?.response?.status === 400) {
         errorMessage = 'Захиалга аль хэдийн төлөгдсөн эсвэл цуцлагдсан байна.';
       } else if (error?.response?.status === 404) {
         errorMessage = 'Захиалга олдсонгүй.';
       }
-      
+
       toast.error('Алдаа гарлаа', {
         description: errorMessage,
       });
@@ -205,22 +212,22 @@ export default function PaymentPage() {
   useEffect(() => {
     // Don't do anything if order is not loaded yet
     if (!order || orderLoading) return;
-    
+
     // Don't initiate if already paid or cancelled
     if (isPaid || isCancelled) return;
-    
+
     // Don't initiate if already have QR code
     if (qrCode) return;
-    
+
     // Don't initiate if already in progress
     if (initiatePaymentMutation.isPending) return;
-    
+
     // Don't auto-retry on error (user must click retry button)
     if (initiatePaymentMutation.isError) return;
-    
+
     // Don't initiate if already attempted (prevents multiple calls)
     if (hasInitiated && initiationAttemptedRef.current) return;
-    
+
     // Initiate payment (works for both new orders and existing invoices)
     handleInitiatePayment();
   }, [
@@ -246,20 +253,17 @@ export default function PaymentPage() {
     }
   }, [isPaid, orderId, router]);
 
-
   // Auto-open QPAY app on mobile devices when QR code is available
   useEffect(() => {
-    if (
-      qrCode &&
-      paymentUrls.length > 0 &&
-      !isPaid &&
-      !isCancelled
-    ) {
+    if (qrCode && paymentUrls.length > 0 && !isPaid && !isCancelled) {
       // Check if mobile device
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
         // Find qPay wallet deeplink
-        const qpayWallet = paymentUrls.find(url => url.name.toLowerCase().includes('qpay') || url.name.toLowerCase().includes('wallet'));
+        const qpayWallet = paymentUrls.find(
+          url =>
+            url.name.toLowerCase().includes('qpay') || url.name.toLowerCase().includes('wallet'),
+        );
         if (qpayWallet) {
           // Small delay to ensure QR code is visible first
           const timer = setTimeout(() => {
@@ -319,22 +323,26 @@ export default function PaymentPage() {
         {/* Breadcrumbs */}
         <div className="mb-4 text-sm text-gray-600">
           <div className="flex items-center gap-2 flex-wrap">
-            <a href="/" className="hover:text-primary">Нүүр хуудас</a>
+            <Link href="/" className="hover:text-primary">
+              Нүүр хуудас
+            </Link>
             <ChevronRight className="w-4 h-4 shrink-0" />
-            <a href="/cart" className="hover:text-primary">Сагс</a>
+            <Link href="/cart" className="hover:text-primary">
+              Сагс
+            </Link>
             <ChevronRight className="w-4 h-4 shrink-0" />
-            <a href="/orders/create" className="hover:text-primary">Захиалга үүсгэх</a>
+            <Link href="/orders/create" className="hover:text-primary">
+              Захиалга үүсгэх
+            </Link>
             <ChevronRight className="w-4 h-4 shrink-0" />
-            <a href={`/orders/${orderId}`} className="hover:text-primary">Захиалга #{orderId}</a>
+            <Link href={`/orders/${orderId}`} className="hover:text-primary">
+              Захиалга #{orderId}
+            </Link>
             <ChevronRight className="w-4 h-4 shrink-0" />
             <span className="text-gray-900">Төлбөр</span>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          onClick={() => router.push(`/orders/${orderId}`)}
-          className="mb-6"
-        >
+        <Button variant="ghost" onClick={() => router.push(`/orders/${orderId}`)} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Буцах
         </Button>
@@ -384,8 +392,8 @@ export default function PaymentPage() {
                   Төлбөр амжилттай төлөгдлөө!
                 </h3>
                 <p className="text-gray-700 mb-4">
-                  Таны захиалга амжилттай баталгаажлаа. Захиалгын дэлгэрэнгүй мэдээлэл рүү
-                  шилжиж байна...
+                  Таны захиалга амжилттай баталгаажлаа. Захиалгын дэлгэрэнгүй мэдээлэл рүү шилжиж
+                  байна...
                 </p>
                 <Button onClick={() => router.push(`/orders/${orderId}`)}>
                   Захиалгын дэлгэрэнгүй
@@ -401,12 +409,9 @@ export default function PaymentPage() {
             <CardContent className="p-6">
               <div className="text-center">
                 <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-red-800 mb-2">
-                  Төлбөр цуцлагдсан
-                </h3>
+                <h3 className="text-2xl font-bold text-red-800 mb-2">Төлбөр цуцлагдсан</h3>
                 <p className="text-gray-700 mb-4">
-                  Төлбөрийн нэхэмжлэх цуцлагдсан байна. Шинээр төлбөр төлөх бол дахин оролдоно
-                  уу.
+                  Төлбөрийн нэхэмжлэх цуцлагдсан байна. Шинээр төлбөр төлөх бол дахин оролдоно уу.
                 </p>
                 <Button onClick={() => router.push(`/orders/${orderId}`)}>
                   Захиалгын дэлгэрэнгүй
@@ -434,16 +439,16 @@ export default function PaymentPage() {
                   </div>
                 ) : qrCode ? (
                   <div className="space-y-6">
-
                     <div className="flex flex-col items-center">
                       <div className="p-4 bg-white rounded-lg border-2 border-gray-200 mb-4 flex items-center justify-center min-h-[300px] min-w-[300px]">
                         {/* Use regular img tag for base64 data URLs - Next.js Image doesn't handle them */}
-                        <img
+                        <Image
                           src={qrCode}
                           alt="QR Code"
                           className="w-full max-w-[300px] h-auto"
-                          style={{ maxWidth: '300px', height: 'auto', display: 'block' }}
-                          onError={(e) => {
+                          width={300}
+                          height={300}
+                          onError={_e => {
                             console.error('QR Code image failed to load');
                             console.error('QR Code value:', qrCode?.substring(0, 100));
                           }}
@@ -455,7 +460,7 @@ export default function PaymentPage() {
                       <p className="text-sm text-gray-600 text-center mb-4">
                         QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
                       </p>
-                      
+
                       {/* Bank/Wallet Buttons - Mobile Only */}
                       {isMobile && paymentUrls.length > 0 && (
                         <div className="w-full max-w-[340px] mt-2">
@@ -467,7 +472,7 @@ export default function PaymentPage() {
                             </span>
                             <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
                           </div>
-                          
+
                           {/* Bank Apps Grid */}
                           <div className="grid grid-cols-4 gap-3">
                             {paymentUrls.map((url, index) => (
@@ -481,21 +486,27 @@ export default function PaymentPage() {
                               >
                                 <div className="w-12 h-12 rounded-xl bg-gray-50 group-hover:bg-white flex items-center justify-center overflow-hidden transition-colors shadow-inner">
                                   {url.logo ? (
-                                    <img
+                                    <Image
                                       src={url.logo}
                                       alt={url.name}
                                       className="w-10 h-10 object-contain"
-                                      onError={(e) => {
+                                      width={40}
+                                      height={40}
+                                      onError={e => {
                                         const target = e.target as HTMLImageElement;
                                         target.style.display = 'none';
                                         const parent = target.parentElement;
                                         if (parent) {
-                                          parent.innerHTML = `<span class="text-lg font-bold text-gray-400">${url.name.charAt(0)}</span>`;
+                                          parent.innerHTML = `<span class="text-lg font-bold text-gray-400">${url.name.charAt(
+                                            0,
+                                          )}</span>`;
                                         }
                                       }}
                                     />
                                   ) : (
-                                    <span className="text-lg font-bold text-gray-400">{url.name.charAt(0)}</span>
+                                    <span className="text-lg font-bold text-gray-400">
+                                      {url.name.charAt(0)}
+                                    </span>
                                   )}
                                 </div>
                                 <span className="text-[10px] font-medium text-gray-600 text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">
@@ -567,9 +578,7 @@ export default function PaymentPage() {
                     {initiatePaymentMutation.isPending ? (
                       <>
                         <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-                        <p className="text-gray-600 mb-4">
-                          Төлбөрийн нэхэмжлэх үүсгэж байна...
-                        </p>
+                        <p className="text-gray-600 mb-4">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
                       </>
                     ) : initiatePaymentMutation.isError ? (
                       <>
@@ -615,9 +624,7 @@ export default function PaymentPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="text-center">
-                  <p className="text-gray-600 mb-4">
-                    Төлбөр төлөхгүй бол цуцлах боломжтой
-                  </p>
+                  <p className="text-gray-600 mb-4">Төлбөр төлөхгүй бол цуцлах боломжтой</p>
                   <Button
                     variant="outline"
                     onClick={handleCancelPayment}

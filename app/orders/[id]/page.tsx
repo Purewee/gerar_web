@@ -1,11 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, QrCode, CheckCircle2, Phone, Loader2, XCircle, RefreshCw, ChevronRight } from 'lucide-react';
-import { useOrder, usePaymentStatus, usePaymentInitiate, usePaymentCancel, getAuthToken } from '@/lib/api';
+import { ArrowLeft, QrCode, CheckCircle2, Phone, Loader2, RefreshCw } from 'lucide-react';
+import {
+  useOrder,
+  usePaymentStatus,
+  usePaymentInitiate,
+  usePaymentCancel,
+  getAuthToken,
+} from '@/lib/api';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { CardSkeleton } from '@/components/skeleton';
@@ -15,12 +21,14 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const orderId = parseInt(params.id as string);
 
-  const { data: orderResponse, isLoading, error } = useOrder(
-    isNaN(orderId) ? 0 : orderId,
-  );
+  const { data: orderResponse, isLoading, error } = useOrder(isNaN(orderId) ? 0 : orderId);
   const order = orderResponse?.data;
 
-  const { data: paymentStatusResponse, refetch: refetchPaymentStatus, isFetching: isFetchingPaymentStatus } = usePaymentStatus(orderId, {
+  const {
+    data: paymentStatusResponse,
+    refetch: refetchPaymentStatus,
+    isFetching: isFetchingPaymentStatus,
+  } = usePaymentStatus(orderId, {
     stopPollingAfter: 60 * 60 * 1000,
   });
   const paymentStatus =
@@ -29,18 +37,19 @@ export default function OrderDetailPage() {
 
   // QR Code state
   const [qrCode, setQrCode] = useState<string | null>(null);
-  const [qrText, setQrText] = useState<string | null>(null);
-  const [paymentUrls, setPaymentUrls] = useState<Array<{
-    name: string;
-    description: string;
-    logo: string;
-    link: string;
-  }>>([]);
+  const [, setQrText] = useState<string | null>(null);
+  const [paymentUrls, setPaymentUrls] = useState<
+    Array<{
+      name: string;
+      description: string;
+      logo: string;
+      link: string;
+    }>
+  >([]);
   const [webUrl, setWebUrl] = useState<string | null>(null);
   const [hasInitiated, setHasInitiated] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const initiationAttemptedRef = useRef(false);
-  
 
   const initiatePaymentMutation = usePaymentInitiate();
   const cancelPaymentMutation = usePaymentCancel();
@@ -66,7 +75,6 @@ export default function OrderDetailPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [mounted]);
 
-
   // Calculate derived values (safe even if order is undefined)
   const orderDate = order?.createdAt ? new Date(order.createdAt) : null;
   const formattedDate = orderDate
@@ -84,14 +92,12 @@ export default function OrderDetailPage() {
       })
     : '';
 
-  const isCancelled =
-    order?.status === 'CANCELLED' || paymentStatus === 'CANCELLED';
+  const isCancelled = order?.status === 'CANCELLED' || paymentStatus === 'CANCELLED';
   const isPaid = paymentStatus === 'PAID' || order?.status === 'PAID';
   const isPending = order?.status === 'PENDING' && paymentStatus !== 'PAID';
 
-
-  // Handle payment initiation
-  const handleInitiatePayment = useCallback(async () => {
+  // Handle payment initiation (plain function so React Compiler can optimize)
+  async function handleInitiatePayment() {
     if (!orderId || isNaN(orderId)) {
       toast.error('Алдаа', {
         description: 'Захиалгын ID олдсонгүй',
@@ -112,19 +118,19 @@ export default function OrderDetailPage() {
         if (response.data.qrCode) {
           // QR code is valid, set it
           setQrCode(response.data.qrCode);
-          
+
           // Store QR text (short URL) if available
           if (response.data.qrText) {
             setQrText(response.data.qrText);
           }
-          
+
           if (response.data.urls) {
             console.log('Payment URLs received:', response.data.urls);
             setPaymentUrls(response.data.urls);
           } else {
             console.warn('No payment URLs in response:', response.data);
           }
-          
+
           toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
             description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр QPAY апп ашиглана уу',
           });
@@ -141,7 +147,7 @@ export default function OrderDetailPage() {
             description: 'QR код үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.',
           });
         }
-        
+
         if (response.data.urls && Array.isArray(response.data.urls) && !response.data.qrCode) {
           setPaymentUrls(response.data.urls);
         }
@@ -149,15 +155,16 @@ export default function OrderDetailPage() {
           setWebUrl(response.data.webUrl);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number }; message?: string };
       // Check if error indicates order is cancelled/paid
-      const isOrderInvalid = 
-        error?.response?.status === 400 || 
-        error?.message?.includes('cancelled') ||
-        error?.message?.includes('paid') ||
+      const isOrderInvalid =
+        err?.response?.status === 400 ||
+        err?.message?.includes('cancelled') ||
+        err?.message?.includes('paid') ||
         order?.status === 'CANCELLED' ||
         paymentStatus === 'CANCELLED';
-      
+
       if (isOrderInvalid) {
         // Don't reset flags for invalid orders to prevent retry loop
         initiationAttemptedRef.current = true;
@@ -166,25 +173,27 @@ export default function OrderDetailPage() {
         initiationAttemptedRef.current = false;
         setHasInitiated(false);
       }
-      
+
       let errorMessage = 'Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа';
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (error?.response?.status === 500) {
-        errorMessage = 'Серверийн алдаа. Төлбөрийн систем тохируулаагүй байна. Админтай холбогдоно уу.';
-      } else if (error?.response?.status === 400) {
+      if (err?.message) {
+        errorMessage = err.message;
+      } else if (err?.response?.status === 500) {
+        errorMessage =
+          'Серверийн алдаа. Төлбөрийн систем тохируулаагүй байна. Админтай холбогдоно уу.';
+      } else if (err?.response?.status === 400) {
         errorMessage = 'Захиалга аль хэдийн төлөгдсөн эсвэл цуцлагдсан байна.';
-      } else if (error?.response?.status === 404) {
+      } else if (err?.response?.status === 404) {
         errorMessage = 'Захиалга олдсонгүй.';
       }
-      
+
       toast.error('Алдаа гарлаа', {
         description: errorMessage,
       });
     }
-  }, [orderId, initiatePaymentMutation]);
+  }
 
   // Auto-initiate payment when component mounts
+
   useEffect(() => {
     if (!order || isLoading) return;
     if (isPaid || isCancelled) return;
@@ -192,7 +201,7 @@ export default function OrderDetailPage() {
     if (initiatePaymentMutation.isPending) return;
     if (initiatePaymentMutation.isError) return;
     if (hasInitiated && initiationAttemptedRef.current) return;
-    
+
     handleInitiatePayment();
   }, [
     order?.id,
@@ -204,7 +213,6 @@ export default function OrderDetailPage() {
     hasInitiated,
     initiatePaymentMutation.isPending,
     initiatePaymentMutation.isError,
-    handleInitiatePayment,
   ]);
 
   // Reset initiation state when order loads with existing invoice but no QR code
@@ -214,8 +222,6 @@ export default function OrderDetailPage() {
       setHasInitiated(false);
     }
   }, [order?.qpayInvoiceId, qrCode, isPaid, isCancelled]);
-
-
 
   const handleCancelPayment = async () => {
     if (!confirm('Та төлбөрийг цуцлахдаа итгэлтэй байна уу?')) {
@@ -236,10 +242,8 @@ export default function OrderDetailPage() {
   };
 
   // Calculate totals
-  const itemTotal = order?.items?.reduce(
-    (sum, item) => sum + parseFloat(item.price) * item.quantity,
-    0,
-  ) || 0;
+  const itemTotal =
+    order?.items?.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0) || 0;
   const deliveryFee = 6000;
   const totalAmount = parseFloat(order?.totalAmount || '0') || itemTotal + deliveryFee;
 
@@ -286,183 +290,187 @@ export default function OrderDetailPage() {
         </Button>
 
         {/* QR Code Payment Section - Show at top if pending */}
-        {isPending && !isCancelled && order?.status !== 'CANCELLED' && paymentStatus !== 'CANCELLED' && (
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-primary/5 via-white to-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-base font-bold">
-                <QrCode className="w-5 h-5 text-primary" />
-                QR кодоор төлбөр төлөх
-              </CardTitle>
-              <CardDescription className="text-xs">
-                60 минутын дотор төлбөрөө баталгаажуулна уу
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {initiatePaymentMutation.isPending && !qrCode ? (
-                <div className="flex flex-col items-center justify-center py-4">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary mb-2" />
-                  <p className="text-xs text-gray-600">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
-                </div>
-              ) : qrCode ? (
-                <div className="space-y-2">
-
-                  <div className="flex flex-col items-center">
-                    <div className="p-4 rounded-2xl bg-white shadow-inner border flex justify-center">
-                      {/* Use regular img tag for base64 data URLs - Next.js Image doesn't handle them */}
-                      <img
-                        src={qrCode}
-                        alt="QR Code"
-                        className="w-60 h-60 object-contain"
-                        onError={(e) => {
-                          console.error('QR Code image failed to load');
-                          console.error('QR Code value:', qrCode?.substring(0, 100));
-                        }}
-                        onLoad={() => {
-                          console.log('QR Code image loaded successfully');
-                        }}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-600 text-center my-2">
-                      QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
-                    </p>
-                    {/* Bank/Wallet Buttons - Mobile Only */}
-                    {isMobile && paymentUrls.length > 0 && (
-                <div className="w-full max-w-xs mt-3 px-1">
-                  {/* Section Header */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="flex-1 h-px bg-gray-200" />
-                    <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
-                      💳 Банкны апп
-                    </span>
-                    <div className="flex-1 h-px bg-gray-200" />
+        {isPending &&
+          !isCancelled &&
+          order?.status !== 'CANCELLED' &&
+          paymentStatus !== 'CANCELLED' && (
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-primary/5 via-white to-white">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base font-bold">
+                  <QrCode className="w-5 h-5 text-primary" />
+                  QR кодоор төлбөр төлөх
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  60 минутын дотор төлбөрөө баталгаажуулна уу
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                {initiatePaymentMutation.isPending && !qrCode ? (
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary mb-2" />
+                    <p className="text-xs text-gray-600">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
                   </div>
-                  
-                  {/* Bank Apps */}
-                  <div className="grid grid-cols-3 gap-3">
-                    {paymentUrls.map((url, index) => (
-                      <button
-                        key={index}
-                        className="group flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-white border border-gray-200 shadow-sm active:scale-95 active:bg-primary/10 transition-all touch-manipulation"
-                        onClick={() => {
-                          console.log("Opening:", url.name, url.link);
-                          window.location.href = url.link;
-                        }}
-                      >
-                        {/* Icon */}
-                        <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden">
-                          {url.logo ? (
-                            <img
-                              src={url.logo}
-                              alt={url.name}
-                              className="w-9 h-9 object-contain"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = "none";
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = `
+                ) : qrCode ? (
+                  <div className="space-y-2">
+                    <div className="flex flex-col items-center">
+                      <div className="p-4 rounded-2xl bg-white shadow-inner border flex justify-center">
+                        {/* Use regular img tag for base64 data URLs - Next.js Image doesn't handle them */}
+                        <Image
+                          src={qrCode}
+                          alt="QR Code"
+                          className="w-60 h-60 object-contain"
+                          width={240}
+                          height={240}
+                          onError={_e => {
+                            console.error('QR Code image failed to load');
+                            console.error('QR Code value:', qrCode?.substring(0, 100));
+                          }}
+                          onLoad={() => {
+                            console.log('QR Code image loaded successfully');
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-600 text-center my-2">
+                        QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
+                      </p>
+                      {/* Bank/Wallet Buttons - Mobile Only */}
+                      {isMobile && paymentUrls.length > 0 && (
+                        <div className="w-full max-w-xs mt-3 px-1">
+                          {/* Section Header */}
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="flex-1 h-px bg-gray-200" />
+                            <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                              💳 Банкны апп
+                            </span>
+                            <div className="flex-1 h-px bg-gray-200" />
+                          </div>
+
+                          {/* Bank Apps */}
+                          <div className="grid grid-cols-3 gap-3">
+                            {paymentUrls.map((url, index) => (
+                              <button
+                                key={index}
+                                className="group flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-white border border-gray-200 shadow-sm active:scale-95 active:bg-primary/10 transition-all touch-manipulation"
+                                onClick={() => {
+                                  console.log('Opening:', url.name, url.link);
+                                  window.location.href = url.link;
+                                }}
+                              >
+                                {/* Icon */}
+                                <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden">
+                                  {url.logo ? (
+                                    <Image
+                                      src={url.logo}
+                                      alt={url.name}
+                                      className="w-9 h-9 object-contain"
+                                      width={36}
+                                      height={36}
+                                      onError={e => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = `
                                     <span class="text-base font-bold text-gray-400">
                                       ${url.name.charAt(0)}
                                     </span>
                                   `;
-                                }
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <span className="text-base font-bold text-gray-400">
+                                      {url.name.charAt(0)}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Label */}
+                                <span className="text-[10px] font-medium text-center leading-tight line-clamp-2 text-gray-700">
+                                  {url.description || url.name}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Web fallback */}
+                          {webUrl && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full mt-4 text-gray-600 hover:text-gray-800"
+                              onClick={() => {
+                                console.log('Opening web:', webUrl);
+                                window.open(webUrl, '_blank', 'noopener,noreferrer');
                               }}
-                            />
-                          ) : (
-                            <span className="text-base font-bold text-gray-400">
-                              {url.name.charAt(0)}
-                            </span>
+                            >
+                              🌐 <span className="ml-1 text-[11px]">Веб хуудсаар төлөх</span>
+                            </Button>
                           )}
                         </div>
+                      )}
 
-                        {/* Label */}
-                        <span className="text-[10px] font-medium text-center leading-tight line-clamp-2 text-gray-700">
-                          {url.description || url.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                      {isMobile && !paymentUrls.length && webUrl && (
+                        <div className="w-full max-w-[240px] mt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              console.log('Opening web URL:', webUrl);
+                              window.open(webUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                          >
+                            Веб хуудас нээх
+                          </Button>
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Web fallback */}
-                  {webUrl && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full mt-4 text-gray-600 hover:text-gray-800"
-                      onClick={() => {
-                        console.log("Opening web:", webUrl);
-                        window.open(webUrl, "_blank", "noopener,noreferrer");
-                      }}
-                    >
-                      🌐 <span className="ml-1 text-[11px]">Веб хуудсаар төлөх</span>
-                    </Button>
-                  )}
-                </div>
-              )}
-
-                    {isMobile && !paymentUrls.length && webUrl && (
-                      <div className="w-full max-w-[240px] mt-2">
+                    {/* Refresh Status Button */}
+                    {!shouldStopPolling && (
+                      <div className="flex justify-center">
                         <Button
-                          size="sm"
                           variant="outline"
-                          className="w-full"
-                          onClick={() => {
-                            console.log('Opening web URL:', webUrl);
-                            window.open(webUrl, '_blank', 'noopener,noreferrer');
-                          }}
+                          size="sm"
+                          onClick={() => refetchPaymentStatus()}
+                          disabled={isFetchingPaymentStatus}
+                          className="text-xs"
                         >
-                          Веб хуудас нээх
+                          <RefreshCw
+                            className={`w-3 h-3 mr-1.5 ${
+                              isFetchingPaymentStatus ? 'animate-spin' : ''
+                            }`}
+                          />
+                          Төлбөрийн шалгах
                         </Button>
                       </div>
                     )}
                   </div>
-
-                  {/* Refresh Status Button */}
-                  {!shouldStopPolling && (
-                    <div className="flex justify-center">
+                ) : (
+                  <div className="text-center py-4">
+                    {initiatePaymentMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
+                        <p className="text-xs text-gray-600">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
+                      </>
+                    ) : (
                       <Button
-                        variant="outline"
                         size="sm"
-                        onClick={() => refetchPaymentStatus()}
-                        disabled={isFetchingPaymentStatus}
-                        className="text-xs"
+                        onClick={() => {
+                          initiationAttemptedRef.current = false;
+                          setHasInitiated(false);
+                          handleInitiatePayment();
+                        }}
                       >
-                        <RefreshCw
-                          className={`w-3 h-3 mr-1.5 ${
-                            isFetchingPaymentStatus ? 'animate-spin' : ''
-                          }`}
-                        />
-                        Төлбөрийн шалгах
+                        Дахин оролдох
                       </Button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  {initiatePaymentMutation.isPending ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                      <p className="text-xs text-gray-600">
-                        Төлбөрийн нэхэмжлэх үүсгэж байна...
-                      </p>
-                    </>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        initiationAttemptedRef.current = false;
-                        setHasInitiated(false);
-                        handleInitiatePayment();
-                      }}
-                    >
-                      Дахин оролдох
-                    </Button>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
         {/* Title Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -490,12 +498,8 @@ export default function OrderDetailPage() {
               !
             </div>
             <div>
-              <p className="text-sm font-bold text-yellow-900">
-                Захиалга цуцлагдсан
-              </p>
-              <p className="text-xs text-yellow-800">
-                60 минутын дотор төлбөр төлөгдөөгүй
-              </p>
+              <p className="text-sm font-bold text-yellow-900">Захиалга цуцлагдсан</p>
+              <p className="text-xs text-yellow-800">60 минутын дотор төлбөр төлөгдөөгүй</p>
             </div>
           </div>
         )}
@@ -548,48 +552,44 @@ export default function OrderDetailPage() {
           <Card className="bg-white border border-gray-200 shadow-sm">
             <CardContent className="p-3">
               <div className="mb-2 pb-1.5 border-b border-gray-200">
-                <h2 className="text-base font-bold text-gray-900 mb-1">
-                  Бүтээгдэхүүн
-                </h2>
+                <h2 className="text-base font-bold text-gray-900 mb-1">Бүтээгдэхүүн</h2>
               </div>
 
               <div className="space-y-2">
-                {order.items.map((item, index) => (
+                {order.items.map(item => (
                   <div key={item.id} className="flex gap-3 p-3 rounded-xl bg-gray-50 border">
-                        {/* Product Image */}
-                        {item.product?.firstImage || item.product?.images?.[0] ? (
-                          <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden shrink-0">
-                            <Image
-                              src={
-                                item.product.firstImage || item.product.images[0]
-                              }
-                              alt={item.product.name}
-                              width={56}
-                              height={56}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-14 h-14 bg-gray-200 rounded flex items-center justify-center shrink-0">
-                            <span className="text-xl">📦</span>
-                          </div>
-                        )}
-
-                        {/* Product Details */}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold line-clamp-2">
-                            {item.product?.name || 'Бүтээгдэхүүн'}
-                          </h3>
-                          <div className="flex justify-between items-center pt-0.5 border-t border-gray-200 mt-0.5">
-                            <span className="text-xs text-gray-600">
-                              {parseFloat(item.price).toLocaleString()} ₮ × {item.quantity}
-                            </span>
-                            <span className="font-bold text-sm text-primary">
-                              {(parseFloat(item.price) * item.quantity).toLocaleString()} ₮
-                            </span>
-                          </div>
-                        </div>
+                    {/* Product Image */}
+                    {item.product?.firstImage || item.product?.images?.[0] ? (
+                      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden shrink-0">
+                        <Image
+                          src={item.product.firstImage || item.product.images[0]}
+                          alt={item.product.name}
+                          width={56}
+                          height={56}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
+                    ) : (
+                      <div className="w-14 h-14 bg-gray-200 rounded flex items-center justify-center shrink-0">
+                        <span className="text-xl">📦</span>
+                      </div>
+                    )}
+
+                    {/* Product Details */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-semibold line-clamp-2">
+                        {item.product?.name || 'Бүтээгдэхүүн'}
+                      </h3>
+                      <div className="flex justify-between items-center pt-0.5 border-t border-gray-200 mt-0.5">
+                        <span className="text-xs text-gray-600">
+                          {parseFloat(item.price).toLocaleString()} ₮ × {item.quantity}
+                        </span>
+                        <span className="font-bold text-sm text-primary">
+                          {(parseFloat(item.price) * item.quantity).toLocaleString()} ₮
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
 
@@ -615,12 +615,10 @@ export default function OrderDetailPage() {
               <div className="flex justify-between">
                 <span className="text-gray-500">Овог</span>
                 <span className="font-medium">
-                  {order?.address?.fullName
-                    ? order.address.fullName.split(' ')[0]
-                    : '-'}
+                  {order?.address?.fullName ? order.address.fullName.split(' ')[0] : '-'}
                 </span>
               </div>
-              
+
               {/* Нэр */}
               <div className="flex justify-between">
                 <span className="text-gray-500">Нэр</span>
@@ -630,32 +628,32 @@ export default function OrderDetailPage() {
                     : '-'}
                 </span>
               </div>
-              
+
               {/* Утас */}
               <div className="flex justify-between">
                 <span className="text-gray-500">Утас</span>
                 <span className="font-medium">
-                  {order?.address?.phoneNumber || 
-                   (typeof window !== 'undefined' && localStorage.getItem('mobile')) || 
-                   '-'}
+                  {order?.address?.phoneNumber ||
+                    (typeof window !== 'undefined' && localStorage.getItem('mobile')) ||
+                    '-'}
                 </span>
               </div>
-              
+
               {/* Цахим хаяг */}
               <div className="flex justify-between">
                 <span className="text-gray-500">Цахим хаяг</span>
                 <span className="font-medium break-all text-right">
-                  {typeof window !== 'undefined' && localStorage.getItem('user_email') || '-'}
+                  {(typeof window !== 'undefined' && localStorage.getItem('user_email')) || '-'}
                 </span>
               </div>
-              
+
               {/* Хувь хүн */}
               <div className="flex justify-between">
                 <span className="text-gray-500">Хувь хүн</span>
                 <span className="font-medium">-</span>
               </div>
             </div>
-            
+
             {/* Address section - show below if address exists */}
             {order?.address && (
               <div className="mt-2 pt-2 border-t border-gray-200">
@@ -664,8 +662,7 @@ export default function OrderDetailPage() {
                   {order.address.provinceOrDistrict}, {order.address.khorooOrSoum}
                   {order.address.street && `, ${order.address.street}`}
                   {order.address.building && `, ${order.address.building}`}
-                  {order.address.apartmentNumber &&
-                    `, ${order.address.apartmentNumber}`}
+                  {order.address.apartmentNumber && `, ${order.address.apartmentNumber}`}
                 </p>
                 {order.address.addressNote && (
                   <div className="mt-1.5 p-1.5 bg-blue-50 border border-blue-200 rounded">
@@ -679,31 +676,32 @@ export default function OrderDetailPage() {
         </Card>
 
         {/* Cancel Payment Button */}
-        {isPending && !isCancelled && order?.status !== 'CANCELLED' && paymentStatus !== 'CANCELLED' && (
-          <Card className="border border-red-200 bg-red-50">
-            <CardContent className="text-center space-y-2">
-              <p className="text-xs text-red-700">
-                Төлбөр төлөхгүй бол захиалга цуцлагдана
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCancelPayment}
-                disabled={cancelPaymentMutation.isPending}
-                className="border-red-300 text-red-700 hover:bg-red-100"
-              >
-                {cancelPaymentMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
-                    Цуцлаж байна...
-                  </>
-                ) : (
-                  'Төлбөр цуцлах'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        {isPending &&
+          !isCancelled &&
+          order?.status !== 'CANCELLED' &&
+          paymentStatus !== 'CANCELLED' && (
+            <Card className="border border-red-200 bg-red-50">
+              <CardContent className="text-center space-y-2">
+                <p className="text-xs text-red-700">Төлбөр төлөхгүй бол захиалга цуцлагдана</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancelPayment}
+                  disabled={cancelPaymentMutation.isPending}
+                  className="border-red-300 text-red-700 hover:bg-red-100"
+                >
+                  {cancelPaymentMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                      Цуцлаж байна...
+                    </>
+                  ) : (
+                    'Төлбөр цуцлах'
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
       </div>
     </div>
   );
