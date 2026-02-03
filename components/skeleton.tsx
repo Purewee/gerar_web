@@ -1,3 +1,5 @@
+import clsx from 'clsx';
+
 export function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse bg-gray-200 rounded ${className}`} />;
 }
@@ -25,18 +27,24 @@ export function ProductSkeleton() {
   );
 }
 
+
+
 export function ProductGridSkeleton({
   count = 8,
   grid = false,
+  className,
 }: {
   count?: number;
   grid?: boolean;
+  className?: string;
 }) {
   return (
     <div
-      className={`grid ${
-        grid ? 'grid-cols-2' : 'grid-cols-1'
-      } sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6`}
+      className={clsx(
+        'grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3',
+        grid ? 'grid-cols-2' : 'grid-cols-1',
+        className
+      )}
     >
       {Array.from({ length: count }).map((_, i) => (
         <ProductSkeleton key={i} />
@@ -44,6 +52,7 @@ export function ProductGridSkeleton({
     </div>
   );
 }
+
 
 export function ProductSliderSkeleton({ count = 6 }: { count?: number }) {
   return (
