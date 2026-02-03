@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Normalize image URLs - replace localhost with network IP for Next.js image optimization
- * This ensures images can be loaded when Next.js runs on network IP (e.g. 192.168.1.3, 192.168.1.4)
+ * This ensures images can be loaded when Next.js runs on network IP (e.g. 192.168.1.3)
  * @param url - Image URL to normalize
  * @returns Normalized URL
  */
