@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Menu, Heart, User, ShoppingCart } from 'lucide-react';
+import { Home, ListOrdered, Heart, User, ShoppingCart } from 'lucide-react';
 import { useCart } from '@/lib/api';
 
 /** Combined hamburger menu + magnifying glass icon (single integrated graphic) */
@@ -33,9 +33,9 @@ function MenuSearchIcon({ className, strokeWidth = 2 }: { className?: string; st
 
 const navItems = [
   { href: '/', label: 'Нүүр', labelEn: 'Home', icon: Home },
-  { href: '/products', label: 'Ангилал', labelEn: 'Browse', icon: Menu },
-  { href: '/profile/favorites', label: 'Хадгалсан', labelEn: 'Favorites', icon: Heart },
   { href: '/profile', label: 'Бүртгэл', labelEn: 'Profile', icon: User },
+  { href: '/profile/orders', label: 'Захиалга', labelEn: 'Orders', icon: ListOrdered },
+  { href: '/profile/favorites', label: 'Хадгалсан', labelEn: 'Favorites', icon: Heart },
   { href: '/cart', label: 'Сагс', labelEn: 'Cart', icon: ShoppingCart },
 ] as const;
 
@@ -76,23 +76,25 @@ export function BottomNav() {
       <div className="flex items-stretch justify-around max-w-lg mx-auto">
         {navItems.map(({ href, label, labelEn: _labelEn, icon: Icon }) => {
           const isCart = href === '/cart';
-          const isBrowse = href === '/products';
           const isProfile = href === '/profile';
+          const isOrders = href === '/profile/orders';
           const isFavorites = href === '/profile/favorites';
           const isGuestProfile = isProfile && mounted && !isAuthenticated;
           const isGuestFavorites = isFavorites && mounted && !isAuthenticated;
           const isActive =
-            href === '/'
-              ? pathname === '/'
-              : href === '/profile/favorites'
-                ? isAuthenticated && pathname === '/profile/favorites'
+              href === '/'
+                ? pathname === '/'
                 : href === '/profile'
-                  ? isAuthenticated && pathname?.startsWith('/profile') && pathname !== '/profile/favorites'
-                  : pathname?.startsWith(href);
+                  ? pathname === '/profile'
+                  : href === '/profile/orders'
+                    ? pathname === '/profile/orders'
+                    : href === '/profile/favorites'
+                      ? pathname === '/profile/favorites'
+                      : pathname?.startsWith(href);
+
 
           const needsLoginButton = isProfile || isFavorites;
           const isGuestAuthItem = (isProfile && isGuestProfile) || (isFavorites && isGuestFavorites);
-          const displayLabel = isGuestAuthItem ? 'Нэвтрэх' : label;
           const itemClasses = `flex flex-col items-center justify-center gap-0.5 py-2.5 px-3 min-w-0 flex-1 transition-colors duration-200 ${
             isActive ? 'text-primary' : 'text-gray-500 hover:text-primary'
           }`;
@@ -103,7 +105,7 @@ export function BottomNav() {
                 key={href}
                 type="button"
                 className={itemClasses}
-                aria-label={displayLabel}
+                aria-label={label}
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('openLoginModal'));
@@ -117,7 +119,7 @@ export function BottomNav() {
                   />
                 </span>
                 <span className="text-[10px] font-medium truncate w-full text-center">
-                  {displayLabel}
+                  {label}
                 </span>
               </button>
             );
@@ -129,7 +131,7 @@ export function BottomNav() {
                 key={href}
                 type="button"
                 className={itemClasses}
-                aria-label={displayLabel}
+                aria-label={label}
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => router.push('/profile')}
               >
@@ -141,7 +143,7 @@ export function BottomNav() {
                   />
                 </span>
                 <span className="text-[10px] font-medium truncate w-full text-center">
-                  {displayLabel}
+                  {label}
                 </span>
               </button>
             );
@@ -156,18 +158,13 @@ export function BottomNav() {
               aria-current={isActive ? 'page' : undefined}
             >
               <span className="relative inline-flex items-center justify-center">
-                {isBrowse ? (
-                  <MenuSearchIcon
-                    className="w-6 h-6 shrink-0"
-                    strokeWidth={isActive ? 2.25 : 2}
-                  />
-                ) : (
+                
                   <Icon
                     className="w-6 h-6 shrink-0"
                     strokeWidth={isActive ? 2.25 : 2}
                     aria-hidden
                   />
-                )}
+                  
                 {isCart && mounted && cartCount > 0 && (
                   <span
                     className="absolute -top-1.5 -right-2 bg-primary text-white text-[10px] font-semibold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center"
