@@ -6,7 +6,7 @@ import { useFavorites } from '@/lib/api';
 import { ProductCard } from '@/components/product-card';
 import { Heart } from 'lucide-react';
 import Link from 'next/link';
-import { ProductGridSkeleton } from '@/components/skeleton';
+import { CardSkeleton } from '@/components/skeleton';
 
 export default function ProfileFavoritesPage() {
   const { data: favoritesResponse, isLoading, error } = useFavorites();
@@ -16,10 +16,11 @@ export default function ProfileFavoritesPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl sm:text-3xl">Миний дуртай</CardTitle>
+          <CardTitle className="text-2xl sm:text-3xl">Миний хадгалсан</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ProductGridSkeleton count={8} />
+        <CardContent className='flex flex-col gap-6'>
+          <CardSkeleton />
+          <CardSkeleton />
         </CardContent>
       </Card>
     );
@@ -30,7 +31,7 @@ export default function ProfileFavoritesPage() {
       <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
         <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
           <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            Миний дуртай
+            Миний хадгалсан
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -54,7 +55,7 @@ export default function ProfileFavoritesPage() {
       <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
         <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
           <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            Миний дуртай
+            Миний хадгалсан
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -63,7 +64,7 @@ export default function ProfileFavoritesPage() {
               <Heart className="w-10 h-10 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Одоогоор дуртай бараа байхгүй
+              Одоогоор хадгалсан бараа байхгүй
             </h3>
             <p className="text-muted-foreground mb-6">Дуртай бараануудаа энд хадгална уу</p>
             <Button variant="outline" asChild className="shadow-sm">
@@ -79,9 +80,9 @@ export default function ProfileFavoritesPage() {
     <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
       <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
         <CardTitle className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-          Миний дуртай ({favorites.length})
+          Миний хадгалсан ({favorites.length})
         </CardTitle>
-        <CardDescription className="mt-2">Дуртай бараануудаа харах</CardDescription>
+        <CardDescription className="mt-2">Хадгалсан бараануудаа харах</CardDescription>
       </CardHeader>
       <CardContent className="p-3 sm:p-6 lg:p-8">
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 lg:gap-6">

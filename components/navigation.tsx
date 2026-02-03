@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -209,28 +209,56 @@ export function Navigation() {
           activeCategoryInfo.category.children.length > 0
         ) {
           setExpandedCategoryId(activeCategoryInfo.category.id);
-          setSelectedChildCategoryId(activeCategoryInfo.category.children[0].id);
+          // setSelectedChildCategoryId(activeCategoryInfo.category.children[0].id);
         }
         setHasAutoSelectedCategory(true);
         return;
       }
     }
 
-    // Fallback: Find first parent category with children
-    const firstParentWithChildren = categories.find(cat => cat.children && cat.children.length > 0);
+    // // Fallback: Find first parent category with children
+    // const firstParentWithChildren = categories.find(cat => cat.children && cat.children.length > 0);
 
-    if (
-      firstParentWithChildren &&
-      firstParentWithChildren.children &&
-      firstParentWithChildren.children.length > 0
-    ) {
-      setExpandedCategoryId(firstParentWithChildren.id);
-      setHasAutoSelectedCategory(true);
-      // Select first child visually
-      const firstChild = firstParentWithChildren.children[0];
-      setSelectedChildCategoryId(firstChild.id);
-    }
+    // if (
+    //   firstParentWithChildren &&
+    //   firstParentWithChildren.children &&
+    //   firstParentWithChildren.children.length > 0
+    // ) {
+    //   setExpandedCategoryId(firstParentWithChildren.id);
+    //   setHasAutoSelectedCategory(true);
+    //   // Select first child visually
+    //   const firstChild = firstParentWithChildren.children[0];
+    //   setSelectedChildCategoryId(firstChild.id);
+    // }
   }, [categories, categoriesLoading, hasAutoSelectedCategory, activeCategoryInfo]);
+
+  // Keep local selectedChildCategoryId in sync with URL-driven selection so only the current child is highlighted
+  useEffect(() => {
+    if (activeCategoryInfo?.isChild && activeCategoryInfo.category) {
+      setSelectedChildCategoryId(activeCategoryInfo.category.id);
+    } else {
+      setSelectedChildCategoryId(null);
+    }
+  }, [finalActiveCategoryId]);
+
+  // On first load (after categories hydrate) ensure no parent/child is auto-expanded/selected unless URL has a categoryId.
+  const initialNavInitRef = useRef(true);
+  useEffect(() => {
+    if (!initialNavInitRef.current) return;
+    if (categoriesLoading) return;
+    if (categories.length === 0) return;
+    // If URL provides a category, leave it alone.
+    if (finalActiveCategoryId) {
+      initialNavInitRef.current = false;
+      return;
+    }
+
+    // Clear any expansions/selections so the nav starts in a neutral state
+    setExpandedCategoryId(null);
+    setSelectedChildCategoryId(null);
+    setHasAutoSelectedCategory(false);
+    initialNavInitRef.current = false;
+  }, [categoriesLoading, categories, finalActiveCategoryId]);
 
   // Get user initials for avatar
   const getUserInitials = (name: string) => {
@@ -241,6 +269,73 @@ export function Navigation() {
     }
     return name.substring(0, 2).toUpperCase();
   };
+
+  // Children for currently expanded parent (mobile)
+  const expandedChildren = categories.find(cat => cat.id === expandedCategoryId)?.children;
+  const childRowRef = useRef<HTMLDivElement | null>(null);
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const parentRowRef = useRef<HTMLDivElement | null>(null);
+
+  // Reset child row scroll to the start when switching parent so the list shows from the beginning
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!childRowRef.current) return;
+    if (expandedCategoryId === null) return;
+    // Allow DOM to update then scroll to start
+    requestAnimationFrame(() => {
+      try {
+        childRowRef.current!.scrollTo({ left: 0, behavior: 'smooth' });
+      } catch (e) {
+        childRowRef.current!.scrollLeft = 0;
+      }
+    });
+  }, [expandedCategoryId]);
+  // Collapse children when clicking outside the mobile categories nav
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node | null;
+      if (!navRef.current) return;
+      if (target && navRef.current.contains(target)) return;
+      setExpandedCategoryId(null);
+      setSelectedChildCategoryId(null);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Collapse when navigating away from products page (keep selection if staying on /products)
+  useEffect(() => {
+    if (!pathname) return;
+    if (!pathname.startsWith('/products')) {
+      setExpandedCategoryId(null);
+      setSelectedChildCategoryId(null);
+    }
+  }, [pathname]);
+
+  // Reset parent categories row scroll when navigating to homepage (no state changes, so no re-render)
+  useEffect(() => {
+    if (!pathname) return;
+    if (pathname === '/') {
+      if (typeof window === 'undefined') return;
+      if (!parentRowRef.current) return;
+      // Use requestAnimationFrame to ensure DOM is ready, then set scrollLeft to 0 directly
+      requestAnimationFrame(() => {
+        try {
+          parentRowRef.current!.scrollLeft = 0;
+        } catch (e) {
+          // ignore
+        }
+      });
+    }
+  }, [pathname]);
+
+  // Collapse when mobile profile drawer opens
+  useEffect(() => {
+    if (mobileProfileMenuOpen) {
+      setExpandedCategoryId(null);
+      setSelectedChildCategoryId(null);
+    }
+  }, [mobileProfileMenuOpen]);
 
   return (
     <>
@@ -332,7 +427,7 @@ export function Navigation() {
                 <Button
                   variant="ghost"
                   onClick={() => setLoginModalOpen(true)}
-                  className="hidden sm:flex hover:bg-gray-100 rounded-lg transition-all duration-200 text-sm sm:text-base whitespace-nowrap font-medium"
+                  className="hidden sm:flex hover:bg-gray-100 rounded-lg transition-all duration-200 text-sm text-primary border border-primary sm:text-base whitespace-nowrap font-medium"
                 >
                   Нэвтрэх
                 </Button>
@@ -421,6 +516,7 @@ export function Navigation() {
                                     <div key={child.id}>
                                       <Link
                                         href={`/products?categoryId=${child.id}`}
+                                        onClick={() => setSelectedChildCategoryId(child.id)}
                                         className="block font-medium text-gray-800 hover:text-primary uppercase mb-1 text-sm"
                                         aria-label={`${child.name} ангиллын бараа харах`}
                                       >
@@ -514,10 +610,10 @@ export function Navigation() {
         </div>
         {/* Category Navigation - Mobile */}
         {!hideCategories && (
-          <nav className="block md:hidden bg-white backdrop-blur-md border-b border-gray-200/80 z-40 shadow-sm">
+          <nav ref={navRef} className="block md:hidden bg-white backdrop-blur-md border-b border-gray-200/80 z-40 shadow-sm">
             <div className="w-full px-4">
               {/* Categories Row */}
-              <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
+              <div ref={parentRowRef} className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
                 {categoriesLoading ? (
                   <div className="flex items-center gap-2 py-1">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -531,6 +627,8 @@ export function Navigation() {
                     const isActive = finalActiveCategoryId === category.id;
                     const hasActiveChild =
                       activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
+                    // Parent is active if it's expanded, itself active, OR one of its children is active
+                    const isParentActive = isExpanded || isActive || hasActiveChild;
 
                     return (
                       <button
@@ -538,7 +636,13 @@ export function Navigation() {
                         onClick={e => {
                           if (hasChildren) {
                             e.preventDefault();
-                            setExpandedCategoryId(category.id);
+                            // Toggle expand/collapse on parent tap
+                            if (isExpanded) {
+                              setExpandedCategoryId(null);
+                              setSelectedChildCategoryId(null);
+                            } else {
+                              setExpandedCategoryId(category.id);
+                            }
                           } else {
                             router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
                           }
@@ -553,9 +657,9 @@ export function Navigation() {
                           e.currentTarget.style.outline = 'none';
                           e.currentTarget.style.boxShadow = 'none';
                         }}
-                        className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-1.5 px-2 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
-                          isExpanded || isActive || hasActiveChild
-                            ? 'text-primary bg-linear-to-r from-primary/15 to-primary/5 shadow-sm'
+                        className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-3.5 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
+                          isParentActive
+                            ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
                             : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
                         }`}
                         aria-label={
@@ -578,8 +682,8 @@ export function Navigation() {
                             aria-hidden="true"
                           />
                         )}
-                        {!isExpanded && !isActive && !hasActiveChild && (
-                          <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-transparent duration-300 rounded-lg" />
+                        {!isParentActive && (
+                          <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
                         )}
                       </button>
                     );
@@ -589,20 +693,20 @@ export function Navigation() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 py-2.5 border-t border-gray-200/60 overflow-x-auto scrollbar-hide">
-                {categories
-                  .find(cat => cat.id === expandedCategoryId)
-                  ?.children?.map(child => {
+              {expandedChildren && expandedChildren.length > 0 && (
+                <div ref={childRowRef} className="flex items-center gap-2 py-2.5 border-t border-gray-200/60 overflow-x-auto scrollbar-hide">
+                  {expandedChildren.map(child => {
                     const isSelected = selectedChildCategoryId === child.id;
                     const isChildActive = activeCategoryId === child.id;
                     return (
                       <Link
                         key={child.id}
                         href={`/products?categoryId=${encodeURIComponent(child.id)}`}
+                        onClick={() => setSelectedChildCategoryId(child.id)}
                         className={`text-xs sm:text-sm font-medium whitespace-nowrap py-2 px-3 shrink-0 rounded-lg transition-all duration-200 ${
                           isSelected || isChildActive
                             ? 'text-primary bg-primary/10 shadow-sm font-semibold'
-                            : 'text-gray-600 hover:text-primary hover:bg-white hover:shadow-sm'
+                            : 'text-gray-700 bg-linear-to-r from-primary/5 to-primary/5 hover:text-primary'
                         }`}
                         aria-label={`${child.name} ангиллын бараа харах`}
                         aria-current={isChildActive ? 'page' : undefined}
@@ -611,7 +715,8 @@ export function Navigation() {
                       </Link>
                     );
                   })}
-              </div>
+                </div>
+              )}
             </div>
           </nav>
         )}

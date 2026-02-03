@@ -971,7 +971,7 @@ export default function OrderCreatePage() {
                 )
               ) : (
                 <div className="space-y-4">
-                  <div>
+                  {/* <div>
                     <label className="text-sm font-medium text-gray-700 mb-1 block">
                       Хаягийн нэр <span className="text-red-500">*</span>
                     </label>
@@ -981,7 +981,7 @@ export default function OrderCreatePage() {
                       placeholder="Жишээ: Гэр, Ажил, Орон сууц"
                       required
                     />
-                  </div>
+                  </div> */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-1 block">
@@ -1007,7 +1007,7 @@ export default function OrderCreatePage() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Хороо/Сум <span className="text-red-500">*</span>
+                        Хороо <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={guestAddress.khorooOrSoum}
@@ -1035,25 +1035,13 @@ export default function OrderCreatePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">Хотхон</label>
+                      <label className="text-sm font-medium text-gray-700 mb-1 block">Байр</label>
                       <Input
                         value={guestAddress.residentialComplex}
                         onChange={e =>
                           setGuestAddress({ ...guestAddress, residentialComplex: e.target.value })
                         }
-                        placeholder="Хотхон"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Барилга
-                      </label>
-                      <Input
-                        value={guestAddress.building}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, building: e.target.value })
-                        }
-                        placeholder="Барилгын дугаар"
+                        placeholder="Байр"
                       />
                     </div>
                     <div>
