@@ -121,9 +121,7 @@ export default function ProfilePage() {
                 className="shadow-md hover:shadow-lg transition-all duration-200"
                 disabled={updateProfile.isPending}
               >
-                {updateProfile.isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : null}
+                {updateProfile.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Хадгалах
               </Button>
             </div>

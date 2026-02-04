@@ -132,7 +132,7 @@ export default function OrderDetailPage() {
           }
 
           toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
-            description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр QPAY апп ашиглана уу',
+            description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр Qpay апп ашиглана уу',
           });
         } else {
           // If no QR code returned, check if it's because order is cancelled
@@ -331,7 +331,7 @@ export default function OrderDetailPage() {
                         />
                       </div>
                       <p className="text-xs text-gray-600 text-center my-2">
-                        QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
+                        Qpay апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
                       </p>
                       {/* Bank/Wallet Buttons - Mobile Only */}
                       {isMobile && paymentUrls.length > 0 && (
@@ -482,8 +482,8 @@ export default function OrderDetailPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             {isPaid && (
               <div className="px-3 py-1.5 bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg w-full sm:w-auto text-center sm:text-left">
-                <p className="text-xs text-green-800 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <p className="text-md text-green-800 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
+                  <CheckCircle2 className="w-4.5 h-4.5" />
                   Төлөгдсөн
                 </p>
               </div>
@@ -532,7 +532,7 @@ export default function OrderDetailPage() {
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">Дотоодын хүргэлт</span>
+                <span className="text-sm text-gray-700">Хүргэлтийн үнэ</span>
                 <span className="text-sm font-semibold text-gray-900">
                   {deliveryFee.toLocaleString()} ₮
                 </span>
@@ -597,7 +597,7 @@ export default function OrderDetailPage() {
               <div className="flex items-center justify-end gap-1.5 mt-2 pt-1.5 border-t border-gray-200">
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded">
                   <Phone className="w-3 h-3 text-gray-600" />
-                  <span className="text-xs font-medium text-gray-700">7777-8985</span>
+                  <span className="text-xs font-medium text-gray-700">8886-0134</span>
                 </div>
               </div>
             </CardContent>
@@ -611,15 +611,14 @@ export default function OrderDetailPage() {
               Захиалагчийн мэдээлэл
             </h2>
             <div className="space-y-2 text-sm">
-              {/* Овог */}
+              {/* Нэр */}
               <div className="flex justify-between">
-                <span className="text-gray-500">Овог</span>
+                <span className="text-gray-500">Нэр</span>
                 <span className="font-medium">
                   {order?.address?.fullName ? order.address.fullName.split(' ')[0] : '-'}
                 </span>
               </div>
-
-              {/* Нэр */}
+              {/* 
               <div className="flex justify-between">
                 <span className="text-gray-500">Нэр</span>
                 <span className="font-medium">
@@ -627,7 +626,7 @@ export default function OrderDetailPage() {
                     ? order.address.fullName.split(' ').slice(1).join(' ') || '-'
                     : '-'}
                 </span>
-              </div>
+              </div> */}
 
               {/* Утас */}
               <div className="flex justify-between">
@@ -648,10 +647,10 @@ export default function OrderDetailPage() {
               </div>
 
               {/* Хувь хүн */}
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span className="text-gray-500">Хувь хүн</span>
                 <span className="font-medium">-</span>
-              </div>
+              </div> */}
             </div>
 
             {/* Address section - show below if address exists */}
@@ -680,8 +679,8 @@ export default function OrderDetailPage() {
           !isCancelled &&
           order?.status !== 'CANCELLED' &&
           paymentStatus !== 'CANCELLED' && (
-            <Card className="border border-red-200 bg-red-50">
-              <CardContent className="text-center space-y-2">
+            <Card className="border border-red-200 bg-red-50 flex flex-col items-center justify-center shadow-none">
+              <CardContent className="text-center py-2 space-y-2">
                 <p className="text-xs text-red-700">Төлбөр төлөхгүй бол захиалга цуцлагдана</p>
                 <Button
                   variant="outline"

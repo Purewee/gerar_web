@@ -16,7 +16,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
 // Reusable product list section (slider) with title and "view all" link
-function ProductListSection({
+export function ProductListSection({
   sectionId,
   title,
   description,
@@ -140,7 +140,7 @@ export default function Home() {
           discount:
             product.hasDiscount && product.discountPercentage
               ? `${product.discountPercentage}% ХЯМДАРСАН`
-              : 'Онцгой санал',
+              : 'Онцлох бараа',
           link: `/product/${product.id}`,
           imageUrl: product.firstImage || product.images?.[0],
         }))
@@ -150,7 +150,7 @@ export default function Home() {
           subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
           discount: product.discountPercentage
             ? `${product.discountPercentage}% ХЯМДАРСАН`
-            : 'Онцгой санал',
+            : 'Онцгой бараа',
           link: `/product/${product.id}`,
           imageUrl: product.firstImage || product.images?.[0],
         }));
@@ -193,7 +193,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] bg-size-[20px_20px]" />
           </div>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 relative z-10">
+          <div className="max-w-7xl mx-auto px-2 sm:px-6 py-4 sm:py-6 lg:py-8 relative z-10">
             {carouselItems.length > 0 ? (
               <div className="relative hero-carousel">
                 {carouselItems.length > 1 && (
@@ -229,14 +229,14 @@ export default function Home() {
                   loop={carouselItems.length > 1}
                   slidesPerView={1}
                   spaceBetween={0}
-                  className="hero-carousel min-h-[150px] sm:min-h-[180px] lg:min-h-[200px]"
+                  className="hero-carousel min-h-[150px] sm:min-h-[180px] lg:min-h-[200px] "
                 >
                   {carouselItems.map(item => (
                     <SwiperSlide key={item.id}>
                       <div
                         role="button"
                         tabIndex={0}
-                        className="carousel-slide-item flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer h-full min-h-[180px] lg:min-h-[250px] px-4 sm:px-8 lg:px-20 pb-3 sm:pb-0 [&:hover_.carousel-image-container]:scale-105"
+                        className="carousel-slide-item flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer h-full min-h-[180px] lg:min-h-[250px] px-4 sm:px-8 lg:px-20 pt-4 sm:pb-0 [&:hover_.carousel-image-container]:scale-105"
                         onClick={() => handleItemClick(item.link)}
                         onKeyDown={e => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -247,21 +247,23 @@ export default function Home() {
                         aria-label={`${item.title} - Дэлгэрэнгүй мэдээлэл харах`}
                       >
                         <div className="flex-1 text-center lg:text-left space-y-2 lg:space-y-3 order-2 lg:order-1">
-                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
-                            <Sparkles className="w-3 h-3" aria-hidden="true" />
+                          {/* <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
                             <span className="opacity-95">{item.subtitle}</span>
-                          </div>
-                          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
-                            {item.title}
+                          </div> */}
+                          <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight px-6">
+                            {item.subtitle}
                           </h2>
-                          <div className="inline-block">
-                            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/30">
-                              {item.discount}
+                          <div className="inline-block mt-auto">
+                            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-white/20 backdrop-blur-sm px-2 py-1 rounded-xl border border-white/30">
+                              <span className="inline-flex items-center gap-2">
+                                <Sparkles className="w-3 h-3" aria-hidden="true" />
+                                <span>{item.discount}</span>
+                              </span>
                             </p>
                           </div>
                         </div>
                         <div className="flex-1 flex justify-center lg:justify-end w-full lg:w-auto order-1 lg:order-2">
-                          <div className="carousel-image-container relative w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 transition-transform duration-500">
+                          <div className="carousel-image-container relative w-36 h-36 sm:w-40 sm:h-40 lg:w-48 lg:h-48 transition-transform duration-500">
                             {item.imageUrl ? (
                               <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/20">
                                 <Image
@@ -272,7 +274,11 @@ export default function Home() {
                                   priority={item.id === carouselItems[0]?.id}
                                   fill
                                   fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
-                                  unoptimized={item.imageUrl?.includes('localhost') || item.imageUrl?.includes('127.0.0.1') || item.imageUrl?.includes('192.168.1.3')}
+                                  unoptimized={
+                                    item.imageUrl?.includes('localhost') ||
+                                    item.imageUrl?.includes('127.0.0.1') ||
+                                    item.imageUrl?.includes('192.168.1.3')
+                                  }
                                 />
                               </div>
                             ) : (
@@ -295,17 +301,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Latest products list */}
-        <ProductListSection
-          sectionId="latest"
-          title="Сүүлд нэмэгдсэн бараа"
-          description="Шинэчлэгдсэн барааны жагсаалт"
-          linkHref="/products"
-          linkLabel="Сүүлд нэмэгдсэн бүх бараа харах"
-          products={latestProducts}
-          isLoading={productsLoading}
-        />
-
         {/* Sale products list */}
         <ProductListSection
           sectionId="sale"
@@ -325,6 +320,17 @@ export default function Home() {
           linkHref="/products"
           linkLabel="Эрэлттэй бүх бараа харах"
           products={popularProducts}
+          isLoading={productsLoading}
+        />
+
+        {/* Latest products list */}
+        <ProductListSection
+          sectionId="latest"
+          title="Сүүлд нэмэгдсэн бараа"
+          description="Шинэчлэгдсэн барааны жагсаалт"
+          linkHref="/products"
+          linkLabel="Сүүлд нэмэгдсэн бүх бараа харах"
+          products={latestProducts}
           isLoading={productsLoading}
         />
       </main>

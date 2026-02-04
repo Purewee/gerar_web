@@ -16,6 +16,7 @@ import {
   Heart,
   X,
   ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import {
   useCart,
@@ -99,6 +100,7 @@ export default function CartPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [quantityInputs, setQuantityInputs] = useState<Record<number, string>>({});
+  const [isProceeding, setIsProceeding] = useState(false);
 
   // Prevent hydration mismatch by only rendering dynamic content after mount
   useEffect(() => {
@@ -217,18 +219,25 @@ export default function CartPage() {
   const deliveryFee = 6980;
   const total = subtotal + deliveryFee;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cartItems.length === 0) {
       toast.error('Сагс хоосон байна');
       return;
     }
 
-    // Always redirect to checkout page
-    router.push('/orders/create');
+    try {
+      setIsProceeding(true);
+      // Navigate to checkout page without awaiting so UI doesn't block.
+      router.push('/orders/create');
+      setIsProceeding(false);
+    } catch (error: any) {
+      setIsProceeding(false);
+      toast.error('Алдаа гарлаа');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="sm:min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Breadcrumbs */}
         <div className="mb-6 text-sm text-gray-600">
@@ -266,17 +275,17 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-linear-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent mb-4 text-center">
-                  {cartError ? 'Сагс ачаалахад алдаа гарлаа' : 'Таны сагс хоосон байна'}
-                </h2>
+                <p className="text-md sm:text-3xl lg:text-4xl px-8 sm:px-0 text-gray-500 mb-4 py-4 text-center">
+                  {cartError ? 'Сагс ачаалахад алдаа гарлаа' : 'Таны сагс одоогоор хоосон байна'}
+                </p>
                 <p className="text-gray-600 mb-2 text-center max-w-lg text-lg leading-5">
                   {cartError
                     ? 'Сагс ачаалахад алдаа гарлаа. Дахин оролдох эсвэл дэлгүүрт үргэлжлүүлэх боломжтой.'
-                    : 'Сагсанд зүйл нэмэхийн тулд дэлгүүрт орно уу'}
+                    : ''}
                 </p>
-                <p className="text-sm text-gray-500 mb-10 text-center">
+                {/* <p className="text-sm text-gray-500 mb-10 text-center">
                   Бид танд шилдэг бүтээгдэхүүн санал болгож байна
-                </p>
+                </p> */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full">
                   {cartError && (
                     <Button
@@ -291,7 +300,7 @@ export default function CartPage() {
                   <Button
                     onClick={() => router.push('/')}
                     size="lg"
-                    className="flex-1 min-h-[48px] py-3 sm:py-2 px-4 sm:px-6 text-base bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    className="flex-1 max-w-max mx-auto min-h-[48px] py-3 sm:py-2 px-4 sm:px-6 text-base bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                   >
                     Дэлгүүрт үргэлжлүүлэх
                     <ArrowRight className="w-5 h-5 ml-2" />
@@ -301,7 +310,7 @@ export default function CartPage() {
             </Card>
 
             {/* Categories Section */}
-            {categories.length > 0 && (
+            {/* {categories.length > 0 && (
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
@@ -329,17 +338,17 @@ export default function CartPage() {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Suggested Products Section */}
-            {suggestedProducts.length > 0 && (
+            {/* {suggestedProducts.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
                       <Sparkles className="w-5 h-5 text-primary" />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900">Санал болгох бүтээгдэхүүн</h3>
+                    <h3 className="text-xl font-bold text-gray-900">Санал болгох бүтээгдэхүүн</h3>
                   </div>
                   <Button
                     variant="ghost"
@@ -357,7 +366,7 @@ export default function CartPage() {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -562,9 +571,16 @@ export default function CartPage() {
                 onClick={handleCheckout}
                 className="w-full min-h-[48px] py-3 sm:py-2 px-4 sm:px-6 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-base font-semibold"
                 size="lg"
-                disabled={createOrderMutation.isPending || cartItems.length === 0}
+                disabled={createOrderMutation.isPending || isProceeding || cartItems.length === 0}
               >
-                {createOrderMutation.isPending ? 'Захиалга үүсгэж байна...' : 'Үргэлжлүүлэх'}
+                {createOrderMutation.isPending || isProceeding ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Захиалга үүсгэж байна...
+                  </>
+                ) : (
+                  'Үргэлжлүүлэх'
+                )}
               </Button>
             </div>
           </div>

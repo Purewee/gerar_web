@@ -29,6 +29,8 @@ export function Navigation() {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [userName, setUserName] = useState<string>('');
   const [expandedCategoryId, setExpandedCategoryId] = useState<number | null>(null);
   const [hasAutoSelectedCategory, setHasAutoSelectedCategory] = useState(false);
@@ -274,6 +276,8 @@ export function Navigation() {
   const expandedChildren = categories.find(cat => cat.id === expandedCategoryId)?.children;
   const childRowRef = useRef<HTMLDivElement | null>(null);
   const navRef = useRef<HTMLDivElement | null>(null);
+  // Track whether the pointer (mouse/finger) is currently over the mobile nav/submenu
+  const isPointerInsideNavRef = useRef(false);
   const parentRowRef = useRef<HTMLDivElement | null>(null);
 
   // Reset child row scroll to the start when switching parent so the list shows from the beginning
@@ -290,23 +294,27 @@ export function Navigation() {
       }
     });
   }, [expandedCategoryId]);
-  // Collapse children when clicking outside the mobile categories nav
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       const target = e.target as Node | null;
       if (!navRef.current) return;
-      if (target && navRef.current.contains(target)) return;
+      if (target && navRef.current.contains(target)) return; // ЗАСВАР: Хэрэв products хуудсан дээр байвал гадна талд дарахад submenu-г хаахгүй
+      if (pathname?.startsWith('/products')) {
+        return;
+      }
       setExpandedCategoryId(null);
       setSelectedChildCategoryId(null);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [pathname]);
 
   // Collapse when navigating away from products page (keep selection if staying on /products)
+  // If the user is currently hovering/interacting with the submenu, do not collapse it.
   useEffect(() => {
     if (!pathname) return;
-    if (!pathname.startsWith('/products')) {
+    if (!pathname.startsWith('/products') && !isPointerInsideNavRef.current) {
       setExpandedCategoryId(null);
       setSelectedChildCategoryId(null);
     }
@@ -330,8 +338,9 @@ export function Navigation() {
   }, [pathname]);
 
   // Collapse when mobile profile drawer opens
+  // Skip collapsing if the user is actively interacting with the submenu
   useEffect(() => {
-    if (mobileProfileMenuOpen) {
+    if (mobileProfileMenuOpen && !isPointerInsideNavRef.current) {
       setExpandedCategoryId(null);
       setSelectedChildCategoryId(null);
     }
@@ -379,7 +388,11 @@ export function Navigation() {
             <div className="flex items-center gap-3">
               {/* Search icon - left of sidebar button; mobile only */}
               <button
-                onClick={() => setMobileProfileMenuOpen(true)}
+                onClick={() => {
+                  // Close profile drawer if open and open the mobile header search overlay
+                  setMobileProfileMenuOpen(false);
+                  setMobileSearchOpen(true);
+                }}
                 className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
                 aria-label="Хайх"
               >
@@ -610,10 +623,16 @@ export function Navigation() {
         </div>
         {/* Category Navigation - Mobile */}
         {!hideCategories && (
-          <nav ref={navRef} className="block md:hidden bg-white backdrop-blur-md border-b border-gray-200/80 z-40 shadow-sm">
+          <nav
+            ref={navRef}
+            className="block md:hidden bg-white backdrop-blur-md border-b border-gray-200/80 z-40 shadow-sm"
+          >
             <div className="w-full px-4">
               {/* Categories Row */}
-              <div ref={parentRowRef} className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
+              <div
+                ref={parentRowRef}
+                className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide"
+              >
                 {categoriesLoading ? (
                   <div className="flex items-center gap-2 py-1">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -694,7 +713,10 @@ export function Navigation() {
               </div>
 
               {expandedChildren && expandedChildren.length > 0 && (
-                <div ref={childRowRef} className="flex items-center gap-2 py-2.5 border-t border-gray-200/60 overflow-x-auto scrollbar-hide">
+                <div
+                  ref={childRowRef}
+                  className="flex items-center gap-2 py-2.5 border-t border-gray-200/60 overflow-x-auto scrollbar-hide"
+                >
                   {expandedChildren.map(child => {
                     const isSelected = selectedChildCategoryId === child.id;
                     const isChildActive = activeCategoryId === child.id;
@@ -721,6 +743,64 @@ export function Navigation() {
           </nav>
         )}
       </header>
+
+      {mobileSearchOpen && (
+        <div
+          className="sm:hidden fixed inset-0 z-101 bg-black/40"
+          onClick={() => setMobileSearchOpen(false)}
+        >
+          <div
+            className="absolute top-0 left-0 right-0 p-3 bg-white border-b border-gray-200"
+            onClick={e => e.stopPropagation()}
+          >
+            <form
+              onSubmit={e => {
+                handleSearch(e, mobileSearchQuery);
+                setMobileSearchOpen(false);
+              }}
+              className="relative"
+            >
+              <button
+                type="submit"
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 p-1.5 text-muted-foreground hover:text-primary hover:bg-gray-100 rounded-md cursor-pointer transition-colors duration-200"
+                aria-label="Хайх"
+              >
+                <Search className="w-5 h-5" aria-hidden="true" />
+              </button>
+
+              <Input
+                ref={mobileSearchInputRef}
+                type="text"
+                placeholder="Тавилга, чимэглэл, гэрийн хэрэгсэл хайх...."
+                className="pl-10 pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                value={mobileSearchQuery}
+                onChange={e =>
+                  setMobileSearchQuery(e.target.value.replace(/[^^\p{L}\p{N}\s]/gu, ''))
+                }
+              />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileSearchOpen(false);
+                  setMobileSearchQuery('');
+                }}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-muted-foreground hover:text-primary hover:bg-gray-100 rounded-md cursor-pointer transition-colors duration-200"
+                aria-label="Хаах хайх"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Drawer Overlay */}
       {mobileProfileMenuOpen && (
@@ -862,32 +942,6 @@ export function Navigation() {
                 </button>
               )}
             </div>
-          </div>
-
-          {/* Drawer Footer - Search Input */}
-          <div className="border-t border-gray-200 p-4">
-            <form
-              onSubmit={e => {
-                handleSearch(e, mobileSearchQuery);
-                setMobileProfileMenuOpen(false);
-              }}
-              className="relative"
-            >
-              <Input
-                type="text"
-                placeholder="Тавилга, чимэглэл, гэрийн хэрэгсэл хайх...."
-                className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                value={mobileSearchQuery}
-                onChange={e => setMobileSearchQuery(e.target.value)}
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-muted-foreground hover:text-primary hover:bg-gray-100 rounded-md cursor-pointer transition-colors duration-200"
-                aria-label="Хайх"
-              >
-                <Search className="w-5 h-5" aria-hidden="true" />
-              </button>
-            </form>
           </div>
         </div>
       </div>
