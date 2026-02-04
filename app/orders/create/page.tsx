@@ -21,6 +21,7 @@ import {
   GuestAddress,
   useDistricts,
   useKhoroo,
+  useOffDeliveryDates,
   authApi,
   type CreateAddressRequest,
   type Address,
@@ -75,6 +76,20 @@ export default function OrderCreatePage() {
     isLoading: khorooLoading,
     error: khorooError,
   } = useKhoroo(selectedDistrict || null);
+  const { data: offDeliveryResponse } = useOffDeliveryDates();
+  const offDeliveryData = offDeliveryResponse?.data;
+  const offWeekdays = offDeliveryData?.offWeekdays ?? [];
+  const offDatesSet = new Set(offDeliveryData?.offDates ?? []);
+
+  // Off-days: backend sends 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat. Disable when weekday is in list or date in offDates.
+  const isDeliveryDateDisabled = (dateString: string): boolean => {
+    if (offDatesSet.has(dateString)) return true;
+    const [y, m, d] = dateString.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const weekday = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    return offWeekdays.includes(weekday);
+  };
+
   // API returns { data: { district: string, khorooOptions: string[] } }
   const khorooOptions =
     khorooResponse?.data &&
@@ -185,6 +200,15 @@ export default function OrderCreatePage() {
       setSelectedAddressId(defaultAddress.id);
     }
   }, [addresses, router, selectedAddressId, isAuthenticated, cartItems.length]);
+
+  // Clear delivery date and time slot if selected date is an off-day (when off-days data has loaded)
+  useEffect(() => {
+    if (!deliveryDate || offDeliveryResponse === undefined) return;
+    if (isDeliveryDateDisabled(deliveryDate)) {
+      setDeliveryDate('');
+      setDeliveryTimeSlot('');
+    }
+  }, [offDeliveryResponse, deliveryDate]);
 
   // Clear time slot if it becomes unavailable when date changes
   useEffect(() => {
@@ -1241,6 +1265,7 @@ export default function OrderCreatePage() {
                   value={deliveryDate}
                   onChange={setDeliveryDate}
                   minDate={new Date().toISOString().split('T')[0]}
+                  isDateDisabled={isDeliveryDateDisabled}
                 />
               </div>
 

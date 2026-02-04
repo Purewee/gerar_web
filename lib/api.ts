@@ -1023,6 +1023,15 @@ const addressesApiFunctions = {
       `/addresses/khoroo?district=${encodeURIComponent(district)}`,
     );
   },
+
+  /** Off-days when delivery is not available. offWeekdays: 0=Sun..6=Sat; offDates: YYYY-MM-DD strings. */
+  getOffDeliveryDates: async (): Promise<
+    ApiResponse<{ offWeekdays?: number[]; offDates?: string[] }>
+  > => {
+    return apiFetch<{ offWeekdays?: number[]; offDates?: string[] }>(
+      '/addresses/off-delivery-dates',
+    );
+  },
 };
 
 // Addresses hooks
@@ -1105,6 +1114,14 @@ export const useKhoroo = (district: string | null) => {
     enabled: !!district && district.length > 0,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
     retry: 1,
+  });
+};
+
+export const useOffDeliveryDates = () => {
+  return useQuery({
+    queryKey: [...queryKeys.addresses.all, 'off-delivery-dates'],
+    queryFn: () => addressesApiFunctions.getOffDeliveryDates(),
+    staleTime: 60 * 60 * 1000, // 1 hour
   });
 };
 

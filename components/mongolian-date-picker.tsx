@@ -21,13 +21,15 @@ const MONTHS_MN = [
   '12 сар',
 ];
 
-// Day names in Mongolian (abbreviated)
-const DAYS_MN = ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'];
+// Day names in Mongolian (abbreviated), week starts Monday: Mon, Tue, Wed, Thu, Fri, Sat, Sun
+const DAYS_MN = ['Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя', 'Ня'];
 
 interface MongolianDatePickerProps {
   value: string; // ISO date string (YYYY-MM-DD)
   onChange: (date: string) => void;
   minDate?: string; // ISO date string
+  /** If provided, dates for which this returns true are disabled (e.g. off-delivery days). */
+  isDateDisabled?: (dateString: string) => boolean;
   className?: string;
 }
 
@@ -35,9 +37,10 @@ export function MongolianDatePicker({
   value,
   onChange,
   minDate,
+  isDateDisabled,
   className,
 }: MongolianDatePickerProps) {
-  // Calculate today and max date (7 days from today)
+  // Today and max date (7 days from today)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const maxDateObj = new Date(today);
@@ -105,8 +108,12 @@ export function MongolianDatePicker({
     selected.setHours(0, 0, 0, 0);
     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     
-    // Check if date is before minDate or after maxDate (7 days)
+    // Check if date is before minDate or after maxDate
     if (selected < minDateObj || selected > maxDateObj) {
+      return;
+    }
+
+    if (isDateDisabled?.(dateString)) {
       return;
     }
 
@@ -220,9 +227,11 @@ export function MongolianDatePicker({
 
               const date = new Date(currentYear, currentMonthIndex, day);
               date.setHours(0, 0, 0, 0);
+              const dateString = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const isBeforeMin = date < minDateObj;
               const isAfterMax = date > maxDateObj;
-              const isDisabled = isBeforeMin || isAfterMax;
+              const isOffDay = isDateDisabled?.(dateString) ?? false;
+              const isDisabled = isBeforeMin || isAfterMax || isOffDay;
               const isSelected =
                 selectedDate &&
                 date.getDate() === selectedDate.getDate() &&
