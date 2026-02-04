@@ -130,7 +130,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
           }
 
           toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
-            description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр QPAY апп ашиглана уу',
+            description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр Qpay апп ашиглана уу',
           });
         } else {
           // Reset flags so auto-initiation can retry
@@ -416,7 +416,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
                         </div>
                         <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4">
                           <p className="text-sm text-blue-900 text-center font-medium">
-                            📱 QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
+                            📱 Qpay апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
                           </p>
                         </div>
 

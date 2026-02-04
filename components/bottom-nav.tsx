@@ -7,7 +7,13 @@ import { Home, ListOrdered, Heart, User, ShoppingCart } from 'lucide-react';
 import { useCart } from '@/lib/api';
 
 /** Combined hamburger menu + magnifying glass icon (single integrated graphic) */
-function MenuSearchIcon({ className, strokeWidth = 2 }: { className?: string; strokeWidth?: number }) {
+function MenuSearchIcon({
+  className,
+  strokeWidth = 2,
+}: {
+  className?: string;
+  strokeWidth?: number;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -50,7 +56,8 @@ export function BottomNav() {
 
   useEffect(() => {
     setMounted(true);
-    const auth = typeof window !== 'undefined' && localStorage.getItem('isAuthenticated') === 'true';
+    const auth =
+      typeof window !== 'undefined' && localStorage.getItem('isAuthenticated') === 'true';
     setIsAuthenticated(auth);
   }, []);
 
@@ -81,20 +88,20 @@ export function BottomNav() {
           const isFavorites = href === '/profile/favorites';
           const isGuestProfile = isProfile && mounted && !isAuthenticated;
           const isGuestFavorites = isFavorites && mounted && !isAuthenticated;
+          const isGuestOrders = isOrders && mounted && !isAuthenticated;
           const isActive =
-              href === '/'
-                ? pathname === '/'
-                : href === '/profile'
-                  ? pathname === '/profile'
-                  : href === '/profile/orders'
-                    ? pathname === '/profile/orders'
-                    : href === '/profile/favorites'
-                      ? pathname === '/profile/favorites'
-                      : pathname?.startsWith(href);
+            href === '/'
+              ? pathname === '/'
+              : href === '/profile'
+                ? pathname === '/profile'
+                : href === '/profile/orders'
+                  ? pathname === '/profile/orders'
+                  : href === '/profile/favorites'
+                    ? pathname === '/profile/favorites'
+                    : pathname?.startsWith(href);
 
-
-          const needsLoginButton = isProfile || isFavorites;
-          const isGuestAuthItem = (isProfile && isGuestProfile) || (isFavorites && isGuestFavorites);
+          const needsLoginButton = isProfile || isFavorites || isOrders;
+          const isGuestAuthItem = isGuestProfile || isGuestFavorites || isGuestOrders;
           const itemClasses = `flex flex-col items-center justify-center gap-0.5 py-2.5 px-3 min-w-0 flex-1 transition-colors duration-200 ${
             isActive ? 'text-primary' : 'text-gray-500 hover:text-primary'
           }`;
@@ -118,9 +125,7 @@ export function BottomNav() {
                     aria-hidden
                   />
                 </span>
-                <span className="text-[10px] font-medium truncate w-full text-center">
-                  {label}
-                </span>
+                <span className="text-[10px] font-medium truncate w-full text-center">{label}</span>
               </button>
             );
           }
@@ -142,9 +147,29 @@ export function BottomNav() {
                     aria-hidden
                   />
                 </span>
-                <span className="text-[10px] font-medium truncate w-full text-center">
-                  {label}
+                <span className="text-[10px] font-medium truncate w-full text-center">{label}</span>
+              </button>
+            );
+          }
+
+          if (isOrders && !isGuestOrders) {
+            return (
+              <button
+                key={href}
+                type="button"
+                className={itemClasses}
+                aria-label={label}
+                aria-current={isActive ? 'page' : undefined}
+                onClick={() => router.push('/profile/orders')}
+              >
+                <span className="relative inline-flex">
+                  <Icon
+                    className="w-6 h-6 shrink-0"
+                    strokeWidth={isActive ? 2.25 : 2}
+                    aria-hidden
+                  />
                 </span>
+                <span className="text-[10px] font-medium truncate w-full text-center">{label}</span>
               </button>
             );
           }
@@ -158,13 +183,8 @@ export function BottomNav() {
               aria-current={isActive ? 'page' : undefined}
             >
               <span className="relative inline-flex items-center justify-center">
-                
-                  <Icon
-                    className="w-6 h-6 shrink-0"
-                    strokeWidth={isActive ? 2.25 : 2}
-                    aria-hidden
-                  />
-                  
+                <Icon className="w-6 h-6 shrink-0" strokeWidth={isActive ? 2.25 : 2} aria-hidden />
+
                 {isCart && mounted && cartCount > 0 && (
                   <span
                     className="absolute -top-1.5 -right-2 bg-primary text-white text-[10px] font-semibold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center"
@@ -174,9 +194,7 @@ export function BottomNav() {
                   </span>
                 )}
               </span>
-              <span className="text-[10px] font-medium truncate w-full text-center">
-                {label}
-              </span>
+              <span className="text-[10px] font-medium truncate w-full text-center">{label}</span>
             </Link>
           );
         })}

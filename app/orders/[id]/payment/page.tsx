@@ -164,7 +164,7 @@ export default function PaymentPage() {
 
           // Show success toast
           toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
-            description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр QPAY апп ашиглана уу',
+            description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр Qpay апп ашиглана уу',
           });
         } else {
           console.warn('No QR code in response!', response.data);
@@ -458,7 +458,7 @@ export default function PaymentPage() {
                         />
                       </div>
                       <p className="text-sm text-gray-600 text-center mb-4">
-                        QPAY апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
+                        Qpay апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
                       </p>
 
                       {/* Bank/Wallet Buttons - Mobile Only */}

@@ -15,7 +15,7 @@ const Footer = dynamic(() => import('@/components/footer').then(mod => mod.Foote
 });
 
 export const metadata: Metadata = {
-  title: 'GERAR household гэр ахуйн бараа бүтээгдэхүүн',
+  title: 'Gerar household гэр ахуйн бараа бүтээгдэхүүн',
   description:
     'GERAR-д тавтай морил! Тавилга, гэрийн чимэглэл, гэрэлтүүлэг, орны даавуу, гал тогооны хэрэгсэл болон гэрийн тавилгын бүх хэрэгцээнд хамгийн сайн хямд үнэ, санал болголттой.',
   other: {
@@ -43,7 +43,7 @@ export default function RootLayout({
             <Suspense fallback={<div className="h-16 bg-white border-b border-gray-200" />}>
               <Navigation />
             </Suspense>
-            <div className="pb-20 md:pb-0">
+            <div className="pb-14 md:pb-0">
               {children}
               <Footer />
             </div>

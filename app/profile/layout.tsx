@@ -56,12 +56,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-50 pb-20 lg:pb-0">
+    <div className=" bg-linear-to-br from-gray-50 via-white to-gray-50 lg:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-12">
         {/* Mobile: horizontal card grid (menus) */}
         <div className="lg:hidden mb-6">
           <nav className="grid grid-cols-4 gap-3">
-            {menuItems.map((item) => {
+            {menuItems.map(item => {
               const Icon = item.icon;
               const active = isActive(item.href);
               return (
@@ -74,8 +74,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                       : 'bg-white border-transparent text-gray-700 hover:bg-gray-50 hover:border-gray-200 hover:shadow-md active:scale-[0.98]'
                   }`}
                 >
-                  <Icon className={`w-6 h-6 shrink-0 ${active ? 'text-primary' : 'text-gray-600'}`} />
-                  <span className="text-xs font-medium text-center leading-tight">{item.label}</span>
+                  <Icon
+                    className={`w-6 h-6 shrink-0 ${active ? 'text-primary' : 'text-gray-600'}`}
+                  />
+                  <span className="text-xs font-medium text-center leading-tight">
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}
@@ -88,7 +92,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             <Card className="sticky top-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardContent className="p-4 lg:p-6">
                 <nav className="space-y-2">
-                  {menuItems.map((item) => {
+                  {menuItems.map(item => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
                     return (
