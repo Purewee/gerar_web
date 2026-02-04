@@ -123,7 +123,15 @@ export default function Home() {
 
   const products = (productsResponse?.data || []).filter(p => p.isHidden !== true);
 
-  const saleProducts = products.slice(0, 24);
+  // Fetch sale products for the "Хямдралтай бараа" section
+  const { data: saleResponse, isLoading: saleLoading } = useProducts({
+    onSale: true,
+    limit: 24,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const saleProducts = (saleResponse?.data || []).filter(p => p.isHidden !== true);
+
   const latestProducts = products.slice(0, 24);
   const popularProducts = products.slice(0, 24);
 
@@ -306,10 +314,10 @@ export default function Home() {
           sectionId="sale"
           title="Хямдралтай бараа"
           description="Онцгой хямдралтай бараанууд"
-          linkHref="/products"
+          linkHref="/products?onSale=true"
           linkLabel="Хямдралтай бүх бараа харах"
           products={saleProducts}
-          isLoading={productsLoading}
+          isLoading={saleLoading || productsLoading}
         />
 
         {/* Sale products list */}

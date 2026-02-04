@@ -606,13 +606,22 @@ export function Navigation() {
                     })}
 
                     {/* Хямдралтай link */}
-                    <Link
-                      href="/products"
-                      className="flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase"
-                      aria-label="Хямдралтай бараа харах"
-                    >
-                      Хямдралтай
-                    </Link>
+                    {(() => {
+                      const isSaleActive =
+                        pathname === '/products' && searchParams?.get('onSale') === 'true';
+                      return (
+                        <Link
+                          href="/products?onSale=true"
+                          className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
+                            isSaleActive ? 'bg-white/10' : ''
+                          }`}
+                          aria-label="Хямдралтай бараа харах"
+                          aria-current={isSaleActive ? 'page' : undefined}
+                        >
+                          Хямдралтай
+                        </Link>
+                      );
+                    })()}
                   </>
                 ) : (
                   <span className="text-sm text-gray-400 px-4">Ангилал олдсонгүй</span>
@@ -640,73 +649,97 @@ export function Navigation() {
                     ))}
                   </div>
                 ) : categories.length > 0 ? (
-                  categories.map(category => {
-                    const hasChildren = category.children && category.children.length > 0;
-                    const isExpanded = expandedCategoryId === category.id;
-                    const isActive = finalActiveCategoryId === category.id;
-                    const hasActiveChild =
-                      activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
-                    // Parent is active if it's expanded, itself active, OR one of its children is active
-                    const isParentActive = isExpanded || isActive || hasActiveChild;
+                  <>
+                    {categories.map(category => {
+                      const hasChildren = category.children && category.children.length > 0;
+                      const isExpanded = expandedCategoryId === category.id;
+                      const isActive = finalActiveCategoryId === category.id;
+                      const hasActiveChild =
+                        activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
+                      // Parent is active if it's expanded, itself active, OR one of its children is active
+                      const isParentActive = isExpanded || isActive || hasActiveChild;
 
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={e => {
-                          if (hasChildren) {
-                            e.preventDefault();
-                            // Toggle expand/collapse on parent tap
-                            if (isExpanded) {
-                              setExpandedCategoryId(null);
-                              setSelectedChildCategoryId(null);
+                      return (
+                        <button
+                          key={category.id}
+                          onClick={e => {
+                            if (hasChildren) {
+                              e.preventDefault();
+                              // Toggle expand/collapse on parent tap
+                              if (isExpanded) {
+                                setExpandedCategoryId(null);
+                                setSelectedChildCategoryId(null);
+                              } else {
+                                setExpandedCategoryId(category.id);
+                              }
                             } else {
-                              setExpandedCategoryId(category.id);
+                              router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
                             }
-                          } else {
-                            router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
+                          }}
+                          onBlur={e => {
+                            // Remove any lingering focus styles
+                            e.currentTarget.style.outline = 'none';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          onMouseDown={e => {
+                            // Prevent focus ring on mouse click
+                            e.currentTarget.style.outline = 'none';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-3.5 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
+                            isParentActive
+                              ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
+                              : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
+                          }`}
+                          aria-label={
+                            hasChildren
+                              ? `${category.name} ангиллын дэд ангилал ${
+                                  isExpanded ? 'хаах' : 'нээх'
+                                }`
+                              : `${category.name} ангиллын бараа харах`
                           }
-                        }}
-                        onBlur={e => {
-                          // Remove any lingering focus styles
-                          e.currentTarget.style.outline = 'none';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                        onMouseDown={e => {
-                          // Prevent focus ring on mouse click
-                          e.currentTarget.style.outline = 'none';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                        className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-3.5 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
-                          isParentActive
-                            ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
-                            : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
-                        }`}
-                        aria-label={
-                          hasChildren
-                            ? `${category.name} ангиллын дэд ангилал ${
-                                isExpanded ? 'хаах' : 'нээх'
-                              }`
-                            : `${category.name} ангиллын бараа харах`
-                        }
-                        aria-expanded={hasChildren ? isExpanded : undefined}
-                      >
-                        <span className="relative z-10">{category.name}</span>
-                        {hasChildren && (
-                          <ChevronDown
-                            className={`w-3.5 h-3.5 transition-all duration-300 relative z-10 ${
-                              isExpanded || hasActiveChild
-                                ? 'rotate-180 text-primary'
-                                : 'text-gray-700 group-hover:text-primary group-hover:translate-y-0.5'
-                            }`}
-                            aria-hidden="true"
-                          />
-                        )}
-                        {!isParentActive && (
-                          <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
-                        )}
-                      </button>
-                    );
-                  })
+                          aria-expanded={hasChildren ? isExpanded : undefined}
+                        >
+                          <span className="relative z-10">{category.name}</span>
+                          {hasChildren && (
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 transition-all duration-300 relative z-10 ${
+                                isExpanded || hasActiveChild
+                                  ? 'rotate-180 text-primary'
+                                  : 'text-gray-700 group-hover:text-primary group-hover:translate-y-0.5'
+                              }`}
+                              aria-hidden="true"
+                            />
+                          )}
+                          {!isParentActive && (
+                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
+                          )}
+                        </button>
+                      );
+                    })}
+                    {(() => {
+                      const isSaleActive =
+                        pathname === '/products' && searchParams?.get('onSale') === 'true';
+                      return (
+                        <Link
+                          href="/products?onSale=true"
+                          onClick={() => {
+                            setExpandedCategoryId(null);
+                            setSelectedChildCategoryId(null);
+                          }}
+                          className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-3.5 shrink-0 flex items-center rounded-lg transition-all duration-200 ${
+                            isSaleActive
+                              ? 'text-primary bg-primary/10 shadow-sm'
+                              : 'text-gray-700 bg-linear-to-r from-primary/5 to-primary/5 hover:text-primary'
+                          }`}
+                          aria-label="Хямдралтай бараа харах"
+                          aria-current={isSaleActive ? 'page' : undefined}
+                        >
+                          Хямдралтай
+                        </Link>
+                      );
+                    })()}
+                  </>
                 ) : (
                   <span className="text-xs text-gray-500">Ангилал олдсонгүй</span>
                 )}

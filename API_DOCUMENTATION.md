@@ -2,6 +2,14 @@
 
 This document provides comprehensive API documentation for frontend developers to integrate with the Ecommerce backend API. **This documentation covers only frontend endpoints - no admin endpoints are included.**
 
+---
+
+## ⚠️ IMPORTANT: Only GET and POST
+
+**DO NOT use PATCH, PUT, DELETE, or any other HTTP method.** This project uses **only GET and POST**. All create/update/delete actions must be **POST** requests. See [IMPORTANT_NOTE.md](./IMPORTANT_NOTE.md).
+
+---
+
 ## Table of Contents
 
 - [Base Information](#base-information)
@@ -16,6 +24,7 @@ This document provides comprehensive API documentation for frontend developers t
   - [Products](#products-endpoints)
   - [Cart](#cart-endpoints)
   - [Orders](#orders-endpoints)
+  - [Order Create Page – Inputs Reference](./docs/ORDER_CREATE_INPUTS_REFERENCE.md)
   - [Addresses](#addresses-endpoints)
   - [Favorites](#favorites-endpoints)
 
@@ -744,7 +753,8 @@ GET /api/categories/1/products?includeSubcategories=true&page=1&limit=20
 **Authentication**: Optional (if authenticated, returns favorite status for each product)
 
 **Query Parameters** (optional, added to URL):
-- `category` (number): Filter by category ID
+- `categoryId` / `categoryIds[]`: Filter by category ID(s)
+- `onSale` (boolean): If `true`, only return products that have a discount (originalPrice set)
 - `page` (number): Page number (default: 1)
 - `limit` (number): Items per page (default: 20)
 - `search` (string): Search query
@@ -784,6 +794,25 @@ GET /api/products?category=1&page=1&limit=20&sortBy=price&sortOrder=asc
   ]
 }
 ```
+
+---
+
+### Get Products on Sale
+
+**Method**: `GET` (retrieves only products that have a discount/sale - **NO request body**)
+
+**Endpoint**: `GET /api/products/sale`
+
+**Authentication**: Optional (if authenticated, returns favorite status for each product)
+
+**Query Parameters** (optional): Same as Get All Products (`categoryId`, `categoryIds[]`, `search`, `minPrice`, `maxPrice`, `sortBy`, `sortOrder`, `page`, `limit`). Results are limited to products with `originalPrice` set (on sale).
+
+**Example Request**:
+```
+GET /api/products/sale?page=1&limit=20&sortBy=price&sortOrder=asc
+```
+
+**Response**: `200 OK` — Same shape as Get All Products. Each product includes `hasDiscount`, `originalPrice`, `discountAmount`, and `discountPercentage` when on sale.
 
 ---
 
@@ -1076,35 +1105,72 @@ Content-Type: application/json
 
 ## Orders Endpoints
 
+For a full list of form inputs and payload shapes for the order create page, see **[Order Create Page – Inputs Reference](./docs/ORDER_CREATE_INPUTS_REFERENCE.md)**.
+
 ### Create Order from Cart
 
 **Method**: `POST` (creates order from cart - **REQUIRES request body**)
 
 **Endpoint**: `POST /api/orders`
 
-**Authentication**: Required
+**Authentication**: Optional (supports both authenticated and guest checkout)
 
 **Headers**:
 ```
-Authorization: Bearer <token>
+Authorization: Bearer <token>   // Optional – for authenticated users
+X-Session-Token: <session-token>  // Optional – for guest users
 Content-Type: application/json
 ```
 
-**Request Body** (JSON):
+**Request Body – Authenticated user** (JSON):
 ```json
 {
   "addressId": 1,
+  "fullName": "John Doe",
+  "phoneNumber": "12345678",
+  "email": "john@example.com",
+  "deliveryDate": "2024-01-20",
   "deliveryTimeSlot": "10-14"
 }
 ```
 
-**Required Fields**:
-- `addressId` (number): Delivery address ID
-- `deliveryTimeSlot` (string): Delivery time slot. Valid values:
-  - `"10-14"` (Morning: 10:00 - 14:00)
-  - `"14-18"` (Afternoon: 14:00 - 18:00)
-  - `"18-21"` (Evening: 18:00 - 21:00)
-  - `"21-00"` (Night: 21:00 - 00:00)
+**Request Body – Guest user** (JSON):
+```json
+{
+  "address": {
+    "fullName": "John Doe",
+    "phoneNumber": "12345678",
+    "provinceOrDistrict": "Баянзүрх",
+    "khorooOrSoum": "1-р хороо",
+    "residentialComplex": "",
+    "building": "",
+    "entrance": "",
+    "apartmentNumber": "",
+    "addressNote": "",
+    "label": "Гэр"
+  },
+  "fullName": "John Doe",
+  "phoneNumber": "12345678",
+  "email": "john@example.com",
+  "deliveryDate": "2024-01-20",
+  "deliveryTimeSlot": "10-14",
+  "sessionToken": "guest_session_token"
+}
+```
+
+**Required Fields (Authenticated)**:
+- `addressId` (number): Selected saved address ID
+- `fullName` (string): From contact section
+- `phoneNumber` (string): 8 digits, from contact section
+- `email` (string): From contact section
+- `deliveryDate` (string): `YYYY-MM-DD`
+- `deliveryTimeSlot` (string): One of `"10-14"`, `"14-18"`, `"18-21"`, `"21-00"`
+
+**Required Fields (Guest)**:
+- `address` (object): Inline address (see [Order Create Inputs Reference](./docs/ORDER_CREATE_INPUTS_REFERENCE.md))
+- `fullName`, `phoneNumber`, `email`: From contact section
+- `deliveryDate`, `deliveryTimeSlot`: Same as above
+- `sessionToken` (string): Guest session token (or sent in `X-Session-Token` header)
 
 **Response**: `201 Created`
 ```json
@@ -1173,6 +1239,10 @@ Content-Type: application/json
   "productId": 1,
   "quantity": 2,
   "addressId": 1,
+  "fullName": "John Doe",
+  "phoneNumber": "12345678",
+  "email": "john@example.com",
+  "deliveryDate": "2024-01-20",
   "deliveryTimeSlot": "10-14"
 }
 ```
@@ -1294,6 +1364,10 @@ Content-Type: application/json
 {
   "sessionToken": "guest_session_token",
   "addressId": 1,
+  "fullName": "John Doe",
+  "phoneNumber": "12345678",
+  "email": "john@example.com",
+  "deliveryDate": "2024-01-20",
   "deliveryTimeSlot": "10-14"
 }
 ```
@@ -1303,20 +1377,31 @@ Content-Type: application/json
 {
   "sessionToken": "guest_session_token",
   "address": {
-    "street": "123 Main St",
-    "city": "City",
-    "state": "State",
-    "zipCode": "12345",
-    "isDefault": false
+    "fullName": "John Doe",
+    "phoneNumber": "12345678",
+    "provinceOrDistrict": "Баянзүрх",
+    "khorooOrSoum": "1-р хороо",
+    "residentialComplex": "",
+    "building": "",
+    "entrance": "",
+    "apartmentNumber": "",
+    "addressNote": "",
+    "label": "Гэр"
   },
+  "fullName": "John Doe",
+  "phoneNumber": "12345678",
+  "email": "john@example.com",
+  "deliveryDate": "2024-01-20",
   "deliveryTimeSlot": "10-14"
 }
 ```
 
 **Required Fields**:
 - `sessionToken` (string): Session token from draft order
-- `deliveryTimeSlot` (string): Valid time slot
-- Either `addressId` OR `address` object
+- `fullName`, `phoneNumber`, `email` (string): Contact info
+- `deliveryDate` (string): `YYYY-MM-DD`
+- `deliveryTimeSlot` (string): One of `"10-14"`, `"14-18"`, `"18-21"`, `"21-00"`
+- Either `addressId` OR `address` object (see [Order Create Inputs Reference](./docs/ORDER_CREATE_INPUTS_REFERENCE.md))
 
 **Response**: `201 Created`
 ```json
@@ -1482,6 +1567,8 @@ All address endpoints require authentication.
 
 **Authentication**: Required
 
+Used when an authenticated user has no addresses and needs to create one before placing an order. Same shape as the order create address; contact fields (`fullName`, `phoneNumber`) come from the contact section.
+
 **Headers**:
 ```
 Authorization: Bearer <token>
@@ -1491,21 +1578,32 @@ Content-Type: application/json
 **Request Body** (JSON):
 ```json
 {
-  "street": "123 Main Street",
-  "city": "New York",
-  "state": "NY",
-  "zipCode": "10001",
+  "fullName": "John Doe",
+  "phoneNumber": "12345678",
+  "provinceOrDistrict": "Баянзүрх",
+  "khorooOrSoum": "1-р хороо",
+  "label": "Гэр",
+  "residentialComplex": "",
+  "building": "",
+  "entrance": "",
+  "apartmentNumber": "",
+  "addressNote": "",
   "isDefault": false
 }
 ```
 
 **Required Fields**:
-- `street` (string): Street address
-- `city` (string): City
-- `state` (string): State/Province
-- `zipCode` (string): ZIP/Postal code
+- `fullName` (string): From contact section
+- `phoneNumber` (string): 8 digits, from contact section
+- `provinceOrDistrict` (string): District (from districts API)
+- `khorooOrSoum` (string): Khoroo/soum (from khoroo API)
+- `label` (string): Address label (e.g. "Гэр")
 
 **Optional Fields**:
+- `street` (string): Not collected in form; backend accepts optional
+- `neighborhood` (string): Not collected in form; backend accepts optional
+- `residentialComplex`, `building`, `entrance`, `apartmentNumber` (string)
+- `addressNote` (string): Max 500 chars
 - `isDefault` (boolean): Set as default address (default: false)
 
 **Response**: `201 Created`
@@ -1516,10 +1614,16 @@ Content-Type: application/json
   "data": {
     "id": 1,
     "userId": 1,
-    "street": "123 Main Street",
-    "city": "New York",
-    "state": "NY",
-    "zipCode": "10001",
+    "fullName": "John Doe",
+    "phoneNumber": "12345678",
+    "provinceOrDistrict": "Баянзүрх",
+    "khorooOrSoum": "1-р хороо",
+    "label": "Гэр",
+    "residentialComplex": "",
+    "building": "",
+    "entrance": "",
+    "apartmentNumber": "",
+    "addressNote": "",
     "isDefault": false,
     "createdAt": "2024-01-15T10:30:00.000Z"
   }
@@ -2028,4 +2132,4 @@ const addToCart = async (productId, quantity) => {
 
 ---
 
-**Last Updated**: 2024-01-15
+**Last Updated**: 2026-02-05

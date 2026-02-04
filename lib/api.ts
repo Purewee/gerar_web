@@ -493,6 +493,8 @@ export interface ProductsQueryParams {
   categoryIds?: number[];
   search?: string;
   inStock?: boolean;
+  /** When true, only products with a sale (originalPrice set) are returned. */
+  onSale?: boolean;
   minPrice?: number;
   maxPrice?: number;
   minStock?: number;
@@ -525,6 +527,9 @@ const productsApiFunctions = {
     }
     if (params?.inStock !== undefined) {
       queryParams.append('inStock', params.inStock.toString());
+    }
+    if (params?.onSale === true) {
+      queryParams.append('onSale', 'true');
     }
     if (params?.minPrice) {
       queryParams.append('minPrice', params.minPrice.toString());
