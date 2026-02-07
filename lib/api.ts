@@ -1011,7 +1011,7 @@ const addressesApiFunctions = {
     return apiFetch<Address>(
       `/addresses/${id}/set-default`,
       {
-        method: 'PATCH',
+        method: 'POST',
       },
       true,
     );

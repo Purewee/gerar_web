@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, MapPin, Plus, Edit, Trash2 } from 'lucide-react';
+import { MapPin, Plus, Edit, Trash2, Loader2 } from 'lucide-react';
 import {
   useAddresses,
   useAddressCreate,
@@ -213,252 +213,231 @@ export default function ProfileAddressesPage() {
       </CardHeader>
       <CardContent className="p-6 lg:p-8">
         {showAddForm && (
-          <Card className="mb-8 border-2 border-primary/20 shadow-lg bg-linear-to-br from-white to-primary/5">
-            <CardHeader className="bg-linear-to-r from-primary/10 to-transparent border-b border-primary/10">
-              <CardTitle className="text-xl font-bold">
-                {editingId ? 'Хаяг засах' : 'Шинэ хаяг нэмэх'}
-              </CardTitle>
-              <CardDescription>
-                {editingId ? 'Хаягийн мэдээллээ шинэчлэнэ үү' : 'Хүргэлт хийх хаягаа нэмнэ үү'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 lg:p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="mb-8 bg-white rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">
+              {editingId ? 'Хаяг засах' : 'Хүргэлтийн хаяг нэмэх'}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Нэр <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="fullName"
+                    value={formData.fullName}
+                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                    required
+                    placeholder="Нэр"
+                    disabled={
+                      createAddressMutation.isPending || updateAddressMutation.isPending
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Утасны дугаар <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
+                      })
+                    }
+                    required
+                    placeholder="Утасны дугаар"
+                    maxLength={8}
+                    disabled={
+                      createAddressMutation.isPending || updateAddressMutation.isPending
+                    }
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Хаягийн гарчиг
+                </label>
+                <Input
+                  id="label"
+                  value={formData.label || ''}
+                  onChange={e => setFormData({ ...formData, label: e.target.value })}
+                  placeholder="Жишээ: Гэр, Ажил, Оффис"
+                  disabled={
+                    createAddressMutation.isPending || updateAddressMutation.isPending
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Дүүрэг <span className="text-red-500">*</span>
+                  </label>
                   <select
-                    id="label"
-                    value={formData.label || ''}
-                    onChange={e => setFormData({ ...formData, label: e.target.value })}
-                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                    id="provinceOrDistrict"
+                    value={selectedDistrict}
+                    onChange={e => {
+                      const d = e.target.value;
+                      setSelectedDistrict(d);
+                      setFormData({ ...formData, provinceOrDistrict: d });
+                    }}
+                    required
+                    disabled={
+                      createAddressMutation.isPending || updateAddressMutation.isPending
+                    }
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <option value="">Хаягийн шошго сонгох (заавал биш)</option>
-                    <option value="Орон сууц">Орон сууц</option>
-                    <option value="Оффис">Оффис</option>
+                    <option value="">Дүүрэг сонгох</option>
+                    {districts.map(d => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <User className="w-4 h-4" />
-                    Хэрэглэгчийн мэдээлэл
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Input
-                        id="fullName"
-                        value={formData.fullName}
-                        onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                        required
-                        placeholder="Бүтэн нэр *"
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        id="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={e =>
-                          setFormData({
-                            ...formData,
-                            phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
-                          })
-                        }
-                        required
-                        placeholder="Утасны дугаар *"
-                        maxLength={8}
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4 pt-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <select
-                        id="provinceOrDistrict"
-                        value={selectedDistrict}
-                        onChange={e => {
-                          const d = e.target.value;
-                          setSelectedDistrict(d);
-                          setFormData({ ...formData, provinceOrDistrict: d });
-                        }}
-                        required
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="">Аймаг/Дүүрэг сонгох *</option>
-                        {districts.map(d => (
-                          <option key={d} value={d}>
-                            {d}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <select
-                        id="khorooOrSoum"
-                        value={formData.khorooOrSoum}
-                        onChange={e => setFormData({ ...formData, khorooOrSoum: e.target.value })}
-                        required
-                        disabled={
-                          createAddressMutation.isPending ||
-                          updateAddressMutation.isPending ||
-                          !selectedDistrict ||
-                          khorooLoading
-                        }
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="">
-                          {khorooLoading
-                            ? 'Ачаалж байна...'
-                            : selectedDistrict
-                            ? 'Хороо/Сум сонгох *'
-                            : 'Эхлээд дүүрэг сонгоно уу'}
-                        </option>
-                        {Array.isArray(khorooOptions) &&
-                          khorooOptions.map(k => (
-                            <option key={k} value={k}>
-                              {k}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-                    <div>
-                      <Input
-                        id="street"
-                        value={formData.street || ''}
-                        onChange={e => setFormData({ ...formData, street: e.target.value })}
-                        placeholder="Гудамж (заавал биш)"
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        id="neighborhood"
-                        value={formData.neighborhood || ''}
-                        onChange={e => setFormData({ ...formData, neighborhood: e.target.value })}
-                        placeholder="Хороолол (заавал биш)"
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4 pt-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Input
-                        id="residentialComplex"
-                        value={formData.residentialComplex || ''}
-                        onChange={e =>
-                          setFormData({ ...formData, residentialComplex: e.target.value })
-                        }
-                        placeholder="Орон сууцны цогцолбор"
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        id="building"
-                        value={formData.building || ''}
-                        onChange={e => setFormData({ ...formData, building: e.target.value })}
-                        placeholder="Барилга"
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        id="entrance"
-                        value={formData.entrance || ''}
-                        onChange={e => setFormData({ ...formData, entrance: e.target.value })}
-                        placeholder="Орц"
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        id="apartmentNumber"
-                        value={formData.apartmentNumber || ''}
-                        onChange={e =>
-                          setFormData({ ...formData, apartmentNumber: e.target.value })
-                        }
-                        placeholder="Тоот оруулна уу"
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="pt-4">
-                  <Textarea
-                    id="addressNote"
-                    value={formData.addressNote || ''}
-                    onChange={e =>
-                      setFormData({ ...formData, addressNote: e.target.value.slice(0, 500) })
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Хороо <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="khorooOrSoum"
+                    value={formData.khorooOrSoum}
+                    onChange={e => setFormData({ ...formData, khorooOrSoum: e.target.value })}
+                    required
+                    disabled={
+                      createAddressMutation.isPending ||
+                      updateAddressMutation.isPending ||
+                      !selectedDistrict ||
+                      khorooLoading
                     }
-                    maxLength={500}
-                    rows={3}
-                    placeholder="Хүргэлттэй холбоотой нэмэлт мэдээлэл. (Жишээ: их дэлгүүрийн хажуу байр, орцны код...)"
-                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    {formData.addressNote?.length || 0}/500 тэмдэгт
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 pt-2 pb-4 border-t border-gray-200">
-                  <Checkbox
-                    id="isDefault"
-                    checked={formData.isDefault || false}
-                    onChange={e => setFormData({ ...formData, isDefault: e.target.checked })}
-                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
-                  />
-                  <Label htmlFor="isDefault" className="text-sm font-medium cursor-pointer">
-                    Үндсэн хаяг болгох
-                  </Label>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
-                  <Button
-                    type="submit"
-                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
-                    className="flex-1 shadow-md hover:shadow-lg transition-all duration-200"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {editingId
-                      ? updateAddressMutation.isPending
-                        ? 'Хадгалж байна...'
-                        : 'Хадгалах'
-                      : createAddressMutation.isPending
-                      ? 'Нэмж байна...'
-                      : 'Нэмэх'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={resetForm}
-                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
-                    className="shadow-sm"
-                  >
-                    Цуцлах
-                  </Button>
+                    <option value="">
+                      {khorooLoading
+                        ? 'Ачаалж байна...'
+                        : selectedDistrict
+                          ? 'Хороо/Сум сонгох'
+                          : 'Эхлээд дүүрэг сонгоно уу'}
+                    </option>
+                    {Array.isArray(khorooOptions) &&
+                      khorooOptions.map(k => (
+                        <option key={k} value={k}>
+                          {k}
+                        </option>
+                      ))}
+                  </select>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Байр <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="residentialComplex"
+                    value={formData.residentialComplex || ''}
+                    onChange={e =>
+                      setFormData({ ...formData, residentialComplex: e.target.value })
+                    }
+                    required
+                    placeholder="Байр"
+                    disabled={
+                      createAddressMutation.isPending || updateAddressMutation.isPending
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Орц <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="entrance"
+                    value={formData.entrance || ''}
+                    onChange={e => setFormData({ ...formData, entrance: e.target.value })}
+                    required
+                    placeholder="Орцны дугаар"
+                    disabled={
+                      createAddressMutation.isPending || updateAddressMutation.isPending
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    Тоот <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="apartmentNumber"
+                    value={formData.apartmentNumber || ''}
+                    onChange={e =>
+                      setFormData({ ...formData, apartmentNumber: e.target.value })
+                    }
+                    required
+                    placeholder="Тоот"
+                    disabled={
+                      createAddressMutation.isPending || updateAddressMutation.isPending
+                    }
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Дэлгэрэнгүй хаяг
+                </label>
+                <Textarea
+                  id="addressNote"
+                  value={formData.addressNote || ''}
+                  onChange={e =>
+                    setFormData({ ...formData, addressNote: e.target.value.slice(0, 500) })
+                  }
+                  maxLength={500}
+                  rows={3}
+                  placeholder="Дэлгэрэнгүй хаягийн мэдээлэл"
+                  disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  {formData.addressNote?.length || 0}/500 тэмдэгт
+                </p>
+              </div>
+              <div className="flex items-center gap-3 pt-2">
+                <Checkbox
+                  id="isDefault"
+                  checked={formData.isDefault || false}
+                  onChange={e => setFormData({ ...formData, isDefault: e.target.checked })}
+                  disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                />
+                <Label htmlFor="isDefault" className="text-sm font-medium cursor-pointer">
+                  Үндсэн хаяг болгох
+                </Label>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="submit"
+                  disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
+                  {createAddressMutation.isPending || updateAddressMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Хадгалж байна...
+                    </>
+                  ) : editingId ? (
+                    'Хадгалах'
+                  ) : (
+                    'Нэмэх'
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
+                  className="flex-1"
+                >
+                  Цуцлах
+                </Button>
+              </div>
+            </form>
+          </div>
         )}
 
         {addresses.length === 0 ? (
