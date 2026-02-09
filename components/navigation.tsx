@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { Search, ShoppingCart, User, ChevronDown, Menu, ChevronRight } from 'lucide-react';
 import { useCart, authApi } from '@/lib/api';
 import { useCategoriesStore } from '@/lib/stores/categories';
 import { LoginModal } from '@/components/auth/login-modal';
@@ -22,6 +21,26 @@ import { RegisterVerifyModal } from '@/components/auth/register-verify-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 import { Spinner, Skeleton } from '@/components/skeleton';
 import Link from 'next/link';
+import {
+  Search,
+  ShoppingCart,
+  User,
+  ChevronDown,
+  Menu,
+  ChevronRight,
+  LucideIcon,
+  BrushCleaning,
+  CookingPot,
+  UserRound,
+  Mars,
+  Venus,
+  Baby,
+  PawPrint,
+  Cable,
+  Car,
+  Hammer,
+  EllipsisVertical,
+} from 'lucide-react';
 
 export function Navigation() {
   const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
@@ -640,7 +659,7 @@ export function Navigation() {
                     ))}
                   </div>
                 ) : categories.length > 0 ? (
-                  categories.map(category => {
+                  categories.map((category, index) => {
                     const hasChildren = category.children && category.children.length > 0;
                     const isExpanded = expandedCategoryId === category.id;
                     const isActive = finalActiveCategoryId === category.id;
@@ -648,6 +667,20 @@ export function Navigation() {
                       activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
                     // Parent is active if it's expanded, itself active, OR one of its children is active
                     const isParentActive = isExpanded || isActive || hasActiveChild;
+
+                    const categoryIcons: LucideIcon[] = [
+                      BrushCleaning,
+                      CookingPot,
+                      UserRound,
+                      Mars,
+                      Venus,
+                      Baby,
+                      PawPrint,
+                      Cable,
+                      Car,
+                      Hammer,
+                    ];
+                    const Icon = categoryIcons[index] ?? EllipsisVertical;
 
                     return (
                       <button
@@ -690,6 +723,9 @@ export function Navigation() {
                         }
                         aria-expanded={hasChildren ? isExpanded : undefined}
                       >
+                        {/* <BrushCleaning className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" />
+                         */}
+                        <Icon className="w-4 h-4 mr-1" />
                         <span className="relative z-10">{category.name}</span>
                         {hasChildren && (
                           <ChevronDown

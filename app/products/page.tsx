@@ -4,14 +4,13 @@ import { Suspense, useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Filter } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useProducts, type ProductsQueryParams } from '@/lib/api';
 import { ProductCard } from '@/components/product-card';
 import { ProductGridSkeleton } from '@/components/skeleton';
 import { FilterSidebar } from '@/components/filter-sidebar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-
+import { ArrowUp10, ArrowDown10, ArrowLeft } from 'lucide-react';
 function ProductsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -122,6 +121,51 @@ function ProductsContent() {
     return count;
   }, [searchParams]);
 
+  const currentSortBy = searchParams.get('sortBy');
+  const currentSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc' | null;
+
+  const isPriceSortActive = currentSortBy === 'price';
+  const nextSortOrder: 'asc' | 'desc' =
+    !isPriceSortActive || currentSortOrder === 'desc' ? 'asc' : 'desc';
+
+  const togglePriceSort = () => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set('sortBy', 'price');
+    params.set('sortOrder', nextSortOrder);
+
+    // page байвал reset хийвэл UX дээр гоё
+    params.delete('page');
+
+    router.push(`/products?${params.toString()}`);
+  };
+
+  const sortBy = searchParams.get('sortBy');
+  const sortOrder = searchParams.get('sortOrder');
+
+  const isPriceAscActive = sortBy === 'price' && sortOrder === 'asc';
+  const isPriceDescActive = sortBy === 'price' && sortOrder === 'desc';
+
+  const handlePriceAsc = () => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set('sortBy', 'price');
+    params.set('sortOrder', 'asc');
+    params.delete('page'); // UX
+
+    router.push(`/products?${params.toString()}`);
+  };
+
+  const handlePriceDesc = () => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set('sortBy', 'price');
+    params.set('sortOrder', 'desc');
+    params.delete('page');
+
+    router.push(`/products?${params.toString()}`);
+  };
+
   return (
     <div className="bg-linear-to-b from-gray-50 via-white to-gray-50">
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8">
@@ -159,14 +203,27 @@ function ProductsContent() {
 
           {/* Bottom Row: Active Filters and Mobile Filter Button */}
           <div className="flex items-center justify-between gap-4">
-            {mounted && activeFiltersCount > 0 && !loading && (
+            {/* {mounted && activeFiltersCount > 0 && !loading && (
               <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
                 {activeFiltersCount} шүүлт идэвхтэй
               </span>
-            )}
+            )} */}
+
+            {/* <Button
+              variant="outline"
+              onClick={togglePriceSort}
+              className="sm:hidden border-2 border-gray-300 hover:border-primary hover:bg-primary/5 transition-all shadow-sm hover:shadow-md"
+            >
+              Үнэ өсөх / буурах
+              {isPriceSortActive && currentSortOrder === 'asc' ? (
+                <ArrowUp className="w-4 h-4" />
+              ) : (
+                <ArrowDown className="w-4 h-4" />
+              )}
+            </Button> */}
 
             {/* Mobile Filter Button */}
-            <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+            {/* <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
@@ -192,7 +249,39 @@ function ProductsContent() {
                   <FilterSidebar productsCount={products.length} isLoading={loading} />
                 </div>
               </SheetContent>
-            </Sheet>
+            </Sheet> */}
+
+            <div className="flex gap-2">
+              <Button
+                variant={isPriceAscActive ? 'default' : 'outline'}
+                onClick={handlePriceAsc}
+                className={`border-2 transition-colors
+      ${
+        isPriceAscActive
+          ? 'border-primary text-primary bg-primary/5'
+          : 'border-gray-300 text-gray-700 hover:border-primary hover:text-primary'
+      }
+    `}
+              >
+                Үнэ өсөхөөр
+                <ArrowUp10 className="ml-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              </Button>
+
+              <Button
+                variant={isPriceDescActive ? 'default' : 'outline'}
+                onClick={handlePriceDesc}
+                className={`border-2 transition-colors
+      ${
+        isPriceDescActive
+          ? 'border-primary text-primary bg-primary/5'
+          : 'border-gray-300 text-gray-700 hover:border-primary hover:text-primary'
+      }
+    `}
+              >
+                Үнэ буурахаар
+                <ArrowDown10 className="w-4 h-4 ml-2 transition-transform group-hover:-translate-x-1" />
+              </Button>
+            </div>
           </div>
         </div>
 

@@ -187,13 +187,8 @@ export default function Home() {
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
       <main>
         {/* Hero Carousel */}
-        <section className="relative overflow-hidden bg-linear-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground">
-          {/* Animated background pattern */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] bg-size-[20px_20px]" />
-          </div>
-
-          <div className="max-w-7xl mx-auto px-2 sm:px-6 py-4 sm:py-6 lg:py-8 relative z-10">
+        <section className="relative overflow-hidden bg-primary text-primary-foreground">
+          <div className="relative">
             {carouselItems.length > 0 ? (
               <div className="relative hero-carousel">
                 {carouselItems.length > 1 && (
@@ -212,89 +207,115 @@ export default function Home() {
                     </button>
                   </>
                 )}
-                <Swiper
-                  modules={[Autoplay, Navigation, Pagination]}
-                  navigation={{
-                    prevEl: '.hero-swiper-prev',
-                    nextEl: '.hero-swiper-next',
-                  }}
-                  pagination={{
-                    clickable: true,
-                  }}
-                  // autoplay={{
-                  //   delay: 5000,
-                  //   disableOnInteraction: false,
-                  //   pauseOnMouseEnter: true,
-                  // }}
-                  loop={carouselItems.length > 1}
-                  slidesPerView={1}
-                  spaceBetween={0}
-                  className="hero-carousel min-h-[150px] sm:min-h-[180px] lg:min-h-[200px] "
-                >
-                  {carouselItems.map(item => (
-                    <SwiperSlide key={item.id}>
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        className="carousel-slide-item flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 cursor-pointer h-full min-h-[180px] lg:min-h-[250px] px-4 sm:px-8 lg:px-20 pt-4 sm:pb-0 [&:hover_.carousel-image-container]:scale-105"
-                        onClick={() => handleItemClick(item.link)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleItemClick(item.link);
-                          }
-                        }}
-                        aria-label={`${item.title} - Дэлгэрэнгүй мэдээлэл харах`}
-                      >
-                        <div className="flex-1 text-center lg:text-left space-y-2 lg:space-y-3 order-2 lg:order-1">
-                          {/* <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-medium">
-                            <span className="opacity-95">{item.subtitle}</span>
-                          </div> */}
-                          <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight px-6">
-                            {item.subtitle}
-                          </h2>
-                          <div className="inline-block mt-auto">
-                            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-white/20 backdrop-blur-sm px-2 py-1 rounded-xl border border-white/30">
-                              <span className="inline-flex items-center gap-2">
-                                <Sparkles className="w-3 h-3" aria-hidden="true" />
-                                <span>{item.discount}</span>
-                              </span>
-                            </p>
+                <div className="hero-carousel relative w-full h-[300px] sm:h-[400px] lg:h-[500px]">
+                  <Swiper
+                    modules={[Autoplay, Navigation, Pagination]}
+                    navigation={{
+                      prevEl: '.hero-swiper-prev',
+                      nextEl: '.hero-swiper-next',
+                    }}
+                    pagination={{
+                      clickable: true,
+                    }}
+                    loop={carouselItems.length > 1}
+                    slidesPerView={1}
+                    spaceBetween={0}
+                    className="w-full h-full"
+                  >
+                    {carouselItems.map(item => (
+                      <SwiperSlide key={item.id} className="!h-full">
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] flex flex-col items-center justify-center cursor-pointer overflow-hidden"
+                          onClick={() => handleItemClick(item.link)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleItemClick(item.link);
+                            }
+                          }}
+                          aria-label={`${item.title} - Дэлгэрэнгүй мэдээлэл харах`}
+                        >
+                          {/* Background Image */}
+                          {item.imageUrl && (
+                            <Image
+                              src={item.imageUrl}
+                              alt={item.title}
+                              className="object-cover w-full h-full absolute inset-0"
+                              priority={item.id === carouselItems[0]?.id}
+                              fill
+                              fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
+                              unoptimized={
+                                item.imageUrl?.includes('localhost') ||
+                                item.imageUrl?.includes('127.0.0.1') ||
+                                item.imageUrl?.includes('192.168.1.3')
+                              }
+                            />
+                          )}
+                          {/* Fallback background if no image */}
+                          {!item.imageUrl && (
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary/60 flex items-center justify-center">
+                              <div className="text-9xl sm:text-[150px] opacity-20">🪑</div>
+                            </div>
+                          )}
+                          {/* Content on top, no padding/margin */}
+                          <div className="relative z-10 flex flex-col items-center justify-center gap-4 lg:gap-6 text-center w-full h-full">
+                            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white">
+                              {item.subtitle}
+                            </h2>
+                            <div className="inline-block">
+                              <p className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/30 text-white">
+                                <span className="inline-flex items-center gap-2">
+                                  <Sparkles className="w-4 h-4" aria-hidden="true" />
+                                  <span>{item.discount}</span>
+                                </span>
+                              </p>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex-1 flex justify-center lg:justify-end w-full lg:w-auto order-1 lg:order-2">
-                          <div className="carousel-image-container relative w-36 h-36 sm:w-40 sm:h-40 lg:w-48 lg:h-48 transition-transform duration-500">
-                            {item.imageUrl ? (
-                              <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-white/20">
-                                <Image
-                                  src={item.imageUrl}
-                                  alt={item.title}
-                                  sizes="(max-width: 640px) 128px, (max-width: 1024px) 160px, 192px"
-                                  className="object-cover"
-                                  priority={item.id === carouselItems[0]?.id}
-                                  fill
-                                  fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
-                                  unoptimized={
-                                    item.imageUrl?.includes('localhost') ||
-                                    item.imageUrl?.includes('127.0.0.1') ||
-                                    item.imageUrl?.includes('192.168.1.3')
-                                  }
-                                />
-                              </div>
-                            ) : (
-                              <div className="absolute inset-0 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl">
-                                <div className="text-8xl sm:text-9xl opacity-80">🪑</div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                  {/* Swiper pagination override */}
+                  <style jsx global>{`
+                    .hero-carousel .swiper-pagination {
+                      position: absolute;
+                      left: 0;
+                      right: 0;
+                      bottom: 24px;
+                      z-index: 20;
+                      display: flex;
+                      justify-content: center;
+                      gap: 8px;
+                      pointer-events: auto;
+                      background: none;
+                      border-radius: 0;
+                      padding: 0;
+                      width: 100%;
+                      margin: 0;
+                      box-shadow: none;
+                    }
+                    .hero-carousel .swiper-pagination-bullet {
+                      background: var(--primary);
+                      opacity: 1;
+                      border-radius: 9999px;
+                      width: 16px;
+                      height: 8px;
+                      transition:
+                        background 0.2s,
+                        width 0.2s;
+                    }
+                    .hero-carousel .swiper-pagination-bullet-active {
+                      background: var(--primary);
+                      width: 32px;
+                      height: 8px;
+                    }
+                  `}</style>
+                </div>
               </div>
             ) : (
-              <div className="min-h-[200px] flex items-center justify-center">
+              <div className="min-h-[300px] sm:min-h-[400px] lg:min-h-[500px] flex items-center justify-center">
                 <Spinner size="lg" className="border-white/30 border-t-white" />
               </div>
             )}

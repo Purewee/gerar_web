@@ -233,7 +233,7 @@ export default function OrderCreatePage() {
     khorooOrSoum: string;
     label?: string;
   }): boolean => {
-    if (!address.label?.trim()) {
+    if (address.label !== undefined && !address.label.trim()) {
       toast.warning('Хаягийн гарчиг оруулна уу');
       return false;
     }
@@ -447,81 +447,35 @@ export default function OrderCreatePage() {
 
       let addressIdToUse = selectedAddressId;
 
-      // Validate contact fields based on auth state
-      if (isAuthenticated) {
-        if (!userName?.trim() || userName.trim().length < 2) {
-          toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
-          setIsSubmitting(false);
-          return;
-        }
-        if (!userPhone?.trim()) {
-          toast.warning('Утасны дугаар оруулна уу');
-          setIsSubmitting(false);
-          return;
-        }
-        if (!userEmail?.trim()) {
-          toast.warning('Имэйл оруулна уу');
-          setIsSubmitting(false);
-          return;
-        }
-      } else {
-        if (!guestAddress.fullName?.trim() || guestAddress.fullName.trim().length < 2) {
-          toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
-          setIsSubmitting(false);
-          return;
-        }
-        if (!guestAddress.phoneNumber?.trim() || guestAddress.phoneNumber.trim().length !== 8) {
-          toast.warning('8 оронтой утасны дугаар оруулна уу');
-          setIsSubmitting(false);
-          return;
-        }
-        if (!guestAddress.email?.trim() || !guestAddress.email.includes('@')) {
-          toast.warning('Зөв имэйл хаяг оруулна уу');
-          setIsSubmitting(false);
-          return;
-        }
-        if (!validateAddress(guestAddress)) {
-          setIsSubmitting(false);
-          return;
-        }
+      if (!userName?.trim() || userName.trim().length < 2) {
+        toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
+        setIsSubmitting(false);
+        return;
       }
 
-      const fullName = isAuthenticated ? userName.trim() : guestAddress.fullName.trim();
-      const phoneNumber = isAuthenticated ? userPhone.trim() : guestAddress.phoneNumber.trim();
-      const email = isAuthenticated ? userEmail.trim() : (guestAddress.email || '').trim();
+      if (!userPhone?.trim()) {
+        toast.warning('Утасны дугаар оруулна уу');
+        setIsSubmitting(false);
+        return;
+      }
 
-      const payload: any = {
-        fullName,
-        phoneNumber,
-        email,
+      if (!userEmail?.trim()) {
+        toast.warning('Имэйл оруулна уу');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const response = await createOrderMutation.mutateAsync({
+        addressId: addressIdToUse ?? undefined,
+        fullName: userName.trim(),
+        phoneNumber: userPhone.trim(),
+        email: userEmail.trim(),
         deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
         deliveryDate: deliveryDate,
-      };
-
-      if (isAuthenticated) {
-        if (addressIdToUse) payload.addressId = addressIdToUse;
-      } else {
-        payload.address = {
-          fullName,
-          phoneNumber,
-          provinceOrDistrict: guestAddress.provinceOrDistrict.trim(),
-          khorooOrSoum: guestAddress.khorooOrSoum.trim(),
-          street: guestAddress.street?.trim() || undefined,
-          neighborhood: guestAddress.neighborhood?.trim() || undefined,
-          residentialComplex: guestAddress.residentialComplex?.trim() || undefined,
-          building: guestAddress.building?.trim() || undefined,
-          entrance: guestAddress.entrance?.trim() || undefined,
-          apartmentNumber: guestAddress.apartmentNumber?.trim() || undefined,
-          addressNote: guestAddress.addressNote?.trim() || undefined,
-          label: guestAddress.label?.trim() || undefined,
-        };
-      }
-
-      const response = await createOrderMutation.mutateAsync(payload);
+      });
 
       if (!response.data?.id) {
         toast.error('Захиалгын ID олдсонгүй');
-        setIsSubmitting(false);
         return;
       }
 
