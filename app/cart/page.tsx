@@ -190,8 +190,8 @@ export default function CartPage() {
     try {
       await removeCartMutation.mutateAsync(productId);
       window.dispatchEvent(new Event('cartUpdated'));
-      toast.success('Зүйл устгагдсан', {
-        description: 'Зүйл таны сагснаас устгагдлаа',
+      toast.success('Сагснаас хасагдсан', {
+        description: 'Барааг таны сагснаас хассан.',
       });
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
