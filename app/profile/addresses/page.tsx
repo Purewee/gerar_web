@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,12 +16,22 @@ import {
   useAddressSetDefault,
   useDistricts,
   useKhoroo,
+  useCurrentUser,
   type CreateAddressRequest,
 } from '@/lib/api';
 import { AddressCardSkeleton } from '@/components/skeleton';
 import { toast } from 'sonner';
 
+function formatPhoneForAddress(phoneNumber: string): string {
+  if (!phoneNumber) return '';
+  const digits = phoneNumber.replace(/\D/g, '');
+  if (digits.startsWith('976')) return digits.slice(3).slice(0, 8);
+  return digits.slice(0, 8);
+}
+
 export default function ProfileAddressesPage() {
+  const { data: userResponse } = useCurrentUser();
+  const user = userResponse?.data;
   const { data: addressesResponse, isLoading, error } = useAddresses();
   const addresses = addressesResponse?.data || [];
   const createAddressMutation = useAddressCreate();
@@ -45,6 +55,8 @@ export default function ProfileAddressesPage() {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const isLoadingForEditRef = useRef(false);
   const [formData, setFormData] = useState<CreateAddressRequest>({
     fullName: '',
     phoneNumber: '',
@@ -83,23 +95,47 @@ export default function ProfileAddressesPage() {
   };
 
   const openAddForm = () => {
-    const savedName = typeof window !== 'undefined' ? localStorage.getItem('user_name') || '' : '';
-    const savedMobile = typeof window !== 'undefined' ? localStorage.getItem('mobile') || '' : '';
+    const name = user?.name ?? (typeof window !== 'undefined' ? localStorage.getItem('user_name') || '' : '');
+    const phone = user?.phoneNumber
+      ? formatPhoneForAddress(user.phoneNumber)
+      : (typeof window !== 'undefined' ? (localStorage.getItem('mobile') || '').replace(/\D/g, '').slice(0, 8) : '');
     setFormData(prev => ({
       ...prev,
-      fullName: savedName,
-      phoneNumber: savedMobile.replace(/\D/g, '').slice(0, 8),
+      fullName: name,
+      phoneNumber: phone,
     }));
     setShowAddForm(true);
   };
 
   useEffect(() => {
     if (selectedDistrict) {
-      setFormData(prev => ({ ...prev, khorooOrSoum: '' }));
+      if (isLoadingForEditRef.current) {
+        isLoadingForEditRef.current = false;
+      } else {
+        setFormData(prev => ({ ...prev, khorooOrSoum: '' }));
+      }
     } else {
       setFormData(prev => ({ ...prev, provinceOrDistrict: '' }));
     }
   }, [selectedDistrict]);
+
+  useEffect(() => {
+    if (showAddForm && user) {
+      const name = user.name ?? '';
+      const phone = formatPhoneForAddress(user.phoneNumber ?? '');
+      setFormData(prev => ({
+        ...prev,
+        fullName: prev.fullName || name,
+        phoneNumber: prev.phoneNumber || phone,
+      }));
+    }
+  }, [showAddForm, user]);
+
+  useEffect(() => {
+    if (showAddForm && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showAddForm, editingId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,11 +155,16 @@ export default function ProfileAddressesPage() {
 
   const handleEdit = (address: any) => {
     setEditingId(address.id);
+    isLoadingForEditRef.current = true;
     setSelectedDistrict(address.provinceOrDistrict || '');
+    const name = user?.name ?? (typeof window !== 'undefined' ? localStorage.getItem('user_name') || '' : '');
+    const phone = user?.phoneNumber
+      ? formatPhoneForAddress(user.phoneNumber)
+      : (typeof window !== 'undefined' ? (localStorage.getItem('mobile') || '').replace(/\D/g, '').slice(0, 8) : '');
     setFormData({
       label: address.label || undefined,
-      fullName: address.fullName,
-      phoneNumber: address.phoneNumber,
+      fullName: name,
+      phoneNumber: phone,
       provinceOrDistrict: address.provinceOrDistrict,
       khorooOrSoum: address.khorooOrSoum,
       street: address.street || undefined,
@@ -213,49 +254,11 @@ export default function ProfileAddressesPage() {
       </CardHeader>
       <CardContent className="p-6 lg:p-8">
         {showAddForm && (
-          <div className="mb-8 bg-white rounded-lg p-6">
+          <div ref={formRef} className="mb-8 bg-white rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">
               {editingId ? 'Хаяг засах' : 'Хүргэлтийн хаяг нэмэх'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Нэр <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    id="fullName"
-                    value={formData.fullName}
-                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                    required
-                    placeholder="Нэр"
-                    disabled={
-                      createAddressMutation.isPending || updateAddressMutation.isPending
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Утасны дугаар <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    id="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={e =>
-                      setFormData({
-                        ...formData,
-                        phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
-                      })
-                    }
-                    required
-                    placeholder="Утасны дугаар"
-                    maxLength={8}
-                    disabled={
-                      createAddressMutation.isPending || updateAddressMutation.isPending
-                    }
-                  />
-                </div>
-              </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Хаягийн гарчиг
@@ -461,7 +464,9 @@ export default function ProfileAddressesPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {addresses.map(address => (
+            {addresses
+              .filter(address => address.id !== editingId)
+              .map(address => (
               <Card
                 key={address.id}
                 className={`transition-all duration-200 hover:shadow-lg ${
