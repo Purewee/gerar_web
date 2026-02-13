@@ -955,6 +955,14 @@ export interface CreateAddressRequest {
   isDefault?: boolean;
 }
 
+/** Response from GET /api/addresses/off-delivery-dates. offTimeSlots = global (every date); offTimeSlotsByDate = per-date (YYYY-MM-DD -> slot list). */
+export interface OffDeliveryDatesResponse {
+  offWeekdays?: number[];
+  offDates?: string[];
+  offTimeSlots?: string[];
+  offTimeSlotsByDate?: Record<string, string[]>;
+}
+
 // Addresses API functions
 const addressesApiFunctions = {
   getAll: async (): Promise<ApiResponse<Address[]>> => {
@@ -1029,13 +1037,9 @@ const addressesApiFunctions = {
     );
   },
 
-  /** Off-days when delivery is not available. offWeekdays: 0=Sun..6=Sat; offDates: YYYY-MM-DD strings. */
-  getOffDeliveryDates: async (): Promise<
-    ApiResponse<{ offWeekdays?: number[]; offDates?: string[] }>
-  > => {
-    return apiFetch<{ offWeekdays?: number[]; offDates?: string[] }>(
-      '/addresses/off-delivery-dates',
-    );
+  /** Off-days when delivery is not available. offWeekdays: 0=Sun..6=Sat; offDates: YYYY-MM-DD; offTimeSlots: global (every date); offTimeSlotsByDate: per-date. */
+  getOffDeliveryDates: async (): Promise<ApiResponse<OffDeliveryDatesResponse>> => {
+    return apiFetch<OffDeliveryDatesResponse>('/addresses/off-delivery-dates');
   },
 };
 
@@ -1129,6 +1133,60 @@ export const useOffDeliveryDates = () => {
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 };
+
+const VALID_DELIVERY_SLOTS = ['10-14', '14-18', '18-21', '21-00'] as const;
+
+/**
+ * Validates that a delivery time slot is allowed for the given date.
+ * A slot is off if it's in global offTimeSlots or in offTimeSlotsByDate[date].
+ * When slotOrder is provided, the first slot in that order is disabled for tomorrow when current time is past 20:50.
+ * @param timeSlot - Slot string (e.g. "10-14" or admin-defined label)
+ * @param deliveryDate - Optional date (string YYYY-MM-DD or Date)
+ * @param options - Optional { offTimeSlots, offTimeSlotsByDate, slotOrder } - slotOrder defines valid slots and which is "first"
+ * @throws Error "Invalid or unavailable delivery time slot for the selected date." if slot is off for that date
+ */
+export function validateDeliveryTimeSlot(
+  timeSlot: string,
+  deliveryDate?: string | Date,
+  options?: {
+    offTimeSlots?: string[];
+    offTimeSlotsByDate?: Record<string, string[]>;
+    /** Order of slots (e.g. from API); first slot is disabled for tomorrow after 20:50. If omitted, uses default list. */
+    slotOrder?: string[];
+  },
+): void {
+  const validSlots = options?.slotOrder?.length ? options.slotOrder : [...VALID_DELIVERY_SLOTS];
+  if (!validSlots.includes(timeSlot)) {
+    throw new Error('Invalid or unavailable delivery time slot for the selected date.');
+  }
+  if (!deliveryDate || !options) return;
+
+  const dateStr =
+    typeof deliveryDate === 'string'
+      ? deliveryDate
+      : `${deliveryDate.getFullYear()}-${String(deliveryDate.getMonth() + 1).padStart(2, '0')}-${String(deliveryDate.getDate()).padStart(2, '0')}`;
+
+  const globalOff = options.offTimeSlots ?? [];
+  const dateOff = options.offTimeSlotsByDate?.[dateStr] ?? [];
+  if (globalOff.includes(timeSlot) || dateOff.includes(timeSlot)) {
+    throw new Error('Invalid or unavailable delivery time slot for the selected date.');
+  }
+
+  // Tomorrow's first slot (slotOrder[0]) is unavailable when current time is past 20:50 today
+  const firstSlot = options.slotOrder?.[0];
+  if (firstSlot && timeSlot === firstSlot) {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    if (dateStr === tomorrowStr) {
+      const currentTimeInHours = now.getHours() + now.getMinutes() / 60;
+      if (currentTimeInHours >= 20 + 50 / 60) {
+        throw new Error('Invalid or unavailable delivery time slot for the selected date.');
+      }
+    }
+  }
+}
 
 export const addressesApi = addressesApiFunctions;
 

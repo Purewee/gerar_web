@@ -22,6 +22,7 @@ import {
   useDistricts,
   useKhoroo,
   useOffDeliveryDates,
+  validateDeliveryTimeSlot,
   authApi,
   type CreateAddressRequest,
   type Address,
@@ -80,6 +81,8 @@ export default function OrderCreatePage() {
   const offDeliveryData = offDeliveryResponse?.data;
   const offWeekdays = offDeliveryData?.offWeekdays ?? [];
   const offDatesSet = new Set(offDeliveryData?.offDates ?? []);
+  const offTimeSlots = offDeliveryData?.offTimeSlots ?? [];
+  const offTimeSlotsByDate = offDeliveryData?.offTimeSlotsByDate ?? {};
 
   // Off-days: backend sends 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat. Disable when weekday is in list or date in offDates.
   const isDeliveryDateDisabled = (dateString: string): boolean => {
@@ -229,12 +232,30 @@ export default function OrderCreatePage() {
     }
   }, [offDeliveryResponse, deliveryDate]);
 
-  // Clear time slot if it becomes unavailable when date changes
+  // Clear time slot if it becomes unavailable when date changes (off slots for this date, or today's timing)
   useEffect(() => {
     if (!deliveryDate || !deliveryTimeSlot) return;
 
+    // Slot is off for this date (global or date-specific)
+    if (offTimeSlots.includes(deliveryTimeSlot) || offTimeSlotsByDate[deliveryDate]?.includes(deliveryTimeSlot)) {
+      setDeliveryTimeSlot('');
+      return;
+    }
+
     const today = new Date();
     const todayDateStr = getTodayDateString();
+    const currentTimeInHours = today.getHours() + today.getMinutes() / 60;
+
+    // Tomorrow's first slot (whatever it is in DELIVERY_SLOT_ORDER) is unavailable after 20:50 today
+    if (deliveryDate > todayDateStr && deliveryTimeSlot === DELIVERY_SLOT_ORDER[0] && currentTimeInHours >= 20 + 50 / 60) {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+      if (deliveryDate === tomorrowStr) {
+        setDeliveryTimeSlot('');
+        return;
+      }
+    }
 
     // If delivery date is today, check if selected slot is still available
     if (deliveryDate === todayDateStr) {
@@ -276,7 +297,7 @@ export default function OrderCreatePage() {
         setDeliveryTimeSlot('');
       }
     }
-  }, [deliveryDate, deliveryTimeSlot]);
+  }, [deliveryDate, deliveryTimeSlot, offTimeSlots, offTimeSlotsByDate]);
 
   const validateAddress = (address: {
     provinceOrDistrict: string;
@@ -486,6 +507,17 @@ export default function OrderCreatePage() {
 
       if (!deliveryTimeSlot) {
         toast.warning('Хүргэлтийн цаг сонгоно уу');
+        return;
+      }
+
+      try {
+        validateDeliveryTimeSlot(deliveryTimeSlot, deliveryDate, {
+          offTimeSlots,
+          offTimeSlotsByDate,
+          slotOrder: [...DELIVERY_SLOT_ORDER],
+        });
+      } catch (err: any) {
+        toast.error(err.message || 'Invalid or unavailable delivery time slot for the selected date.');
         return;
       }
 
@@ -1315,15 +1347,25 @@ export default function OrderCreatePage() {
                     const firstFutureSlotIndex =
                       deliveryDate === getTodayDateString() ? getFirstFutureSlotIndex() : null;
 
-                    // Check if time slot is available (disable current and past slots; for today, skip next slot and enable from second)
+                    // Check if time slot is available (off slots for date, then current/past/skip-next for today)
                     const isTimeSlotAvailable = (): boolean => {
                       if (!deliveryDate) return false;
+                      // Off for every date (global) or for this date only
+                      if (offTimeSlots.includes(slot) || offTimeSlotsByDate[deliveryDate]?.includes(slot))
+                        return false;
 
                       const today = new Date();
                       const todayDateStr = getTodayDateString();
+                      const currentTimeInHours = today.getHours() + today.getMinutes() / 60;
 
-                      // If delivery date is in the future, all slots are available
+                      // If delivery date is in the future, all slots available except: tomorrow's first slot after 20:50
                       if (deliveryDate > todayDateStr) {
+                        const tomorrow = new Date(today);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+                        if (deliveryDate === tomorrowStr && currentTimeInHours >= 20 + 50 / 60 && slotIndex === 0) {
+                          return false;
+                        }
                         return true;
                       }
 
