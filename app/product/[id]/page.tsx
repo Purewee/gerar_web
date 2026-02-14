@@ -85,12 +85,6 @@ export default function ProductDetailPage() {
   const handleAddToCart = async () => {
     if (!product) return;
 
-    const token = getAuthToken();
-    if (!token) {
-      window.dispatchEvent(new CustomEvent('authRequired'));
-      return;
-    }
-
     try {
       await addToCartMutation.mutateAsync({ productId: product.id, quantity });
       window.dispatchEvent(new Event('cartUpdated'));
@@ -103,12 +97,6 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = async () => {
-    const token = getAuthToken();
-    if (!token) {
-      window.dispatchEvent(new CustomEvent('authRequired'));
-      return;
-    }
-
     if (!product) return;
 
     setIsBuyNowLoading(true);
