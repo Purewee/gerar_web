@@ -1,5 +1,38 @@
 'use client';
 
+// ==================== BANNERS ====================
+export interface Banner {
+  id: number;
+  imageMobile: string;
+  imageDesktop: string;
+  title?: string;
+  description?: string;
+  link?: string;
+  order?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Banners API functions
+const bannersApiFunctions = {
+  getAll: async (): Promise<ApiResponse<Banner[]>> => {
+    return apiFetch<Banner[]>('/banners');
+  },
+};
+
+// Banners hooks
+export const useBanners = (options?: { enabled?: boolean }) => {
+  return useQuery({
+    queryKey: ['banners'],
+    queryFn: () => bannersApiFunctions.getAll(),
+    enabled: options?.enabled ?? true,
+  });
+};
+
+export const bannersApi = bannersApiFunctions;
+
+// ...existing code...
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
@@ -493,6 +526,8 @@ export interface ProductsQueryParams {
   categoryIds?: number[];
   search?: string;
   inStock?: boolean;
+  /** When true, only products with a sale (originalPrice set) are returned. */
+  onSale?: boolean;
   minPrice?: number;
   maxPrice?: number;
   minStock?: number;
@@ -525,6 +560,9 @@ const productsApiFunctions = {
     }
     if (params?.inStock !== undefined) {
       queryParams.append('inStock', params.inStock.toString());
+    }
+    if (params?.onSale === true) {
+      queryParams.append('onSale', 'true');
     }
     if (params?.minPrice) {
       queryParams.append('minPrice', params.minPrice.toString());
@@ -1006,7 +1044,7 @@ const addressesApiFunctions = {
     return apiFetch<Address>(
       `/addresses/${id}/set-default`,
       {
-        method: 'PATCH',
+        method: 'POST',
       },
       true,
     );
@@ -1021,6 +1059,15 @@ const addressesApiFunctions = {
   ): Promise<ApiResponse<{ district: string; khorooOptions: string[] }>> => {
     return apiFetch<{ district: string; khorooOptions: string[] }>(
       `/addresses/khoroo?district=${encodeURIComponent(district)}`,
+    );
+  },
+
+  /** Off-days when delivery is not available. offWeekdays: 0=Sun..6=Sat; offDates: YYYY-MM-DD strings. */
+  getOffDeliveryDates: async (): Promise<
+    ApiResponse<{ offWeekdays?: number[]; offDates?: string[] }>
+  > => {
+    return apiFetch<{ offWeekdays?: number[]; offDates?: string[] }>(
+      '/addresses/off-delivery-dates',
     );
   },
 };
@@ -1105,6 +1152,14 @@ export const useKhoroo = (district: string | null) => {
     enabled: !!district && district.length > 0,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
     retry: 1,
+  });
+};
+
+export const useOffDeliveryDates = () => {
+  return useQuery({
+    queryKey: [...queryKeys.addresses.all, 'off-delivery-dates'],
+    queryFn: () => addressesApiFunctions.getOffDeliveryDates(),
+    staleTime: 60 * 60 * 1000, // 1 hour
   });
 };
 

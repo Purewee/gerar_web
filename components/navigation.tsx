@@ -625,13 +625,22 @@ export function Navigation() {
                     })}
 
                     {/* Хямдралтай link */}
-                    <Link
-                      href="/products"
-                      className="flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase"
-                      aria-label="Хямдралтай бараа харах"
-                    >
-                      Хямдралтай
-                    </Link>
+                    {(() => {
+                      const isSaleActive =
+                        pathname === '/products' && searchParams?.get('onSale') === 'true';
+                      return (
+                        <Link
+                          href="/products?onSale=true"
+                          className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
+                            isSaleActive ? 'bg-white/10' : ''
+                          }`}
+                          aria-label="Хямдралтай бараа харах"
+                          aria-current={isSaleActive ? 'page' : undefined}
+                        >
+                          Хямдралтай
+                        </Link>
+                      );
+                    })()}
                   </>
                 ) : (
                   <span className="text-sm text-gray-400 px-4">Ангилал олдсонгүй</span>
@@ -693,19 +702,17 @@ export function Navigation() {
                               setExpandedCategoryId(null);
                               setSelectedChildCategoryId(null);
                             } else {
-                              setExpandedCategoryId(category.id);
+                              router.push(
+                                `/products?categoryId=${encodeURIComponent(category.id)}`,
+                              );
                             }
-                          } else {
-                            router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
                           }
                         }}
                         onBlur={e => {
-                          // Remove any lingering focus styles
                           e.currentTarget.style.outline = 'none';
                           e.currentTarget.style.boxShadow = 'none';
                         }}
                         onMouseDown={e => {
-                          // Prevent focus ring on mouse click
                           e.currentTarget.style.outline = 'none';
                           e.currentTarget.style.boxShadow = 'none';
                         }}

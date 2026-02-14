@@ -21,6 +21,7 @@ import {
   GuestAddress,
   useDistricts,
   useKhoroo,
+  useOffDeliveryDates,
   authApi,
   type CreateAddressRequest,
   type Address,
@@ -75,6 +76,20 @@ export default function OrderCreatePage() {
     isLoading: khorooLoading,
     error: khorooError,
   } = useKhoroo(selectedDistrict || null);
+  const { data: offDeliveryResponse } = useOffDeliveryDates();
+  const offDeliveryData = offDeliveryResponse?.data;
+  const offWeekdays = offDeliveryData?.offWeekdays ?? [];
+  const offDatesSet = new Set(offDeliveryData?.offDates ?? []);
+
+  // Off-days: backend sends 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat. Disable when weekday is in list or date in offDates.
+  const isDeliveryDateDisabled = (dateString: string): boolean => {
+    if (offDatesSet.has(dateString)) return true;
+    const [y, m, d] = dateString.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const weekday = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    return offWeekdays.includes(weekday);
+  };
+
   // API returns { data: { district: string, khorooOptions: string[] } }
   const khorooOptions =
     khorooResponse?.data &&
@@ -178,6 +193,25 @@ export default function OrderCreatePage() {
     ).padStart(2, '0')}`;
   };
 
+  // Slot order for delivery time; we skip the first future slot and offer from the second (when delivery is today)
+  const DELIVERY_SLOT_ORDER = ['10-14', '14-18', '18-21', '21-00'] as const;
+  const getFirstFutureSlotIndex = (): number | null => {
+    const today = new Date();
+    const currentTimeInHours = today.getHours() + today.getMinutes() / 60;
+    for (let i = 0; i < DELIVERY_SLOT_ORDER.length; i++) {
+      const slot = DELIVERY_SLOT_ORDER[i];
+      const [startHour, endHour] = slot.split('-');
+      const slotStartHour = parseInt(startHour === '00' ? '24' : startHour);
+      const slotEndHour = parseInt(endHour === '00' ? '24' : endHour);
+      if (slotEndHour === 24 && currentTimeInHours >= 24) continue;
+      if (slotEndHour !== 24 && currentTimeInHours >= slotEndHour) continue;
+      const hoursUntilSlot =
+        slotStartHour === 24 ? 24 - currentTimeInHours : slotStartHour - currentTimeInHours;
+      if (hoursUntilSlot > 0) return i;
+    }
+    return null;
+  };
+
   useEffect(() => {
     // Set default address if available (for authenticated users)
     if (isAuthenticated && addresses.length > 0 && !selectedAddressId) {
@@ -185,6 +219,15 @@ export default function OrderCreatePage() {
       setSelectedAddressId(defaultAddress.id);
     }
   }, [addresses, router, selectedAddressId, isAuthenticated, cartItems.length]);
+
+  // Clear delivery date and time slot if selected date is an off-day (when off-days data has loaded)
+  useEffect(() => {
+    if (!deliveryDate || offDeliveryResponse === undefined) return;
+    if (isDeliveryDateDisabled(deliveryDate)) {
+      setDeliveryDate('');
+      setDeliveryTimeSlot('');
+    }
+  }, [offDeliveryResponse, deliveryDate]);
 
   // Clear time slot if it becomes unavailable when date changes
   useEffect(() => {
@@ -223,6 +266,13 @@ export default function OrderCreatePage() {
 
       // Clear slot if it has already started (current slot)
       if (hoursUntilSlot <= 0) {
+        setDeliveryTimeSlot('');
+        return;
+      }
+
+      // Clear slot if it is the "next" slot (we skip it and offer from the second slot)
+      const firstFutureIdx = getFirstFutureSlotIndex();
+      if (firstFutureIdx !== null && DELIVERY_SLOT_ORDER[firstFutureIdx] === deliveryTimeSlot) {
         setDeliveryTimeSlot('');
       }
     }
@@ -1195,6 +1245,7 @@ export default function OrderCreatePage() {
                   value={deliveryDate}
                   onChange={setDeliveryDate}
                   minDate={new Date().toISOString().split('T')[0]}
+                  isDateDisabled={isDeliveryDateDisabled}
                 />
               </div>
 
@@ -1204,9 +1255,9 @@ export default function OrderCreatePage() {
                   Хүргэлтийн цаг сонгох <span className="text-red-500">*</span>
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {(['10-14', '14-18', '18-21', '21-00'] as const).map(slot => {
-                    const formatTimeSlot = (slot: string) => {
-                      const [start, end] = slot.split('-');
+                  {DELIVERY_SLOT_ORDER.map((slot, slotIndex) => {
+                    const formatTimeSlot = (s: string) => {
+                      const [start, end] = s.split('-');
                       const formatHour = (hour: string) => {
                         if (hour === '00') return '00:00';
                         return `${hour.padStart(2, '0')}:00`;
@@ -1214,7 +1265,11 @@ export default function OrderCreatePage() {
                       return `${formatHour(start)} - ${formatHour(end)}`;
                     };
 
-                    // Check if time slot is available (disable current and past slots, enable all future slots)
+                    // First future slot index when delivery is today (we skip it, offer from second slot)
+                    const firstFutureSlotIndex =
+                      deliveryDate === getTodayDateString() ? getFirstFutureSlotIndex() : null;
+
+                    // Check if time slot is available (disable current and past slots; for today, skip next slot and enable from second)
                     const isTimeSlotAvailable = (): boolean => {
                       if (!deliveryDate) return false;
 
@@ -1258,7 +1313,15 @@ export default function OrderCreatePage() {
                           return false;
                         }
 
-                        // Slot is in the future - enable it
+                        // Skip the next (first future) slot; only second slot and later are available
+                        if (
+                          firstFutureSlotIndex !== null &&
+                          slotIndex === firstFutureSlotIndex
+                        ) {
+                          return false;
+                        }
+
+                        // Slot is in the future and not the skipped "next" slot - enable it
                         return true;
                       }
 

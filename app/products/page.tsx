@@ -48,6 +48,9 @@ function ProductsContent() {
     if (inStock === 'true') params.inStock = true;
     if (inStock === 'false') params.inStock = false;
 
+    const onSale = searchParams.get('onSale');
+    if (onSale === 'true') params.onSale = true;
+
     const minPrice = searchParams.get('minPrice');
     if (minPrice) {
       const price = parseFloat(minPrice);
@@ -118,6 +121,7 @@ function ProductsContent() {
     if (searchParams.get('categoryId') || searchParams.get('categoryIds')) count++;
     if (searchParams.get('minPrice') || searchParams.get('maxPrice')) count++;
     if (searchParams.get('inStock') === 'true') count++;
+    if (searchParams.get('onSale') === 'true') count++;
     return count;
   }, [searchParams]);
 
@@ -194,6 +198,8 @@ function ProductsContent() {
                       {searchQuery}
                     </span>
                   </>
+                ) : mounted && searchParams.get('onSale') === 'true' ? (
+                  'Хямдралтай бараа'
                 ) : (
                   'Бүх бүтээгдэхүүн'
                 )}

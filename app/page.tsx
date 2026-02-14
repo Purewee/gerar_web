@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
 import { useProducts, type Product } from '@/lib/api';
+import { useBanners } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
@@ -123,44 +124,41 @@ export default function Home() {
 
   const products = (productsResponse?.data || []).filter(p => p.isHidden !== true);
 
-  const saleProducts = products.slice(0, 24);
+  // Fetch sale products for the "Хямдралтай бараа" section
+  const { data: saleResponse, isLoading: saleLoading } = useProducts({
+    onSale: true,
+    limit: 24,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
+  const saleProducts = (saleResponse?.data || []).filter(p => p.isHidden !== true);
+
   const latestProducts = products.slice(0, 24);
   const popularProducts = products.slice(0, 24);
 
-  // Create carousel items from products with discounts (let React Compiler handle memoization)
-  const discountedProducts = products
-    .filter(p => p.hasDiscount && p.discountPercentage && p.discountPercentage >= 30)
-    .slice(0, 5);
-  const carouselItems =
-    discountedProducts.length === 0
-      ? products.slice(0, 5).map(product => ({
-          id: product.id,
-          title: product.name.toUpperCase(),
-          subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
-          discount:
-            product.hasDiscount && product.discountPercentage
-              ? `${product.discountPercentage}% ХЯМДАРСАН`
-              : 'Онцлох бараа',
-          link: `/product/${product.id}`,
-          imageUrl: product.firstImage || product.images?.[0],
-        }))
-      : discountedProducts.map(product => ({
-          id: product.id,
-          title: product.name.toUpperCase(),
-          subtitle: product.description?.slice(0, 50) || 'Шинэ бараа',
-          discount: product.discountPercentage
-            ? `${product.discountPercentage}% ХЯМДАРСАН`
-            : 'Онцгой бараа',
-          link: `/product/${product.id}`,
-          imageUrl: product.firstImage || product.images?.[0],
-        }));
+  // Fetch banners for hero carousel
+  const { data: bannersResponse, isLoading: bannersLoading } = useBanners();
+  const banners = bannersResponse?.data || [];
+
+  // Map banners to carousel items
+  const carouselItems = banners.map(banner => ({
+    id: banner.id,
+    title: banner.title || '',
+    subtitle: banner.title || '',
+    discount: banner.description || '',
+    link: banner.link || '#',
+    imageMobile: banner.imageMobile,
+    imageDesktop: banner.imageDesktop,
+  }));
+
+  console.log('resp', bannersResponse);
 
   const handleItemClick = (link: string) => {
     router.push(link);
   };
 
   // Preload first hero image for LCP optimization
-  const firstCarouselImage = carouselItems[0]?.imageUrl;
+  const firstCarouselImage = carouselItems[0]?.imageMobile || carouselItems[0]?.imageDesktop;
   useEffect(() => {
     if (firstCarouselImage && typeof document !== 'undefined') {
       // Check if preload link already exists
@@ -187,9 +185,9 @@ export default function Home() {
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
       <main>
         {/* Hero Carousel */}
-        <section className="relative overflow-hidden bg-primary text-primary-foreground">
+        <section className="relative overflow-hidden text-primary-foreground">
           <div className="relative">
-            {carouselItems.length > 0 ? (
+            {!bannersLoading && carouselItems.length > 0 ? (
               <div className="relative hero-carousel">
                 {carouselItems.length > 1 && (
                   <>
@@ -207,7 +205,7 @@ export default function Home() {
                     </button>
                   </>
                 )}
-                <div className="hero-carousel relative w-full h-[300px] sm:h-[400px] lg:h-[500px]">
+                <div className="hero-carousel relative w-full min-h-[300px] sm:h-[400px] lg:h-[500px] max-w-7xl mx-auto">
                   <Swiper
                     modules={[Autoplay, Navigation, Pagination]}
                     navigation={{
@@ -223,11 +221,14 @@ export default function Home() {
                     className="w-full h-full"
                   >
                     {carouselItems.map(item => (
-                      <SwiperSlide key={item.id} className="!h-full">
+                      <SwiperSlide
+                        key={item.id}
+                        className="!h-full min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]"
+                      >
                         <div
                           role="button"
                           tabIndex={0}
-                          className="relative w-full h-[300px] sm:h-[400px] lg:h-[500px] flex flex-col items-center justify-center cursor-pointer overflow-hidden"
+                          className="relative w-full h-full min-h-[300px] sm:min-h-[400px] lg:min-h-[500px] flex flex-col items-center justify-center cursor-pointer overflow-hidden"
                           onClick={() => handleItemClick(item.link)}
                           onKeyDown={e => {
                             if (e.key === 'Enter' || e.key === ' ') {
@@ -238,28 +239,66 @@ export default function Home() {
                           aria-label={`${item.title} - Дэлгэрэнгүй мэдээлэл харах`}
                         >
                           {/* Background Image */}
-                          {item.imageUrl && (
+                          {/* Responsive banner image: mobile vs desktop */}
+                          {item.imageMobile && item.imageDesktop ? (
+                            <>
+                              <Image
+                                src={item.imageMobile}
+                                alt={item.title}
+                                className="object-cover w-full h-full absolute inset-0 block sm:hidden"
+                                priority={item.id === carouselItems[0]?.id}
+                                fill
+                                fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
+                                unoptimized={
+                                  item.imageMobile?.includes('localhost') ||
+                                  item.imageMobile?.includes('127.0.0.1') ||
+                                  item.imageMobile?.includes('192.168.1.3')
+                                }
+                              />
+                              <Image
+                                src={item.imageDesktop}
+                                alt={item.title}
+                                className="object-cover w-full h-full absolute inset-0 hidden sm:block"
+                                priority={item.id === carouselItems[0]?.id}
+                                fill
+                                fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
+                                unoptimized={
+                                  item.imageDesktop?.includes('localhost') ||
+                                  item.imageDesktop?.includes('127.0.0.1') ||
+                                  item.imageDesktop?.includes('192.168.1.3')
+                                }
+                              />
+                            </>
+                          ) : item.imageMobile ? (
                             <Image
-                              src={item.imageUrl}
+                              src={item.imageMobile}
                               alt={item.title}
                               className="object-cover w-full h-full absolute inset-0"
                               priority={item.id === carouselItems[0]?.id}
                               fill
                               fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
                               unoptimized={
-                                item.imageUrl?.includes('localhost') ||
-                                item.imageUrl?.includes('127.0.0.1') ||
-                                item.imageUrl?.includes('192.168.1.3')
+                                item.imageMobile?.includes('localhost') ||
+                                item.imageMobile?.includes('127.0.0.1') ||
+                                item.imageMobile?.includes('192.168.1.3')
                               }
                             />
-                          )}
-                          {/* Fallback background if no image */}
-                          {!item.imageUrl && (
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary/60 flex items-center justify-center">
-                              <div className="text-9xl sm:text-[150px] opacity-20">🪑</div>
-                            </div>
-                          )}
-                          {/* Content on top, no padding/margin */}
+                          ) : item.imageDesktop ? (
+                            <Image
+                              src={item.imageDesktop}
+                              alt={item.title}
+                              className="object-cover w-full h-full absolute inset-0"
+                              priority={item.id === carouselItems[0]?.id}
+                              fill
+                              fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
+                              unoptimized={
+                                item.imageDesktop?.includes('localhost') ||
+                                item.imageDesktop?.includes('127.0.0.1') ||
+                                item.imageDesktop?.includes('192.168.1.3')
+                              }
+                            />
+                          ) : null}
+
                           <div className="relative z-10 flex flex-col items-center justify-center gap-4 lg:gap-6 text-center w-full h-full">
                             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white">
                               {item.subtitle}
@@ -327,10 +366,10 @@ export default function Home() {
           sectionId="sale"
           title="Хямдралтай бараа"
           description="Онцгой хямдралтай бараанууд"
-          linkHref="/products"
+          linkHref="/products?onSale=true"
           linkLabel="Хямдралтай бүх бараа харах"
           products={saleProducts}
-          isLoading={productsLoading}
+          isLoading={saleLoading || productsLoading}
         />
 
         {/* Sale products list */}
