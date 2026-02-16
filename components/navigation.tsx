@@ -41,6 +41,7 @@ import {
   Hammer,
   EllipsisVertical,
 } from 'lucide-react';
+import path from 'path';
 
 export function Navigation() {
   const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
@@ -51,6 +52,7 @@ export function Navigation() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [userName, setUserName] = useState<string>('');
+  const [userEmail, setUserEmail] = useState<string>('');
   const [expandedCategoryId, setExpandedCategoryId] = useState<number | null>(null);
   const [hasAutoSelectedCategory, setHasAutoSelectedCategory] = useState(false);
   const [selectedChildCategoryId, setSelectedChildCategoryId] = useState<number | null>(null);
@@ -101,17 +103,24 @@ export function Navigation() {
       setUserName(name);
     };
 
+    const updateUserEmail = () => {
+      const email = localStorage.getItem('user_email') || '';
+      setUserEmail(email);
+    };
+
     // Update authentication state
     const updateAuthState = () => {
       const auth = localStorage.getItem('isAuthenticated');
       setIsAuthenticated(auth === 'true');
       updateUserName();
+      updateUserEmail();
     };
 
     updateUserName();
+    updateUserEmail();
     // Listen for storage changes (when cart is updated in other tabs/components)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'isAuthenticated' || e.key === 'user_name') {
+      if (e.key === 'isAuthenticated' || e.key === 'user_name' || e.key === 'user_email') {
         updateAuthState();
       }
     };
@@ -156,6 +165,7 @@ export function Navigation() {
       await authApi.logout();
       setIsAuthenticated(false);
       setUserName('');
+      setUserEmail('');
       setMobileProfileMenuOpen(false);
       localStorage.clear();
     } catch (error) {
@@ -364,6 +374,21 @@ export function Navigation() {
       setSelectedChildCategoryId(null);
     }
   }, [mobileProfileMenuOpen]);
+
+  const formatName = (name: string) => {
+    if (typeof name !== 'string' || name.length === 0) return '';
+    // Split by whitespace, capitalize first letter of each word
+    return name
+      .toLocaleLowerCase('mn-MN')
+      .split(/\s+/)
+      .map(word => word.charAt(0).toLocaleUpperCase('mn-MN') + word.slice(1))
+      .join(' ');
+  };
+
+  const isActive = (href: string) => {
+    if (href === '/profile') return pathname === '/profile';
+    return pathname?.startsWith(href);
+  };
 
   return (
     <>
@@ -694,6 +719,7 @@ export function Navigation() {
                     return (
                       <button
                         key={category.id}
+                        type="button"
                         onClick={e => {
                           if (hasChildren) {
                             e.preventDefault();
@@ -702,10 +728,12 @@ export function Navigation() {
                               setExpandedCategoryId(null);
                               setSelectedChildCategoryId(null);
                             } else {
-                              router.push(
-                                `/products?categoryId=${encodeURIComponent(category.id)}`,
-                              );
+                              setExpandedCategoryId(category.id);
+                              setSelectedChildCategoryId(null);
                             }
+                          } else {
+                            // Зөвхөн хүүхэдгүй parent дээр л линк рүү явна
+                            router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
                           }
                         }}
                         onBlur={e => {
@@ -730,8 +758,6 @@ export function Navigation() {
                         }
                         aria-expanded={hasChildren ? isExpanded : undefined}
                       >
-                        {/* <BrushCleaning className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" />
-                         */}
                         <Icon className="w-4 h-4 mr-1" />
                         <span className="relative z-10">{category.name}</span>
                         {hasChildren && (
@@ -864,22 +890,23 @@ export function Navigation() {
           <div className="flex items-center justify-between px-5 py-2 border-b border-gray-200 bg-linear-to-r from-gray-50 to-white">
             <div className="flex items-center gap-3">
               {mounted && isAuthenticated && userName ? (
-                <>
-                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-sm shadow-md">
-                    {getUserInitials(userName)}
+                <div className="pt-8 pl-2 pb-2">
+                  <img
+                    src="/profile.png"
+                    className="w-16 h-16 mb-2 bg-linear-to-br from-primary to-primary/70 rounded-full border border-gray-200 shadow-md"
+                  />
+                  <div className="pl-1">
+                    <h2 className="text-lg font-semibold text-gray-900">{formatName(userName)}</h2>
+                    <p className="text-xs text-gray-500">{userEmail}</p>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">{userName}</h2>
-                    <p className="text-xs text-gray-500">Цэс</p>
-                  </div>
-                </>
+                </div>
               ) : (
                 <h2 className="text-lg font-semibold text-gray-900">Цэс</h2>
               )}
             </div>
             <button
               onClick={() => setMobileProfileMenuOpen(false)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="p-2 mb-16 hover:bg-gray-100 rounded-lg transition-colors duration-200"
               aria-label="Цэс хаах"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -895,13 +922,15 @@ export function Navigation() {
 
           {/* Drawer Content - Scrollable */}
           <div className="flex-1 overflow-y-auto">
-            <div className="flex flex-col py-2">
+            <div className="flex flex-col py-4">
               {mounted && isAuthenticated ? (
                 <>
                   <a
                     href="/profile"
                     onClick={() => setMobileProfileMenuOpen(false)}
-                    className="flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2"
+                    className={`flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2
+                    ${isActive('/profile') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''}
+                      `}
                   >
                     <User className="w-5 h-5" />
                     <span>Миний профайл</span>
@@ -909,7 +938,9 @@ export function Navigation() {
                   <a
                     href="/profile/orders"
                     onClick={() => setMobileProfileMenuOpen(false)}
-                    className="flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2"
+                    className={`flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2
+                    ${isActive('/profile/orders') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''}
+                      `}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -924,7 +955,9 @@ export function Navigation() {
                   <a
                     href="/profile/favorites"
                     onClick={() => setMobileProfileMenuOpen(false)}
-                    className="flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2"
+                    className={`flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2
+                    ${isActive('/profile/favorites') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''}
+                      `}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -939,7 +972,9 @@ export function Navigation() {
                   <a
                     href="/profile/addresses"
                     onClick={() => setMobileProfileMenuOpen(false)}
-                    className="flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2"
+                    className={`flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2
+                    ${isActive('/profile/addresses') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''}
+                      `}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path

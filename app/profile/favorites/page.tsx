@@ -14,11 +14,11 @@ export default function ProfileFavoritesPage() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border border-gray-200">
         <CardHeader>
           <CardTitle className="text-2xl sm:text-3xl">Миний хадгалсан</CardTitle>
         </CardHeader>
-        <CardContent className='flex flex-col gap-6'>
+        <CardContent className="flex flex-col gap-6">
           <CardSkeleton />
           <CardSkeleton />
         </CardContent>

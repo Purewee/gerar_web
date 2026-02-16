@@ -151,8 +151,6 @@ export default function Home() {
     imageDesktop: banner.imageDesktop,
   }));
 
-  console.log('resp', bannersResponse);
-
   const handleItemClick = (link: string) => {
     router.push(link);
   };
@@ -180,6 +178,18 @@ export default function Home() {
       }
     }
   }, [firstCarouselImage]);
+
+  // Swiper navigation fix: update navigation after DOM rendered
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.querySelectorAll('.swiper').forEach(swiperEl => {
+        const instance = (swiperEl as any)['swiper'];
+        if (instance && instance.navigation && typeof instance.navigation.update === 'function') {
+          instance.navigation.update();
+        }
+      });
+    }
+  }, [bannersLoading, carouselItems.length]);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
@@ -299,7 +309,7 @@ export default function Home() {
                             />
                           ) : null}
 
-                          <div className="relative z-10 flex flex-col items-center justify-center gap-4 lg:gap-6 text-center w-full h-full">
+                          {/* <div className="relative z-10 flex flex-col items-center justify-center gap-4 lg:gap-6 text-center w-full h-full">
                             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white">
                               {item.subtitle}
                             </h2>
@@ -311,7 +321,7 @@ export default function Home() {
                                 </span>
                               </p>
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                       </SwiperSlide>
                     ))}
@@ -372,7 +382,7 @@ export default function Home() {
           isLoading={saleLoading || productsLoading}
         />
 
-        {/* Sale products list */}
+        {/* Popular products list */}
         <ProductListSection
           sectionId="popular"
           title="Эрэлттэй бараа"

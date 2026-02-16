@@ -264,7 +264,7 @@ function ProductsContent() {
                 className={`border-2 transition-colors
       ${
         isPriceAscActive
-          ? 'border-primary text-primary bg-primary/5'
+          ? 'border-primary text-primary bg-primary/5 hover:border-primary hover:text-primary hover:bg-primary/10'
           : 'border-gray-300 text-gray-700 hover:border-primary hover:text-primary'
       }
     `}
@@ -279,7 +279,7 @@ function ProductsContent() {
                 className={`border-2 transition-colors
       ${
         isPriceDescActive
-          ? 'border-primary text-primary bg-primary/5'
+          ? 'border-primary text-primary bg-primary/5 hover:border-primary hover:text-primary hover:bg-primary/10'
           : 'border-gray-300 text-gray-700 hover:border-primary hover:text-primary'
       }
     `}

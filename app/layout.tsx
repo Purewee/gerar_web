@@ -8,9 +8,10 @@ import { BottomNav } from '@/components/bottom-nav';
 import { FontLoader } from '@/components/font-loader';
 import dynamic from 'next/dynamic';
 import { Toaster } from '@/components/ui/sonner';
+import { MobileHomeFooter } from '@/components/mobile-footer';
 
 // Defer non-critical components to reduce initial bundle size
-const Footer = dynamic(() => import('@/components/footer').then(mod => mod.Footer), {
+const Footer = dynamic(() => import('@/components/footer').then(mod => mod.HomeFooter), {
   ssr: true, // Keep SSR for SEO but load async
 });
 
@@ -45,7 +46,15 @@ export default function RootLayout({
             </Suspense>
             <div className="pb-14 md:pb-0">
               {children}
-              <Footer />
+              {/* Desktop: бүх хуудсанд */}
+              <div className="hidden md:block">
+                <Footer />
+              </div>
+
+              {/* Mobile: зөвхөн homepage */}
+              <div className="block md:hidden">
+                <MobileHomeFooter />
+              </div>
             </div>
             <BottomNav />
           </CategoriesProvider>

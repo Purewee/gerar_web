@@ -1,7 +1,19 @@
+'use client';
 import { Phone, Facebook, Instagram } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import dynamic from 'next/dynamic';
 
-export function HomeFooter() {
+const Footer = dynamic(
+  () => import('@/components/mobile-footer').then(mod => mod.MobileHomeFooter),
+  {
+    ssr: false,
+  },
+);
+
+export function MobileHomeFooter() {
   const currentYear = new Date().getFullYear();
+  const pathname = usePathname();
+  if (pathname !== '/') return null;
 
   return (
     <footer className="md:block bg-gray-50 border-t border-gray-200">

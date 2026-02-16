@@ -50,8 +50,8 @@ export default function ProfileAddressesPage() {
     Array.isArray(khorooResponse.data.khorooOptions)
       ? khorooResponse.data.khorooOptions
       : Array.isArray(khorooResponse?.data)
-      ? khorooResponse.data
-      : [];
+        ? khorooResponse.data
+        : [];
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -95,10 +95,13 @@ export default function ProfileAddressesPage() {
   };
 
   const openAddForm = () => {
-    const name = user?.name ?? (typeof window !== 'undefined' ? localStorage.getItem('user_name') || '' : '');
+    const name =
+      user?.name ?? (typeof window !== 'undefined' ? localStorage.getItem('user_name') || '' : '');
     const phone = user?.phoneNumber
       ? formatPhoneForAddress(user.phoneNumber)
-      : (typeof window !== 'undefined' ? (localStorage.getItem('mobile') || '').replace(/\D/g, '').slice(0, 8) : '');
+      : typeof window !== 'undefined'
+        ? (localStorage.getItem('mobile') || '').replace(/\D/g, '').slice(0, 8)
+        : '';
     setFormData(prev => ({
       ...prev,
       fullName: name,
@@ -157,10 +160,13 @@ export default function ProfileAddressesPage() {
     setEditingId(address.id);
     isLoadingForEditRef.current = true;
     setSelectedDistrict(address.provinceOrDistrict || '');
-    const name = user?.name ?? (typeof window !== 'undefined' ? localStorage.getItem('user_name') || '' : '');
+    const name =
+      user?.name ?? (typeof window !== 'undefined' ? localStorage.getItem('user_name') || '' : '');
     const phone = user?.phoneNumber
       ? formatPhoneForAddress(user.phoneNumber)
-      : (typeof window !== 'undefined' ? (localStorage.getItem('mobile') || '').replace(/\D/g, '').slice(0, 8) : '');
+      : typeof window !== 'undefined'
+        ? (localStorage.getItem('mobile') || '').replace(/\D/g, '').slice(0, 8)
+        : '';
     setFormData({
       label: address.label || undefined,
       fullName: name,
@@ -200,7 +206,7 @@ export default function ProfileAddressesPage() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border border-gray-200">
         <CardHeader>
           <CardTitle className="text-2xl sm:text-3xl">Хаягууд</CardTitle>
         </CardHeader>
@@ -268,9 +274,7 @@ export default function ProfileAddressesPage() {
                   value={formData.label || ''}
                   onChange={e => setFormData({ ...formData, label: e.target.value })}
                   placeholder="Жишээ: Гэр, Ажил, Оффис"
-                  disabled={
-                    createAddressMutation.isPending || updateAddressMutation.isPending
-                  }
+                  disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -287,9 +291,7 @@ export default function ProfileAddressesPage() {
                       setFormData({ ...formData, provinceOrDistrict: d });
                     }}
                     required
-                    disabled={
-                      createAddressMutation.isPending || updateAddressMutation.isPending
-                    }
+                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <option value="">Дүүрэг сонгох</option>
@@ -339,14 +341,10 @@ export default function ProfileAddressesPage() {
                   <Input
                     id="residentialComplex"
                     value={formData.residentialComplex || ''}
-                    onChange={e =>
-                      setFormData({ ...formData, residentialComplex: e.target.value })
-                    }
+                    onChange={e => setFormData({ ...formData, residentialComplex: e.target.value })}
                     required
                     placeholder="Байр"
-                    disabled={
-                      createAddressMutation.isPending || updateAddressMutation.isPending
-                    }
+                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                   />
                 </div>
                 <div>
@@ -359,9 +357,7 @@ export default function ProfileAddressesPage() {
                     onChange={e => setFormData({ ...formData, entrance: e.target.value })}
                     required
                     placeholder="Орцны дугаар"
-                    disabled={
-                      createAddressMutation.isPending || updateAddressMutation.isPending
-                    }
+                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                   />
                 </div>
                 <div>
@@ -371,14 +367,10 @@ export default function ProfileAddressesPage() {
                   <Input
                     id="apartmentNumber"
                     value={formData.apartmentNumber || ''}
-                    onChange={e =>
-                      setFormData({ ...formData, apartmentNumber: e.target.value })
-                    }
+                    onChange={e => setFormData({ ...formData, apartmentNumber: e.target.value })}
                     required
                     placeholder="Тоот"
-                    disabled={
-                      createAddressMutation.isPending || updateAddressMutation.isPending
-                    }
+                    disabled={createAddressMutation.isPending || updateAddressMutation.isPending}
                   />
                 </div>
               </div>
@@ -467,95 +459,95 @@ export default function ProfileAddressesPage() {
             {addresses
               .filter(address => address.id !== editingId)
               .map(address => (
-              <Card
-                key={address.id}
-                className={`transition-all duration-200 hover:shadow-lg ${
-                  address.isDefault
-                    ? 'border-2 border-primary/30 bg-linear-to-br from-primary/5 to-transparent'
-                    : 'border border-gray-200'
-                }`}
-              >
-                <CardContent className="p-5 sm:p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {address.label && (
-                          <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">
-                            {address.label}
-                          </span>
-                        )}
-                        {address.isDefault && (
-                          <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold shadow-sm">
-                            ⭐ Үндсэн
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 mb-1 text-lg">
-                          {address.fullName}
-                        </p>
-                        <p className="text-sm text-gray-600 flex items-center gap-1">
-                          <span>📞</span>
-                          {address.phoneNumber}
-                        </p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                        <p className="text-sm text-gray-700 leading-relaxed">
-                          {address.provinceOrDistrict}, {address.khorooOrSoum}
-                          {address.street && `, ${address.street}`}
-                          {address.neighborhood && `, ${address.neighborhood}`}
-                          {address.residentialComplex && `, ${address.residentialComplex}`}
-                          {address.building && `, ${address.building}`}
-                          {address.entrance && `, ${address.entrance}`}
-                          {address.apartmentNumber && `, ${address.apartmentNumber}`}
-                        </p>
-                      </div>
-                      {address.addressNote && (
-                        <div className="pt-2 border-t border-gray-100">
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Тэмдэглэл:</span> {address.addressNote}
+                <Card
+                  key={address.id}
+                  className={`transition-all duration-200 hover:shadow-lg ${
+                    address.isDefault
+                      ? 'border-2 border-primary/30 bg-linear-to-br from-primary/5 to-transparent'
+                      : 'border border-gray-200'
+                  }`}
+                >
+                  <CardContent className="p-5 sm:p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {address.label && (
+                            <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">
+                              {address.label}
+                            </span>
+                          )}
+                          {address.isDefault && (
+                            <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold shadow-sm">
+                              ⭐ Үндсэн
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 mb-1 text-lg">
+                            {address.fullName}
+                          </p>
+                          <p className="text-sm text-gray-600 flex items-center gap-1">
+                            <span>📞</span>
+                            {address.phoneNumber}
                           </p>
                         </div>
-                      )}
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
-                      {!address.isDefault && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSetDefault(address.id)}
-                          disabled={setDefaultAddressMutation.isPending}
-                          className="shadow-sm hover:shadow-md transition-all duration-200"
-                        >
-                          Үндсэн болгох
-                        </Button>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(address)}
-                          disabled={updateAddressMutation.isPending}
-                          className="shadow-sm hover:shadow-md transition-all duration-200"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(address.id)}
-                          disabled={deleteAddressMutation.isPending}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 shadow-sm hover:shadow-md transition-all duration-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {address.provinceOrDistrict}, {address.khorooOrSoum}
+                            {address.street && `, ${address.street}`}
+                            {address.neighborhood && `, ${address.neighborhood}`}
+                            {address.residentialComplex && `, ${address.residentialComplex}`}
+                            {address.building && `, ${address.building}`}
+                            {address.entrance && `, ${address.entrance}`}
+                            {address.apartmentNumber && `, ${address.apartmentNumber}`}
+                          </p>
+                        </div>
+                        {address.addressNote && (
+                          <div className="pt-2 border-t border-gray-100">
+                            <p className="text-sm text-gray-600">
+                              <span className="font-medium">Тэмдэглэл:</span> {address.addressNote}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
+                        {!address.isDefault && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSetDefault(address.id)}
+                            disabled={setDefaultAddressMutation.isPending}
+                            className="shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            Үндсэн болгох
+                          </Button>
+                        )}
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(address)}
+                            disabled={updateAddressMutation.isPending}
+                            className="shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(address.id)}
+                            disabled={deleteAddressMutation.isPending}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 shadow-sm hover:shadow-md transition-all duration-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         )}
       </CardContent>
