@@ -88,6 +88,16 @@ export default function ProfilePage() {
     );
   }
 
+  const formatName = (name: string) => {
+    if (typeof name !== 'string' || name.length === 0) return '';
+    // Split by whitespace, capitalize first letter of each word
+    return name
+      .toLocaleLowerCase('mn-MN')
+      .split(/\s+/)
+      .map(word => word.charAt(0).toLocaleUpperCase('mn-MN') + word.slice(1))
+      .join(' ');
+  };
+
   return (
     <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
       <CardHeader className="bg-linear-to-r from-primary/5 via-primary/3 to-transparent border-b border-gray-100">
@@ -147,7 +157,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
-                {name || 'Хэрэглэгч'}
+                {formatName(name) || 'Хэрэглэгч'}
               </h3>
               <p className="text-sm text-gray-600">
                 {email && email !== 'null' ? email : 'Имэйл оруулаагүй'}

@@ -31,7 +31,10 @@ function formatDateMongolian(date: Date): string {
   return `${year} оны ${month} ${day}`;
 }
 
-const ORDER_STATUS: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; className: string }> = {
+const ORDER_STATUS: Record<
+  string,
+  { label: string; icon: React.ComponentType<{ className?: string }>; className: string }
+> = {
   PENDING: {
     label: 'Хүлээгдэж байна',
     icon: Clock,
@@ -55,7 +58,7 @@ export default function ProfileOrdersPage() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border border-gray-200">
         <CardHeader>
           <CardTitle className="text-2xl sm:text-3xl">Миний захиалгууд</CardTitle>
         </CardHeader>
@@ -126,20 +129,18 @@ export default function ProfileOrdersPage() {
           {orders.map(order => (
             <Link key={order.id} href={`/orders/${order.id}`} className="group">
               <Card className="relative overflow-hidden transition-all duration-300 border border-gray-200 hover:border-primary/40 hover:shadow-xl hover:-translate-y-0.5">
-                
                 {/* hover glow */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-linear-to-r from-primary/5 to-transparent" />
-            
+
                 <CardContent className="relative p-5 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    
                     {/* LEFT */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-3 flex-wrap">
                         <h3 className="text-lg font-semibold text-gray-900">
                           Захиалга #{order.id}
                         </h3>
-            
+
                         {(() => {
                           const status = ORDER_STATUS[order.status];
                           const IconComponent = status?.icon;
@@ -153,39 +154,36 @@ export default function ProfileOrdersPage() {
                           );
                         })()}
                       </div>
-            
+
                       <p className="text-sm text-gray-500 flex items-center gap-1">
-                        📅{' '}
-                        {formatDateMongolian(new Date(order.createdAt))}
+                        📅 {formatDateMongolian(new Date(order.createdAt))}
                       </p>
-            
+
                       {order.address && (
                         <p className="text-sm text-gray-500 flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5" />
                           {order.address.provinceOrDistrict}, {order.address.khorooOrSoum}
                         </p>
                       )}
-            
+
                       {order.items && order.items.length > 0 && (
                         <p className="text-xs text-gray-400">
                           {order.items?.length ?? 0} бүтээгдэхүүн
                         </p>
                       )}
                     </div>
-            
+
                     {/* RIGHT */}
                     <div className="sm:text-right">
                       <p className="text-2xl font-bold text-primary">
                         {Number(order.totalAmount).toLocaleString()}₮
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Дэлгэрэнгүй харах →
-                      </p>
+                      <p className="text-xs text-gray-400 mt-1">Дэлгэрэнгүй харах →</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-          </Link>
+            </Link>
           ))}
         </div>
       </CardContent>

@@ -1,5 +1,38 @@
 'use client';
 
+// ==================== BANNERS ====================
+export interface Banner {
+  id: number;
+  imageMobile: string;
+  imageDesktop: string;
+  title?: string;
+  description?: string;
+  link?: string;
+  order?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Banners API functions
+const bannersApiFunctions = {
+  getAll: async (): Promise<ApiResponse<Banner[]>> => {
+    return apiFetch<Banner[]>('/banners');
+  },
+};
+
+// Banners hooks
+export const useBanners = (options?: { enabled?: boolean }) => {
+  return useQuery({
+    queryKey: ['banners'],
+    queryFn: () => bannersApiFunctions.getAll(),
+    enabled: options?.enabled ?? true,
+  });
+};
+
+export const bannersApi = bannersApiFunctions;
+
+// ...existing code...
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
