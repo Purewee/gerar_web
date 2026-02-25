@@ -12,6 +12,7 @@ import {
   usePaymentCancel,
   getAuthToken,
 } from '@/lib/api';
+import { getDeliveryFee } from '@/lib/utils';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { CardSkeleton } from '@/components/skeleton';
@@ -241,11 +242,11 @@ export default function OrderDetailPage() {
     }
   };
 
-  // Calculate totals
+  // Calculate totals: main price = item total, delivery fee by tiers, total = itemTotal + deliveryFee
   const itemTotal =
     order?.items?.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0) || 0;
-  const deliveryFee = 6000;
-  const totalAmount = parseFloat(order?.totalAmount || '0') || itemTotal + deliveryFee;
+  const deliveryFee = getDeliveryFee(itemTotal);
+  const totalAmount = itemTotal + deliveryFee;
 
   // Show loading state until mounted and data is loaded
   if (!mounted || isLoading) {

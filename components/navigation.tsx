@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { useCart, authApi } from '@/lib/api';
+import { useCart, authApi, useSessionValidator } from '@/lib/api';
 import { useCategoriesStore } from '@/lib/stores/categories';
 import { LoginModal } from '@/components/auth/login-modal';
 import { RegisterModal } from '@/components/auth/register-modal';
@@ -86,6 +86,9 @@ export function Navigation() {
     pathname === '/cart' ||
     pathname === '/orders/create' ||
     false;
+
+  // Validate session on mount — clears stale auth if token is expired
+  useSessionValidator();
 
   // Fetch cart data from API
   const { data: cartResponse } = useCart();

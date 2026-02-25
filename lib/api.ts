@@ -429,6 +429,60 @@ export const useCurrentUser = () => {
   });
 };
 
+/**
+ * Proactively validate the stored auth token against the server.
+ * If the token is expired/invalid (401), clears all stale auth data from
+ * localStorage and dispatches 'authStateChanged' so the UI updates immediately.
+ *
+ * Unlike a normal API call, this does NOT open the login modal — it silently
+ * clears stale state so the UI reflects the real auth status.
+ *
+ * Returns true if the session is valid, false otherwise.
+ */
+export async function validateSession(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  const token = getAuthToken();
+  if (!token) return false;
+
+  // Suppress the 'authRequired' event that apiFetch fires on 401 so the
+  // login modal doesn't pop up during background validation.
+  let suppressAuthRequired = false;
+  const suppress = (e: Event) => {
+    if (suppressAuthRequired) {
+      e.stopImmediatePropagation();
+    }
+  };
+  window.addEventListener('authRequired', suppress, { capture: true });
+
+  try {
+    suppressAuthRequired = true;
+    await authApiFunctions.getMe();
+    return true;
+  } catch {
+    // 401 is already handled inside apiFetch (clears localStorage, etc.)
+    // Any other error (network) – leave auth state as-is.
+    return false;
+  } finally {
+    suppressAuthRequired = false;
+    window.removeEventListener('authRequired', suppress, { capture: true });
+  }
+}
+
+/**
+ * Hook that validates the stored auth token once on mount.
+ * If the token turns out to be expired, the UI will be updated immediately
+ * (via the 'authStateChanged' event dispatched by clearAuthAndUserData).
+ */
+import { useEffect, useRef } from 'react';
+export function useSessionValidator() {
+  const hasRun = useRef(false);
+  useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+    validateSession();
+  }, []);
+}
+
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({

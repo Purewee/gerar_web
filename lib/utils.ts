@@ -30,3 +30,15 @@ export function normalizeImageUrl(url: string | null | undefined): string | null
   return url;
 }
 
+/**
+ * Delivery fee by subtotal (MNT):
+ * - 0–50,000₮ → 5,000₮
+ * - 50,001–90,000₮ → 3,000₮
+ * - above 90,000₮ → free
+ */
+export function getDeliveryFee(subtotal: number): number {
+  if (subtotal > 90_000) return 0;
+  if (subtotal > 50_000) return 3_000;
+  return 5_000;
+}
+

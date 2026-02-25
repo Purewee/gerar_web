@@ -35,6 +35,7 @@ import Image from 'next/image';
 import { CardSkeleton } from '@/components/skeleton';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { getDeliveryFee } from '@/lib/utils';
 
 function CartItemFavoriteRemove({
   productId,
@@ -216,7 +217,7 @@ export default function CartPage() {
     (sum, item) => sum + parseFloat(item.product?.price || '0') * item.quantity,
     0,
   );
-  const deliveryFee = 6980;
+  const deliveryFee = getDeliveryFee(subtotal);
   const total = subtotal + deliveryFee;
 
   const handleCheckout = async () => {

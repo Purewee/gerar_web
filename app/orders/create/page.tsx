@@ -30,6 +30,7 @@ import {
 import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { getDeliveryFee } from '@/lib/utils';
 
 export default function OrderCreatePage() {
   const router = useRouter();
@@ -697,7 +698,7 @@ export default function OrderCreatePage() {
     (sum, item) => sum + parseFloat(item.product?.price || '0') * item.quantity,
     0,
   );
-  const deliveryFee = 0; // Set to 0 for testing (e.g. 6000 for production)
+  const deliveryFee = getDeliveryFee(subtotal);
   const walletBalance = 0;
   const total = subtotal + deliveryFee - walletBalance;
 

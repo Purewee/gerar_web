@@ -22,13 +22,24 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
 
   useEffect(() => {
-    const auth = localStorage.getItem('isAuthenticated');
-    const storedMobile = localStorage.getItem('mobile');
-    if (auth === 'true' && storedMobile) {
-      setIsAuthenticated(true);
-    } else {
-      router.replace('/auth/login');
-    }
+    const checkAuth = () => {
+      const auth = localStorage.getItem('isAuthenticated');
+      const storedMobile = localStorage.getItem('mobile');
+      if (auth === 'true' && storedMobile) {
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        router.replace('/');
+        // Open the login modal so the user can re-authenticate
+        window.dispatchEvent(new CustomEvent('openLoginModal'));
+      }
+    };
+
+    checkAuth();
+
+    // React when session validator (or any 401) clears the auth state
+    window.addEventListener('authStateChanged', checkAuth);
+    return () => window.removeEventListener('authStateChanged', checkAuth);
   }, [router]);
 
   const handleLogout = async () => {
