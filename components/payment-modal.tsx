@@ -129,7 +129,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
             setWebUrl(response.data.webUrl);
           }
 
-          toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
+          toast.success('Төлбөрийн нэхэмжлэл үүслээ', {
             description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр Qpay апп ашиглана уу',
           });
         } else {
@@ -155,7 +155,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
       setHasInitiated(false);
 
       // Extract error message
-      let errorMessage = 'Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа';
+      let errorMessage = 'Төлбөрийн нэхэмжлэл үүсгэхэд алдаа гарлаа';
       if (error.message) {
         errorMessage = error.message;
         // Check if error indicates payment already in progress
@@ -274,7 +274,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
     try {
       await cancelPaymentMutation.mutateAsync(orderId);
       toast.success('Төлбөр цуцлагдлаа', {
-        description: 'Төлбөрийн нэхэмжлэх амжилттай цуцлагдлаа',
+        description: 'Төлбөрийн нэхэмжлэл амжилттай цуцлагдлаа',
       });
       onOpenChange(false);
     } catch (error: any) {
@@ -373,7 +373,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
                   </div>
                   <h3 className="text-3xl font-bold text-red-900 mb-3">Төлбөр цуцлагдсан</h3>
                   <p className="text-gray-700 text-lg mb-6">
-                    Төлбөрийн нэхэмжлэх цуцлагдсан байна. Шинээр төлбөр төлөх бол дахин оролдоно уу.
+                    Төлбөрийн нэхэмжлэл цуцлагдсан байна. Шинээр төлбөр төлөх бол дахин оролдоно уу.
                   </p>
                 </div>
               </CardContent>
@@ -398,8 +398,8 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
                       <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
                       <p className="text-gray-600">
                         {isWaitingForInitiation
-                          ? 'Төлбөрийн нэхэмжлэх үүсгэж байна. Хүлээж байна...'
-                          : 'Төлбөрийн нэхэмжлэх үүсгэж байна...'}
+                          ? 'Төлбөрийн нэхэмжлэл үүсгэж байна. Хүлээж байна...'
+                          : 'Төлбөрийн нэхэмжлэл үүсгэж байна...'}
                       </p>
                     </div>
                   ) : qrCode ? (
@@ -540,7 +540,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
                         <>
                           <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto mb-4" />
                           <p className="text-gray-700 mb-4 font-medium text-lg">
-                            Төлбөрийн нэхэмжлэх үүсгэж байна...
+                            Төлбөрийн нэхэмжлэл үүсгэж байна...
                           </p>
                         </>
                       ) : initiatePaymentMutation.isError ? (
@@ -549,7 +549,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
                             <XCircle className="w-12 h-12 text-red-600" />
                           </div>
                           <p className="text-gray-900 mb-2 font-bold text-lg">
-                            Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа
+                            Төлбөрийн нэхэмжлэл үүсгэхэд алдаа гарлаа
                           </p>
                           <p className="text-sm text-gray-600 mb-6">
                             Серверийн алдаа гарсан байна. Админтай холбогдох эсвэл дахин оролдоно
@@ -570,7 +570,7 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
                       ) : (
                         <>
                           <p className="text-gray-700 mb-6 font-medium text-lg">
-                            Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа
+                            Төлбөрийн нэхэмжлэл үүсгэхэд алдаа гарлаа
                           </p>
                           <Button
                             onClick={() => {

@@ -132,7 +132,7 @@ export default function OrderDetailPage() {
             console.warn('No payment URLs in response:', response.data);
           }
 
-          toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
+          toast.success('Төлбөрийн нэхэмжлэл үүслээ', {
             description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр Qpay апп ашиглана уу',
           });
         } else {
@@ -175,7 +175,7 @@ export default function OrderDetailPage() {
         setHasInitiated(false);
       }
 
-      let errorMessage = 'Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа';
+      let errorMessage = 'Төлбөрийн нэхэмжлэл үүсгэхэд алдаа гарлаа';
       if (err?.message) {
         errorMessage = err.message;
       } else if (err?.response?.status === 500) {
@@ -232,7 +232,7 @@ export default function OrderDetailPage() {
     try {
       await cancelPaymentMutation.mutateAsync(orderId);
       toast.success('Төлбөр цуцлагдлаа', {
-        description: 'Төлбөрийн нэхэмжлэх амжилттай цуцлагдлаа',
+        description: 'Төлбөрийн нэхэмжлэл амжилттай цуцлагдлаа',
       });
       router.refresh();
     } catch (error: any) {
@@ -309,7 +309,7 @@ export default function OrderDetailPage() {
                 {initiatePaymentMutation.isPending && !qrCode ? (
                   <div className="flex flex-col items-center justify-center py-4">
                     <Loader2 className="w-6 h-6 animate-spin text-primary mb-2" />
-                    <p className="text-xs text-gray-600">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
+                    <p className="text-xs text-gray-600">Төлбөрийн нэхэмжлэл үүсгэж байна...</p>
                   </div>
                 ) : qrCode ? (
                   <div className="space-y-2">
@@ -443,7 +443,7 @@ export default function OrderDetailPage() {
                               isFetchingPaymentStatus ? 'animate-spin' : ''
                             }`}
                           />
-                          Төлбөрийн шалгах
+                          Төлбөр шалгах
                         </Button>
                       </div>
                     )}
@@ -453,7 +453,7 @@ export default function OrderDetailPage() {
                     {initiatePaymentMutation.isPending ? (
                       <>
                         <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
-                        <p className="text-xs text-gray-600">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
+                        <p className="text-xs text-gray-600">Төлбөрийн нэхэмжлэл үүсгэж байна...</p>
                       </>
                     ) : (
                       <Button

@@ -163,7 +163,7 @@ export default function PaymentPage() {
           }
 
           // Show success toast
-          toast.success('Төлбөрийн нэхэмжлэх үүслээ', {
+          toast.success('Төлбөрийн нэхэмжлэл үүслээ', {
             description: 'QR код амжилттай үүслээ. Төлбөр төлөхөөр Qpay апп ашиглана уу',
           });
         } else {
@@ -190,7 +190,7 @@ export default function PaymentPage() {
       setHasInitiated(false);
 
       // Extract error message
-      let errorMessage = 'Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа';
+      let errorMessage = 'Төлбөрийн нэхэмжлэл үүсгэхэд алдаа гарлаа';
       if (error.message) {
         errorMessage = error.message;
       } else if (error?.response?.status === 500) {
@@ -283,7 +283,7 @@ export default function PaymentPage() {
     try {
       await cancelPaymentMutation.mutateAsync(orderId);
       toast.success('Төлбөр цуцлагдлаа', {
-        description: 'Төлбөрийн нэхэмжлэх амжилттай цуцлагдлаа',
+        description: 'Төлбөрийн нэхэмжлэл амжилттай цуцлагдлаа',
       });
       router.push(`/orders/${orderId}`);
     } catch (error: any) {
@@ -411,7 +411,7 @@ export default function PaymentPage() {
                 <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
                 <h3 className="text-2xl font-bold text-red-800 mb-2">Төлбөр цуцлагдсан</h3>
                 <p className="text-gray-700 mb-4">
-                  Төлбөрийн нэхэмжлэх цуцлагдсан байна. Шинээр төлбөр төлөх бол дахин оролдоно уу.
+                  Төлбөрийн нэхэмжлэл цуцлагдсан байна. Шинээр төлбөр төлөх бол дахин оролдоно уу.
                 </p>
                 <Button onClick={() => router.push(`/orders/${orderId}`)}>
                   Захиалгын дэлгэрэнгүй
@@ -435,7 +435,7 @@ export default function PaymentPage() {
                 {initiatePaymentMutation.isPending && !qrCode ? (
                   <div className="flex flex-col items-center justify-center py-12">
                     <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
-                    <p className="text-gray-600">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
+                    <p className="text-gray-600">Төлбөрийн нэхэмжлэл үүсгэж байна...</p>
                   </div>
                 ) : qrCode ? (
                   <div className="space-y-6">
@@ -578,13 +578,13 @@ export default function PaymentPage() {
                     {initiatePaymentMutation.isPending ? (
                       <>
                         <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-                        <p className="text-gray-600 mb-4">Төлбөрийн нэхэмжлэх үүсгэж байна...</p>
+                        <p className="text-gray-600 mb-4">Төлбөрийн нэхэмжлэл үүсгэж байна...</p>
                       </>
                     ) : initiatePaymentMutation.isError ? (
                       <>
                         <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                         <p className="text-gray-600 mb-2 font-semibold">
-                          Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа
+                          Төлбөрийн нэхэмжлэл үүсгэхэд алдаа гарлаа
                         </p>
                         <p className="text-sm text-gray-500 mb-4">
                           Серверийн алдаа гарсан байна. Админтай холбогдох эсвэл дахин оролдоно уу.
@@ -602,7 +602,7 @@ export default function PaymentPage() {
                     ) : (
                       <>
                         <p className="text-gray-600 mb-4">
-                          Төлбөрийн нэхэмжлэх үүсгэхэд алдаа гарлаа
+                          Төлбөрийн нэхэмжлэл үүсгэхэд алдаа гарлаа
                         </p>
                         <Button
                           onClick={() => {
