@@ -194,6 +194,7 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.categories.details(), id] as const,
     products: (id: number, includeSubcategories?: boolean) =>
       [...queryKeys.categories.detail(id), 'products', { includeSubcategories }] as const,
+    featuredCategories: () => [...queryKeys.categories.all, 'featured-categories'] as const,
   },
 
   // Products
@@ -578,6 +579,8 @@ export interface Product {
 export interface ProductsQueryParams {
   categoryId?: number;
   categoryIds?: number[];
+  featureId?: number;
+  featureIds?: number[];
   search?: string;
   inStock?: boolean;
   /** When true, only products with a sale (originalPrice set) are returned. */
@@ -607,6 +610,14 @@ const productsApiFunctions = {
     if (params?.categoryIds && params.categoryIds.length > 0) {
       params.categoryIds.forEach(id => {
         queryParams.append('categoryIds[]', id.toString());
+      });
+    }
+    if (params?.featureId) {
+      queryParams.append('featureId', params.featureId.toString());
+    }
+    if (params?.featureIds && params.featureIds.length > 0) {
+      params.featureIds.forEach(id => {
+        queryParams.append('featureIds[]', id.toString());
       });
     }
     if (params?.search) {
@@ -707,9 +718,13 @@ const categoriesApiFunctions = {
   ): Promise<ApiResponse<Product[]>> => {
     const params = new URLSearchParams();
     if (includeSubcategories) params.append('includeSubcategories', 'true');
-    params.append('isHidden', '0'); // Only visible products
+    params.append('isHidden', '0');
     const query = params.toString();
     return apiFetch<Product[]>(`/categories/${id}/products?${query}`);
+  },
+
+  getFeaturedCategories: async (): Promise<ApiResponse<Category[]>> => {
+    return apiFetch<Category[]>('/features');
   },
 };
 
@@ -718,6 +733,15 @@ export const useCategories = (options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: queryKeys.categories.list(),
     queryFn: () => categoriesApiFunctions.getAll(),
+    staleTime: 1.5 * 60 * 60 * 1000, // 1.5 hours
+    enabled: options?.enabled ?? true,
+  });
+};
+
+export const useFeaturedCategories = (options?: { enabled?: boolean }) => {
+  return useQuery({
+    queryKey: queryKeys.categories.featuredCategories(),
+    queryFn: () => categoriesApiFunctions.getFeaturedCategories(),
     staleTime: 1.5 * 60 * 60 * 1000, // 1.5 hours
     enabled: options?.enabled ?? true,
   });
@@ -1251,7 +1275,10 @@ export function validateDeliveryTimeSlot(
   const dateStr =
     typeof deliveryDate === 'string'
       ? deliveryDate
-      : `${deliveryDate.getFullYear()}-${String(deliveryDate.getMonth() + 1).padStart(2, '0')}-${String(deliveryDate.getDate()).padStart(2, '0')}`;
+      : `${deliveryDate.getFullYear()}-${String(deliveryDate.getMonth() + 1).padStart(
+          2,
+          '0',
+        )}-${String(deliveryDate.getDate()).padStart(2, '0')}`;
 
   const globalOff = options.offTimeSlots ?? [];
   const dateOff = options.offTimeSlotsByDate?.[dateStr] ?? [];
@@ -1265,7 +1292,10 @@ export function validateDeliveryTimeSlot(
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(
+      2,
+      '0',
+    )}-${String(tomorrow.getDate()).padStart(2, '0')}`;
     if (dateStr === tomorrowStr) {
       const currentTimeInHours = now.getHours() + now.getMinutes() / 60;
       if (currentTimeInHours >= 20 + 50 / 60) {

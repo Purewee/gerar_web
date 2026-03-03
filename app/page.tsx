@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
 import { useProducts, type Product } from '@/lib/api';
 import { useBanners } from '@/lib/api';
+import { useCategoriesStore } from '@/lib/stores/categories';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductSliderSkeleton, Spinner } from '@/components/skeleton';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
@@ -15,6 +16,33 @@ import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+
+// Fetches products for a feature (GET /products?featureId=...) and renders ProductListSection
+function FeatureProductSection({
+  featureId,
+  featureName,
+}: {
+  featureId: number;
+  featureName: string;
+}) {
+  const { data, isLoading } = useProducts({
+    featureId,
+    limit: 20,
+  });
+  const raw = data?.data;
+  const products = Array.isArray(raw) ? raw.filter(p => p && p.isHidden !== true) : [];
+
+  return (
+    <ProductListSection
+      sectionId={`feature-${featureId}`}
+      title={featureName}
+      linkHref={`/products?featureId=${featureId}`}
+      linkLabel={`${featureName} бүх бараа харах`}
+      products={products}
+      isLoading={isLoading}
+    />
+  );
+}
 
 // Reusable product list section (slider) with title and "view all" link
 export function ProductListSection({
@@ -115,26 +143,7 @@ export function ProductListSection({
 export default function Home() {
   const router = useRouter();
 
-  // Fetch products sorted by newest first - fetch more to have enough for subcategory grouping
-  const { data: productsResponse, isLoading: productsLoading } = useProducts({
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-    limit: 100, // Fetch more products to group by subcategory
-  });
-
-  const products = (productsResponse?.data || []).filter(p => p.isHidden !== true);
-
-  // Fetch sale products for the "Хямдралтай бараа" section
-  const { data: saleResponse, isLoading: saleLoading } = useProducts({
-    onSale: true,
-    limit: 24,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-  const saleProducts = (saleResponse?.data || []).filter(p => p.isHidden !== true);
-
-  const latestProducts = products.slice(0, 24);
-  const popularProducts = products.slice(0, 24);
+  const featuredCategories = useCategoriesStore(state => state.featuredCategories);
 
   // Fetch banners for hero carousel
   const { data: bannersResponse, isLoading: bannersLoading } = useBanners();
@@ -351,9 +360,7 @@ export default function Home() {
                       border-radius: 9999px;
                       width: 16px;
                       height: 8px;
-                      transition:
-                        background 0.2s,
-                        width 0.2s;
+                      transition: background 0.2s, width 0.2s;
                     }
                     .hero-carousel .swiper-pagination-bullet-active {
                       background: var(--primary);
@@ -371,38 +378,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Sale products list */}
-        <ProductListSection
-          sectionId="sale"
-          title="Хямдралтай бараа"
-          description="Онцгой хямдралтай бараанууд"
-          linkHref="/products?onSale=true"
-          linkLabel="Хямдралтай бүх бараа харах"
-          products={saleProducts}
-          isLoading={saleLoading || productsLoading}
-        />
-
-        {/* Popular products list */}
-        <ProductListSection
-          sectionId="popular"
-          title="Эрэлттэй бараа"
-          description="Хамгийн эрэлттэй бараанууд"
-          linkHref="/products"
-          linkLabel="Эрэлттэй бүх бараа харах"
-          products={popularProducts}
-          isLoading={productsLoading}
-        />
-
-        {/* Latest products list */}
-        <ProductListSection
-          sectionId="latest"
-          title="Сүүлд нэмэгдсэн бараа"
-          description="Шинэчлэгдсэн барааны жагсаалт"
-          linkHref="/products"
-          linkLabel="Сүүлд нэмэгдсэн бүх бараа харах"
-          products={latestProducts}
-          isLoading={productsLoading}
-        />
+        {/* Featured product lists (from features menu) */}
+        {featuredCategories.length > 0 &&
+          featuredCategories.map(feature => (
+            <FeatureProductSection
+              key={feature.id}
+              featureId={feature.id}
+              featureName={feature.name}
+            />
+          ))}
       </main>
     </div>
   );

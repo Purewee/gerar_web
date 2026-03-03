@@ -124,6 +124,13 @@ export function ProductCard({
               className="relative bg-gray-100 w-full overflow-hidden"
               style={{ aspectRatio: '1' }}
             >
+              {product?.stock === 0 && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50">
+                  <span className="text-white font-bold text-lg sm:text-xl uppercase tracking-wider">
+                    Дууссан
+                  </span>
+                </div>
+              )}
               {isImageUrl ? (
                 <Image
                   src={imageUrl}

@@ -86,7 +86,6 @@ function CategoryTreeItem({
     if (level === 0) {
       setIsExpanded(true);
     }
-     
   }, []); // Only run once on mount
 
   return (
@@ -208,6 +207,14 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   const inStock = searchParams.get('inStock');
   const sortBy = searchParams.get('sortBy') || 'createdAt';
   const sortOrder = searchParams.get('sortOrder') || 'desc';
+  const [minPriceDraft, setMinPriceDraft] = useState(minPrice);
+  const [maxPriceDraft, setMaxPriceDraft] = useState(maxPrice);
+
+  // Keep input drafts in sync with URL (back/forward, clear filters, etc.)
+  useEffect(() => {
+    setMinPriceDraft(minPrice);
+    setMaxPriceDraft(maxPrice);
+  }, [minPrice, maxPrice]);
 
   // Build category tree
   const _categoryTree = useMemo(() => buildCategoryTree(allCategories), [allCategories]);
@@ -244,14 +251,6 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
     }
   };
 
-  const handlePriceChange = (type: 'min' | 'max', value: string) => {
-    if (type === 'min') {
-      updateFilters({ minPrice: value || null });
-    } else {
-      updateFilters({ maxPrice: value || null });
-    }
-  };
-
   const handleStockChange = (checked: boolean) => {
     updateFilters({ inStock: checked ? 'true' : null });
   };
@@ -275,11 +274,10 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
   return (
     <div
       className={cn(
-        'space-y-5 sticky w-full top-24 backdrop-blur-md bg-white border border-gray-200 rounded-2xl p-4 shadow-lg',
+        'space-y-5 sticky w-full top-32 backdrop-blur-md bg-white border border-gray-200 rounded-2xl p-4 shadow-lg',
         className,
       )}
     >
-      {/* Header */}
       <div className="space-y-3 pb-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -302,7 +300,6 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
           )}
         </div>
 
-        {/* Products Count */}
         {productsCount !== undefined && !isLoading && (
           <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/10">
             <div className="flex-1">
@@ -323,153 +320,6 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
         )}
       </div>
 
-      {/* Categories */}
-      {/* <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-        <CardHeader className="border-b border-gray-100 p-3">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <div className="p-1.5 bg-primary/10 rounded-md">
-              <Package className="w-4 h-4 text-primary" />
-            </div>
-            Ангилал
-          </CardTitle>
-        </CardHeader>
-  
-        <CardContent className="p-3 w-full">
-          <div className="max-h-[400px] overflow-y-auto pr-2 space-y-1 w-full">
-            {categoryTree.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">
-                {isMounted ? "Ангилал олдсонгүй" : "Ачааллаж байна..."}
-              </p>
-            ) : (
-              categoryTree.map((category, index) => {
-                return (
-                  <CategoryTreeItem
-                    key={category.id}
-                    category={category}
-                    selectedCategories={selectedCategoryIds}
-                    onToggleCategory={handleCategoryToggle}
-                    isLast={index === categoryTree.length - 1}
-                    parentPath={[]}
-                  />
-                )
-              })
-            )}
-          </div>
-        </CardContent>
-      </Card> */}
-
-      {/* Price */}
-      <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-        <CardHeader className="p-3 border-b border-gray-100">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <div className="size-6 flex items-center justify-center bg-primary/10 rounded-md">
-              ₮
-            </div>
-            Үнэ
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="p-3 space-y-3">
-          <div className="flex items-center gap-3">
-            <Input
-              type="number"
-              placeholder="Хамгийн бага"
-              value={minPrice}
-              min="0"
-              onChange={e => handlePriceChange('min', e.target.value)}
-            />
-            <span className="text-gray-400">-</span>
-            <Input
-              type="number"
-              placeholder="Хамгийн их"
-              value={maxPrice}
-              min="0"
-              onChange={e => handlePriceChange('max', e.target.value)}
-            />
-          </div>
-
-          <Button
-            size="sm"
-            className="w-full"
-            onClick={() =>
-              updateFilters({
-                minPrice: minPrice || null,
-                maxPrice: maxPrice || null,
-              })
-            }
-          >
-            Үнэ шүүх
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Stock */}
-      <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-        <CardHeader className="p-3 border-b border-gray-100">
-          <CardTitle className="text-base font-semibold">Барааны нөөц</CardTitle>
-        </CardHeader>
-
-        <CardContent className="p-3">
-          <Button
-            variant={inStock === 'true' ? 'default' : 'outline'}
-            className="w-full justify-start gap-2"
-            onClick={() => handleStockChange(inStock !== 'true')}
-          >
-            <div
-              className={cn(
-                'w-2.5 h-2.5 rounded-full',
-                inStock === 'true' ? 'bg-green-400' : 'bg-gray-300',
-              )}
-            />
-            Зөвхөн нөөцтэй бараа
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Sort */}
-      <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-        <CardHeader className="p-3 border-b border-gray-100">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <div className="p-1.5 bg-primary/10 rounded-md">
-              <ArrowUpDown className="w-4 h-4 text-primary" />
-            </div>
-            Эрэмбэлэх
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="p-3">
-          <Select
-            value={`${sortBy}-${sortOrder}`}
-            onValueChange={value => {
-              const [sb, so] = value.split('-');
-              handleSortChange(sb, so);
-            }}
-          >
-            <SelectTrigger className="w-full rounded-xl border-gray-300 px-3 py-2.5 text-sm font-medium">
-              <SelectValue placeholder="Эрэмбэлэх" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Огноо</SelectLabel>
-                <SelectItem value="createdAt-desc">Шинэ эхэнд</SelectItem>
-                <SelectItem value="createdAt-asc">Хуучин эхэнд</SelectItem>
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel>Үнэ</SelectLabel>
-                <SelectItem value="price-asc">Хямд → Үнэтэй</SelectItem>
-                <SelectItem value="price-desc">Үнэтэй → Хямд</SelectItem>
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel>Нэр</SelectLabel>
-                <SelectItem value="name-asc">А → Я</SelectItem>
-                <SelectItem value="name-desc">Я → А</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      {/* Active Filters */}
       {hasActiveFilters && (
         <Card className="rounded-2xl border-2 border-primary/30 bg-primary/5 shadow-md">
           <CardContent className="p-4">
@@ -514,6 +364,148 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
           </CardContent>
         </Card>
       )}
+
+      {/* <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+        <CardHeader className="border-b border-gray-100 p-3">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <div className="p-1.5 bg-primary/10 rounded-md">
+              <Package className="w-4 h-4 text-primary" />
+            </div>
+            Ангилал
+          </CardTitle>
+        </CardHeader>
+  
+        <CardContent className="p-3 w-full">
+          <div className="max-h-[400px] overflow-y-auto pr-2 space-y-1 w-full">
+            {categoryTree.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-6">
+                {isMounted ? "Ангилал олдсонгүй" : "Ачааллаж байна..."}
+              </p>
+            ) : (
+              categoryTree.map((category, index) => {
+                return (
+                  <CategoryTreeItem
+                    key={category.id}
+                    category={category}
+                    selectedCategories={selectedCategoryIds}
+                    onToggleCategory={handleCategoryToggle}
+                    isLast={index === categoryTree.length - 1}
+                    parentPath={[]}
+                  />
+                )
+              })
+            )}
+          </div>
+        </CardContent>
+      </Card> */}
+
+      <Card className="rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+        <CardHeader className="p-3 border-b border-gray-100">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <div className="p-1.5 bg-primary/10 rounded-md">
+              <ArrowUpDown className="w-4 h-4 text-primary" />
+            </div>
+            Эрэмбэлэх
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="p-3">
+          <Select
+            value={`${sortBy}-${sortOrder}`}
+            onValueChange={value => {
+              const [sb, so] = value.split('-');
+              handleSortChange(sb, so);
+            }}
+          >
+            <SelectTrigger className="w-full rounded-xl border-gray-300 px-3 py-2.5 text-sm font-medium">
+              <SelectValue placeholder="Эрэмбэлэх" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Огноо</SelectLabel>
+                <SelectItem value="createdAt-desc">Шинэ эхэнд</SelectItem>
+                <SelectItem value="createdAt-asc">Хуучин эхэнд</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Үнэ</SelectLabel>
+                <SelectItem value="price-asc">Хямд → Үнэтэй</SelectItem>
+                <SelectItem value="price-desc">Үнэтэй → Хямд</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Нэр</SelectLabel>
+                <SelectItem value="name-asc">А → Я</SelectItem>
+                <SelectItem value="name-desc">Я → А</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl hidden sm:block border border-gray-100 shadow-sm hover:shadow-md transition">
+        <CardHeader className="p-3 border-b border-gray-100">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <div className="size-6 flex items-center justify-center bg-primary/10 rounded-md">
+              ₮
+            </div>
+            Үнэ
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="p-3 space-y-3">
+          <div className="flex items-center gap-3">
+            <Input
+              type="number"
+              placeholder="Хамгийн бага"
+              value={minPriceDraft}
+              min="0"
+              onChange={e => setMinPriceDraft(e.target.value)}
+            />
+            <span className="text-gray-400">-</span>
+            <Input
+              type="number"
+              placeholder="Хамгийн их"
+              value={maxPriceDraft}
+              min="0"
+              onChange={e => setMaxPriceDraft(e.target.value)}
+            />
+          </div>
+
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={() =>
+              updateFilters({
+                minPrice: minPriceDraft || null,
+                maxPrice: maxPriceDraft || null,
+              })
+            }
+          >
+            Үнэ шүүх
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl hidden sm:block border border-gray-100 shadow-sm hover:shadow-md transition">
+        <CardHeader className="p-3 border-b border-gray-100">
+          <CardTitle className="text-base font-semibold">Барааны нөөц</CardTitle>
+        </CardHeader>
+
+        <CardContent className="p-3">
+          <Button
+            variant={inStock === 'true' ? 'default' : 'outline'}
+            className="w-full justify-start gap-2"
+            onClick={() => handleStockChange(inStock !== 'true')}
+          >
+            <div
+              className={cn(
+                'w-2.5 h-2.5 rounded-full',
+                inStock === 'true' ? 'bg-green-400' : 'bg-gray-300',
+              )}
+            />
+            Зөвхөн нөөцтэй бараа
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -528,7 +528,7 @@ export default function OrderCreatePage() {
 
       // const response = await createOrderMutation.mutateAsync({...});
 
-      let addressIdToUse = selectedAddressId;
+      const addressIdToUse = selectedAddressId;
 
       if (!userName?.trim() || userName.trim().length < 2) {
         toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');

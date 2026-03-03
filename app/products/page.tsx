@@ -9,12 +9,11 @@ import { useProducts, type ProductsQueryParams } from '@/lib/api';
 import { ProductCard } from '@/components/product-card';
 import { ProductGridSkeleton } from '@/components/skeleton';
 import { FilterSidebar } from '@/components/filter-sidebar';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ArrowUp10, ArrowDown10, ArrowLeft } from 'lucide-react';
+
 function ProductsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch by only rendering dynamic content after mount
@@ -106,7 +105,6 @@ function ProductsContent() {
     return params;
   }, [searchParams]);
 
-  // Fetch products using hook
   const {
     data: productsResponse,
     isLoading: loading,
@@ -114,35 +112,6 @@ function ProductsContent() {
   } = useProducts(queryParams);
   const products = (productsResponse?.data || []).filter(p => p.isHidden !== true);
   const searchQuery = searchParams.get('search');
-
-  // Count active filters
-  const activeFiltersCount = useMemo(() => {
-    let count = 0;
-    if (searchParams.get('categoryId') || searchParams.get('categoryIds')) count++;
-    if (searchParams.get('minPrice') || searchParams.get('maxPrice')) count++;
-    if (searchParams.get('inStock') === 'true') count++;
-    if (searchParams.get('onSale') === 'true') count++;
-    return count;
-  }, [searchParams]);
-
-  const currentSortBy = searchParams.get('sortBy');
-  const currentSortOrder = searchParams.get('sortOrder') as 'asc' | 'desc' | null;
-
-  const isPriceSortActive = currentSortBy === 'price';
-  const nextSortOrder: 'asc' | 'desc' =
-    !isPriceSortActive || currentSortOrder === 'desc' ? 'asc' : 'desc';
-
-  const togglePriceSort = () => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    params.set('sortBy', 'price');
-    params.set('sortOrder', nextSortOrder);
-
-    // page байвал reset хийвэл UX дээр гоё
-    params.delete('page');
-
-    router.push(`/products?${params.toString()}`);
-  };
 
   const sortBy = searchParams.get('sortBy');
   const sortOrder = searchParams.get('sortOrder');
@@ -171,8 +140,8 @@ function ProductsContent() {
   };
 
   return (
-    <div className="bg-linear-to-b from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8">
+    <div className="bg-linear-to-b from-gray-50 via-white to-gray-50 relative">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8 h-full">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-8">
           {/* Top Row: Back Button and Title */}
@@ -207,56 +176,7 @@ function ProductsContent() {
             </div>
           </div>
 
-          {/* Bottom Row: Active Filters and Mobile Filter Button */}
           <div className="flex items-center justify-between gap-4">
-            {/* {mounted && activeFiltersCount > 0 && !loading && (
-              <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
-                {activeFiltersCount} шүүлт идэвхтэй
-              </span>
-            )} */}
-
-            {/* <Button
-              variant="outline"
-              onClick={togglePriceSort}
-              className="sm:hidden border-2 border-gray-300 hover:border-primary hover:bg-primary/5 transition-all shadow-sm hover:shadow-md"
-            >
-              Үнэ өсөх / буурах
-              {isPriceSortActive && currentSortOrder === 'asc' ? (
-                <ArrowUp className="w-4 h-4" />
-              ) : (
-                <ArrowDown className="w-4 h-4" />
-              )}
-            </Button> */}
-
-            {/* Mobile Filter Button */}
-            {/* <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="sm:hidden border-2 border-gray-300 hover:border-primary hover:bg-primary/5 transition-all shadow-sm hover:shadow-md"
-                >
-                  <Filter className="w-4 h-4 mr-2" />
-                  Шүүлт
-                  {mounted && activeFiltersCount > 0 && (
-                    <span className="ml-2 bg-primary text-primary-foreground rounded-full size-6 flex items-center justify-center text-[14px] leading-[14px] font-bold shadow-sm">
-                      {activeFiltersCount}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="left"
-                className="w-[85vw] sm:w-[400px] overflow-y-auto bg-gray-50"
-              >
-                <SheetHeader className="border-b border-gray-200 pb-4 mb-4">
-                  <SheetTitle className="text-xl font-bold text-gray-900">Шүүлт</SheetTitle>
-                </SheetHeader>
-                <div className="mt-2">
-                  <FilterSidebar productsCount={products.length} isLoading={loading} />
-                </div>
-              </SheetContent>
-            </Sheet> */}
-
             <div className="flex gap-2">
               <Button
                 variant={isPriceAscActive ? 'default' : 'outline'}
@@ -295,7 +215,7 @@ function ProductsContent() {
         <div className="flex gap-6 lg:gap-8">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block shrink-0 max-w-[350px] w-full">
-            <div className="sticky top-6">
+            <div className="sticky top-40">
               <FilterSidebar productsCount={products.length} isLoading={loading} />
             </div>
           </aside>

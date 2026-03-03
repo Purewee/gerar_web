@@ -12,7 +12,6 @@ import {
   ShoppingBag,
   Sparkles,
   ArrowRight,
-  TrendingUp,
   Heart,
   X,
   ChevronRight,
@@ -24,13 +23,10 @@ import {
   useCartRemove,
   useCartClear,
   useOrderCreate,
-  useProducts,
   useFavoriteStatus,
   useFavoriteAdd,
   useFavoriteRemove,
 } from '@/lib/api';
-import { useCategoriesStore } from '@/lib/stores/categories';
-import { ProductCard } from '@/components/product-card';
 import Image from 'next/image';
 import { CardSkeleton } from '@/components/skeleton';
 import { Input } from '@/components/ui/input';
@@ -120,22 +116,12 @@ export default function CartPage() {
     item => item.product == null || item.product.isHidden !== true,
   );
 
-  // Treat certain errors (like 401/403) as empty cart for better UX
   const isAuthError =
     cartError &&
     ((cartError as any)?.message?.includes('401') ||
       (cartError as any)?.message?.includes('403') ||
       (cartError as any)?.message?.includes('Authentication') ||
       (cartError as any)?.message?.includes('Unauthorized'));
-
-  // Fetch categories and products for suggestions
-  const categories = useCategoriesStore(state => state.categories);
-  const { data: productsResponse } = useProducts({
-    limit: 6,
-    sortBy: 'createdAt',
-    sortOrder: 'desc',
-  });
-  const suggestedProducts = (productsResponse?.data || []).filter(p => p.isHidden !== true);
 
   const updateCartMutation = useCartUpdate();
   const removeCartMutation = useCartRemove();
@@ -233,7 +219,7 @@ export default function CartPage() {
       setIsProceeding(false);
     } catch (error: any) {
       setIsProceeding(false);
-      toast.error('Алдаа гарлаа');
+      toast.error(error.message || 'Алдаа гарлаа');
     }
   };
 

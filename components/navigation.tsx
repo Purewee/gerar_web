@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, FormEvent } from 'react';
+import { useState, useEffect, useRef, useMemo, FormEvent } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { useCart, authApi, useSessionValidator } from '@/lib/api';
+import { useCart, authApi, useSessionValidator, productsApi } from '@/lib/api';
 import { useCategoriesStore } from '@/lib/stores/categories';
 import { LoginModal } from '@/components/auth/login-modal';
 import { RegisterModal } from '@/components/auth/register-modal';
@@ -25,6 +26,9 @@ import {
   Search,
   ShoppingCart,
   User,
+  Package,
+  Heart,
+  MapPin,
   ChevronDown,
   Menu,
   ChevronRight,
@@ -41,7 +45,6 @@ import {
   Hammer,
   EllipsisVertical,
 } from 'lucide-react';
-import path from 'path';
 
 export function Navigation() {
   const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
@@ -50,6 +53,8 @@ export function Navigation() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const mobileSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [userName, setUserName] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
@@ -187,14 +192,53 @@ export function Navigation() {
       router.push(`/products?search=${encodeURIComponent(query.trim())}`);
       setSearchQuery('');
       setMobileSearchQuery('');
+      setSearchFocused(false);
     }
   };
 
+  const showSearchPopover = searchFocused && searchQuery.trim().length >= 3;
+  const { data: searchResults } = useQuery({
+    queryKey: ['search-products', searchQuery.trim()],
+    queryFn: () => productsApi.getAll({ search: searchQuery.trim(), limit: 8 }),
+    enabled: showSearchPopover,
+  });
+  const searchProducts = searchResults?.data ?? [];
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    }
+    if (showSearchPopover) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showSearchPopover]);
+
   // Get categories from store (hydrated by CategoriesProvider)
   const allCategories = useCategoriesStore(state => state.categories);
+  const featuredCategoriesFromStore = useCategoriesStore(state => state.featuredCategories);
   const categoriesLoading = useCategoriesStore(state => state.isLoading);
   // Filter to show only parent categories (parentId === null)
   const categories = allCategories.filter(cat => cat.parentId === null);
+
+  const { navCategories, featuredCategories } = useMemo(() => {
+    const firstFour = categories.slice(0, 4);
+    const allById = new Map(allCategories.map(c => [c.id, c]));
+
+    // Use featured from store directly (has id, name from API) – no lookup needed
+    const featuredFromStore = featuredCategoriesFromStore;
+    const featuredResolved = featuredFromStore
+      .map(f => allById.get(f.id) ?? f)
+      .filter((cat): cat is (typeof allCategories)[number] & { id: number; name: string } =>
+        Boolean(cat?.id && cat?.name),
+      );
+
+    const navCategories = featuredResolved.length === 0 ? firstFour : [...firstFour];
+
+    return { navCategories, featuredCategories: featuredFromStore };
+  }, [categories, allCategories, featuredCategoriesFromStore]);
 
   // Get active categoryId from URL
   const categoryIdParam = searchParams?.get('categoryId');
@@ -412,7 +456,7 @@ export function Navigation() {
             </Link>
 
             {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-4 hidden sm:flex">
+            <div ref={searchContainerRef} className="flex-1 max-w-2xl mx-4 hidden sm:flex relative">
               <form onSubmit={e => handleSearch(e, searchQuery)} className="relative w-full">
                 <Input
                   type="text"
@@ -420,6 +464,7 @@ export function Navigation() {
                   className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value.replace(/[^\p{L}\p{N}\s]/gu, ''))}
+                  onFocus={() => setSearchFocused(true)}
                 />
                 <button
                   type="submit"
@@ -429,6 +474,65 @@ export function Navigation() {
                   <Search className="w-5 h-5" aria-hidden="true" />
                 </button>
               </form>
+              {showSearchPopover && (
+                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto">
+                  {searchProducts.length === 0 ? (
+                    <div className="p-4 text-sm text-gray-500 text-center">Илэрц олдсонгүй</div>
+                  ) : (
+                    <ul className="py-2">
+                      {searchProducts.map(product => {
+                        const img = product?.firstImage || product?.images?.[0];
+                        const price = Number(product?.price) || 0;
+                        return (
+                          <li key={product.id}>
+                            <Link
+                              href={`/product/${product.id}`}
+                              onClick={() => {
+                                setSearchQuery('');
+                                setSearchFocused(false);
+                              }}
+                              className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
+                            >
+                              <div className="shrink-0 w-10 h-10 rounded-md bg-gray-100 overflow-hidden">
+                                {img && (img.startsWith('http') || img.startsWith('/')) ? (
+                                  <Image
+                                    src={img}
+                                    alt={product?.name ?? ''}
+                                    width={40}
+                                    height={40}
+                                    className="object-cover w-full h-full"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-lg">
+                                    📦
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                  {product?.name}
+                                </p>
+                                <p className="text-xs text-primary font-semibold">
+                                  {price.toLocaleString()}₮
+                                </p>
+                              </div>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  <div className="border-t border-gray-100 px-4 py-2">
+                    <Link
+                      href={`/products?search=${encodeURIComponent(searchQuery.trim())}`}
+                      onClick={() => setSearchFocused(false)}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      Бүх үр дүнг харах →
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Icons */}
@@ -470,10 +574,28 @@ export function Navigation() {
                     className="bg-white border border-gray-200 shadow-xl rounded-lg mt-2 w-48"
                   >
                     <DropdownMenuItem asChild className="cursor-pointer">
-                      <a href="/profile" className="flex items-center gap-2 w-full">
+                      <Link href="/profile" className="flex items-center gap-2 w-full">
                         <User className="w-4 h-4" />
                         Профайл харах
-                      </a>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link href="/profile/orders" className="flex items-center gap-2 w-full">
+                        <Package className="w-4 h-4" />
+                        Миний захиалга
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link href="/profile/favorites" className="flex items-center gap-2 w-full">
+                        <Heart className="w-4 h-4" />
+                        Хүслийн жагсаалт
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link href="/profile/addresses" className="flex items-center gap-2 w-full">
+                        <MapPin className="w-4 h-4" />
+                        Хаягууд
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleLogout}
@@ -524,60 +646,111 @@ export function Navigation() {
                     <Spinner size="sm" className="border-white/30 border-t-white" />
                   </div>
                 ) : categories.length > 0 ? (
-                  <>
-                    <HoverCard openDelay={10} closeDelay={10}>
-                      <HoverCardTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="flex items-center gap-2 p-2 rounded cursor-pointer text-black hover:bg-white/10"
-                          aria-label="Ангилал нээх"
+                  <div className="divide-x divide-gray-300 flex items-center w-full overflow-x-auto scrollbar-hide flex-nowrap min-w-0">
+                    <div className="shrink-0">
+                      <HoverCard openDelay={10} closeDelay={10}>
+                        <HoverCardTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="flex items-center gap-2 p-2 rounded cursor-pointer text-black hover:bg-white/10"
+                            aria-label="Ангилал нээх"
+                          >
+                            <Menu className="size-4" aria-hidden="true" />
+                            <span className="uppercase text-sm font-medium">Ангилал</span>
+                          </Button>
+                        </HoverCardTrigger>
+                        <HoverCardContent
+                          side="bottom"
+                          align="start"
+                          sideOffset={0}
+                          className="bg-white text-primary w-[700px] p-4 rounded-md shadow-lg border-gray-200"
                         >
-                          <Menu className="size-4" aria-hidden="true" />
-                          <span className="uppercase text-sm font-medium">Ангилал</span>
-                        </Button>
-                      </HoverCardTrigger>
-                      <HoverCardContent
-                        side="bottom"
-                        align="start"
-                        className="bg-white text-primary w-[700px] p-4 rounded-md shadow-lg border-gray-200"
-                      >
-                        <div className="flex gap-6">
-                          <div className="w-1/3 space-y-0.5 border-r border-gray-200 pr-4">
-                            {categories.map(cat => (
-                              <div
-                                key={cat.id}
-                                onMouseEnter={() => setDesktopActiveCategory(cat)}
-                                className={`flex justify-between w-full items-center p-2 rounded cursor-pointer text-sm ${
-                                  desktopActiveCategory?.id === cat.id
-                                    ? 'bg-neutral-100 font-medium'
-                                    : 'hover:bg-neutral-50'
-                                }`}
-                              >
-                                <Link
-                                  href={`/products?categoryId=${cat.id}`}
-                                  className="uppercase w-full text-gray-800 hover:text-primary"
+                          <div className="flex gap-6">
+                            <div className="w-1/3 space-y-0.5 border-r border-gray-200 pr-4">
+                              {categories.map(cat => (
+                                <div
+                                  key={cat.id}
+                                  onMouseEnter={() => setDesktopActiveCategory(cat)}
+                                  className={`flex justify-between w-full items-center p-2 rounded cursor-pointer text-sm ${
+                                    desktopActiveCategory?.id === cat.id
+                                      ? 'bg-neutral-100 font-medium'
+                                      : 'hover:bg-neutral-50'
+                                  }`}
                                 >
-                                  {cat.name}
-                                </Link>
-                                {cat.children && cat.children.length > 0 && (
-                                  <ChevronRight
-                                    className="h-4 w-4 text-neutral-500 shrink-0"
-                                    aria-hidden="true"
-                                  />
+                                  <Link
+                                    href={`/products?categoryId=${cat.id}`}
+                                    className="uppercase w-full text-gray-800 hover:text-primary"
+                                  >
+                                    {cat.name}
+                                  </Link>
+                                  {cat.children && cat.children.length > 0 && (
+                                    <ChevronRight
+                                      className="h-4 w-4 text-neutral-500 shrink-0"
+                                      aria-hidden="true"
+                                    />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="w-2/3">
+                              {desktopActiveCategory?.children &&
+                                desktopActiveCategory.children.length > 0 && (
+                                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                                    {desktopActiveCategory.children.map(child => (
+                                      <div key={child.id}>
+                                        <Link
+                                          href={`/products?categoryId=${child.id}`}
+                                          onClick={() => setSelectedChildCategoryId(child.id)}
+                                          className="block font-medium text-gray-800 hover:text-primary uppercase mb-1 text-sm"
+                                          aria-label={`${child.name} ангиллын бараа харах`}
+                                        >
+                                          {child.name}
+                                        </Link>
+                                      </div>
+                                    ))}
+                                  </div>
                                 )}
-                              </div>
-                            ))}
+                            </div>
                           </div>
-                          <div className="w-2/3">
-                            {desktopActiveCategory?.children &&
-                              desktopActiveCategory.children.length > 0 && (
-                                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                                  {desktopActiveCategory.children.map(child => (
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+
+                    <div className="flex items-center shrink-0">
+                      {navCategories.map(category => {
+                        const hasChildren = category.children && category.children.length > 0;
+                        const isCategoryActive = finalActiveCategoryId === category.id;
+                        const hasActiveChild =
+                          activeCategoryInfo?.isChild &&
+                          activeCategoryInfo?.parent?.id === category.id;
+
+                        if (hasChildren) {
+                          return (
+                            <HoverCard key={category.id} openDelay={10} closeDelay={10}>
+                              <HoverCardTrigger asChild>
+                                <Link
+                                  href={`/products?categoryId=${category.id}`}
+                                  className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
+                                    isCategoryActive || hasActiveChild ? 'bg-white/10' : ''
+                                  }`}
+                                  aria-label={`${category.name} ангиллын бараа харах`}
+                                  aria-current={isCategoryActive ? 'page' : undefined}
+                                >
+                                  {category.name}
+                                </Link>
+                              </HoverCardTrigger>
+                              <HoverCardContent
+                                side="bottom"
+                                align="start"
+                                sideOffset={0}
+                                className="bg-white text-black w-full md:w-[500px] p-4 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6 rounded-md shadow-lg border-gray-200"
+                              >
+                                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 text-sm">
+                                  {category.children?.map(child => (
                                     <div key={child.id}>
                                       <Link
                                         href={`/products?categoryId=${child.id}`}
-                                        onClick={() => setSelectedChildCategoryId(child.id)}
-                                        className="block font-medium text-gray-800 hover:text-primary uppercase mb-1 text-sm"
+                                        className="font-medium text-gray-600 hover:text-primary uppercase block py-1"
                                         aria-label={`${child.name} ангиллын бараа харах`}
                                       >
                                         {child.name}
@@ -585,91 +758,54 @@ export function Navigation() {
                                     </div>
                                   ))}
                                 </div>
-                              )}
-                          </div>
-                        </div>
-                      </HoverCardContent>
-                    </HoverCard>
+                              </HoverCardContent>
+                            </HoverCard>
+                          );
+                        }
 
-                    {/* Each category as HoverCard or Link - first 4 only */}
-                    {categories.slice(0, 4).map(category => {
-                      const hasChildren = category.children && category.children.length > 0;
-                      const isCategoryActive = finalActiveCategoryId === category.id;
-                      const hasActiveChild =
-                        activeCategoryInfo?.isChild &&
-                        activeCategoryInfo?.parent?.id === category.id;
-
-                      if (hasChildren) {
                         return (
-                          <HoverCard key={category.id} openDelay={10} closeDelay={10}>
-                            <HoverCardTrigger asChild>
-                              <Link
-                                href={`/products?categoryId=${category.id}`}
-                                className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
-                                  isCategoryActive || hasActiveChild ? 'bg-white/10' : ''
-                                }`}
-                                aria-label={`${category.name} ангиллын бараа харах`}
-                                aria-current={isCategoryActive ? 'page' : undefined}
-                              >
-                                {category.name}
-                              </Link>
-                            </HoverCardTrigger>
-                            <HoverCardContent
-                              side="bottom"
-                              align="start"
-                              className="bg-white text-black w-full md:w-[500px] p-4 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6 rounded-md shadow-lg border-gray-200"
-                            >
-                              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8 text-sm">
-                                {category.children?.map(child => (
-                                  <div key={child.id}>
-                                    <Link
-                                      href={`/products?categoryId=${child.id}`}
-                                      className="font-medium text-gray-600 hover:text-primary uppercase block py-1"
-                                      aria-label={`${child.name} ангиллын бараа харах`}
-                                    >
-                                      {child.name}
-                                    </Link>
-                                  </div>
-                                ))}
-                              </div>
-                            </HoverCardContent>
-                          </HoverCard>
+                          <Link
+                            key={category.id}
+                            href={`/products?categoryId=${category.id}`}
+                            className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
+                              isCategoryActive ? 'bg-white/10' : ''
+                            }`}
+                            aria-label={`${category.name} ангиллын бараа харах`}
+                            aria-current={isCategoryActive ? 'page' : undefined}
+                          >
+                            {category.name}
+                          </Link>
                         );
-                      }
-
-                      return (
-                        <Link
-                          key={category.id}
-                          href={`/products?categoryId=${category.id}`}
-                          className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
-                            isCategoryActive ? 'bg-white/10' : ''
-                          }`}
-                          aria-label={`${category.name} ангиллын бараа харах`}
-                          aria-current={isCategoryActive ? 'page' : undefined}
-                        >
-                          {category.name}
-                        </Link>
-                      );
-                    })}
-
-                    {/* Хямдралтай link */}
-                    {(() => {
-                      const isSaleActive =
-                        pathname === '/products' && searchParams?.get('onSale') === 'true';
-                      return (
-                        <Link
-                          href="/products?onSale=true"
-                          className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
-                            isSaleActive ? 'bg-white/10' : ''
-                          }`}
-                          aria-label="Хямдралтай бараа харах"
-                          aria-current={isSaleActive ? 'page' : undefined}
-                        >
-                          Хямдралтай
-                        </Link>
-                      );
-                    })()}
-                  </>
+                      })}
+                    </div>
+                    {featuredCategories.length > 0 && (
+                      <div className="flex items-center gap-1 pl-2 shrink-0">
+                        {featuredCategories.map(category => {
+                          const isCategoryActive = finalActiveCategoryId === category.id;
+                          return (
+                            <Link
+                              key={category.id}
+                              href={`/products?categoryId=${category.id}`}
+                              className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
+                                isCategoryActive ? 'bg-white/10' : 'hover:text-gray-600'
+                              }`}
+                              aria-label={`${category.name} ангиллын бараа харах`}
+                              aria-current={isCategoryActive ? 'page' : undefined}
+                            >
+                              {category.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <Link
+                      href={`/products`}
+                      className={`flex cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase hover:text-gray-600`}
+                      aria-label={`Бүх бараа харах`}
+                    >
+                      Бүх бараа
+                    </Link>
+                  </div>
                 ) : (
                   <span className="text-sm text-gray-400 px-4">Ангилал олдсонгүй</span>
                 )}
@@ -932,7 +1068,9 @@ export function Navigation() {
                     href="/profile"
                     onClick={() => setMobileProfileMenuOpen(false)}
                     className={`flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2
-                    ${isActive('/profile') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''}
+                    ${
+                      isActive('/profile') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''
+                    }
                       `}
                   >
                     <User className="w-5 h-5" />
@@ -942,7 +1080,11 @@ export function Navigation() {
                     href="/profile/orders"
                     onClick={() => setMobileProfileMenuOpen(false)}
                     className={`flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2
-                    ${isActive('/profile/orders') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''}
+                    ${
+                      isActive('/profile/orders')
+                        ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                        : ''
+                    }
                       `}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -959,7 +1101,11 @@ export function Navigation() {
                     href="/profile/favorites"
                     onClick={() => setMobileProfileMenuOpen(false)}
                     className={`flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2
-                    ${isActive('/profile/favorites') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''}
+                    ${
+                      isActive('/profile/favorites')
+                        ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                        : ''
+                    }
                       `}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -976,7 +1122,11 @@ export function Navigation() {
                     href="/profile/addresses"
                     onClick={() => setMobileProfileMenuOpen(false)}
                     className={`flex items-center gap-3 py-3 px-5 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2
-                    ${isActive('/profile/addresses') ? 'bg-primary/10 text-primary font-medium shadow-sm' : ''}
+                    ${
+                      isActive('/profile/addresses')
+                        ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                        : ''
+                    }
                       `}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

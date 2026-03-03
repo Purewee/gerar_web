@@ -6,37 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Home, ListOrdered, Heart, User, ShoppingCart } from 'lucide-react';
 import { useCart } from '@/lib/api';
 
-/** Combined hamburger menu + magnifying glass icon (single integrated graphic) */
-function MenuSearchIcon({
-  className,
-  strokeWidth = 2,
-}: {
-  className?: string;
-  strokeWidth?: number;
-}) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden
-    >
-      {/* Hamburger: three horizontal lines on the left */}
-      <line x1="3" y1="6" x2="10" y2="6" />
-      <line x1="3" y1="12" x2="10" y2="12" />
-      <line x1="3" y1="18" x2="10" y2="18" />
-      {/* Magnifying glass: circle aligned to the right of the lines */}
-      <circle cx="14" cy="10" r="5" />
-      {/* Handle: down and to the right */}
-      <line x1="17.5" y1="12.5" x2="21" y2="16" />
-    </svg>
-  );
-}
-
 const navItems = [
   { href: '/', label: 'Нүүр', labelEn: 'Home', icon: Home },
   { href: '/profile', label: 'Бүртгэл', labelEn: 'Profile', icon: User },
@@ -93,12 +62,12 @@ export function BottomNav() {
             href === '/'
               ? pathname === '/'
               : href === '/profile'
-                ? pathname === '/profile'
-                : href === '/profile/orders'
-                  ? pathname === '/profile/orders'
-                  : href === '/profile/favorites'
-                    ? pathname === '/profile/favorites'
-                    : pathname?.startsWith(href);
+              ? pathname === '/profile'
+              : href === '/profile/orders'
+              ? pathname === '/profile/orders'
+              : href === '/profile/favorites'
+              ? pathname === '/profile/favorites'
+              : pathname?.startsWith(href);
 
           const needsLoginButton = isProfile || isFavorites || isOrders;
           const isGuestAuthItem = isGuestProfile || isGuestFavorites || isGuestOrders;
