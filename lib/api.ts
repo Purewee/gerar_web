@@ -7,7 +7,7 @@ export interface Banner {
   imageDesktop: string;
   title?: string;
   description?: string;
-  link?: string;
+  linkUrl?: string;
   order?: number;
   createdAt: string;
   updatedAt: string;

@@ -539,7 +539,15 @@ export default function CartPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Хүргэлтийн үнэ</span>
                     <span className="font-medium text-gray-900">
+                      {deliveryFee === 0 ? '\u00A0\u00A0\u00A0' : ''}
                       {deliveryFee.toLocaleString()}₮
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm w-full">
+                    <span className="text-gray-600 bg-orange-100 w-full border-orange-400 border rounded-md p-2">
+                      <span> </span> 0 – 50,000₮ захиалга = 5,000₮ <br /> 50,000 – 90,000₮ захиалга
+                      = 3,000₮ <br />
+                      90,000₮ + захиалга = <span className="uppercase text-red-500">үнэгүй</span>
                     </span>
                   </div>
                   <div className="border-t border-gray-200 pt-3 mt-3">

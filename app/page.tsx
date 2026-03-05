@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { RegisterModal } from '@/components/auth/register-modal';
+import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
 import { useProducts, type Product } from '@/lib/api';
@@ -16,6 +18,23 @@ import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+
+function RegisterSectionButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button
+        className="mt-4 px-8 sm:px-16 text-lg h-10 sm:h-12 text-white bg-primary border border-primary/50 border-2 hover:bg-primary/90 hover:text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-100"
+        onClick={() => setOpen(true)}
+        variant={'outline'}
+        type="button"
+      >
+        Бүртгүүлэх
+      </Button>
+      <RegisterModal open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
 
 // Fetches products for a feature (GET /products?featureId=...) and renders ProductListSection
 function FeatureProductSection({
@@ -155,7 +174,7 @@ export default function Home() {
     title: banner.title || '',
     subtitle: banner.title || '',
     discount: banner.description || '',
-    link: banner.link || '#',
+    link: banner.linkUrl || '#',
     imageMobile: banner.imageMobile,
     imageDesktop: banner.imageDesktop,
   }));
@@ -208,23 +227,31 @@ export default function Home() {
           <div className="relative">
             {!bannersLoading && carouselItems.length > 0 ? (
               <div className="relative hero-carousel">
-                {carouselItems.length > 1 && (
-                  <>
-                    <button
-                      className="hero-swiper-prev cursor-pointer absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
-                      aria-label="Өмнөх слайд"
-                    >
-                      <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
-                    </button>
-                    <button
-                      className="hero-swiper-next cursor-pointer absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-white/30"
-                      aria-label="Дараагийн слайд"
-                    >
-                      <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
-                    </button>
-                  </>
-                )}
-                <div className="hero-carousel relative w-full min-h-[300px] sm:h-[400px] lg:h-[500px] max-w-7xl mx-auto">
+                <div className="hero-carousel relative w-full max-w-7xl mx-auto aspect-[4/5] sm:aspect-[16/9] min-h-[300px] sm:h-[400px] lg:h-[500px]">
+                  {carouselItems.length > 1 && (
+                    <>
+                      <button
+                        className="hero-swiper-prev cursor-pointer absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-gray-100"
+                        aria-label="Өмнөх слайд"
+                        style={{ top: '50%', transform: 'translateY(-50%)' }}
+                      >
+                        <ChevronLeft
+                          className="w-4 h-4 sm:w-5 sm:h-5 text-gray-100"
+                          aria-hidden="true"
+                        />
+                      </button>
+                      <button
+                        className="hero-swiper-next cursor-pointer absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-20 p-2 sm:p-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full transition-all duration-300 hover:scale-110 border border-gray-100"
+                        aria-label="Дараагийн слайд"
+                        style={{ top: '50%', transform: 'translateY(-50%)' }}
+                      >
+                        <ChevronRight
+                          className="w-4 h-4 sm:w-5 sm:h-5 text-gray-100"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </>
+                  )}
                   <Swiper
                     modules={[Autoplay, Navigation, Pagination]}
                     navigation={{
@@ -264,7 +291,7 @@ export default function Home() {
                               <Image
                                 src={item.imageMobile}
                                 alt={item.title}
-                                className="object-cover w-full h-full absolute inset-0 block sm:hidden"
+                                className="object-cover w-full h-full absolute inset-0 block sm:hidden bg-gradient-to-r from-black/60 via-black/20 to-transparent"
                                 priority={item.id === carouselItems[0]?.id}
                                 fill
                                 fetchPriority={item.id === carouselItems[0]?.id ? 'high' : 'auto'}
@@ -318,6 +345,28 @@ export default function Home() {
                             />
                           ) : null}
 
+                          {/* Banner overlay: title, subtitle, link */}
+                          {item.link && (
+                            <div className="absolute z-10 flex flex-col items-center text-white h-full w-full ">
+                              {item.link &&
+                                item.link !== '#' &&
+                                (item.link.startsWith('/') ? (
+                                  <Link
+                                    href={item.link}
+                                    onClick={e => e.stopPropagation()}
+                                    scroll={true}
+                                  ></Link>
+                                ) : (
+                                  <a
+                                    href={item.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={e => e.stopPropagation()}
+                                  ></a>
+                                ))}
+                            </div>
+                          )}
+
                           {/* <div className="relative z-10 flex flex-col items-center justify-center gap-4 lg:gap-6 text-center w-full h-full">
                             <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white">
                               {item.subtitle}
@@ -360,7 +409,9 @@ export default function Home() {
                       border-radius: 9999px;
                       width: 16px;
                       height: 8px;
-                      transition: background 0.2s, width 0.2s;
+                      transition:
+                        background 0.2s,
+                        width 0.2s;
                     }
                     .hero-carousel .swiper-pagination-bullet-active {
                       background: var(--primary);
@@ -378,6 +429,32 @@ export default function Home() {
           </div>
         </section>
 
+        {/* <div className="gap-4 pt-12 pb-8 md:flex mx-auto items-center flex-row justify-center max-w-7xl">
+          <div className="p-4 items-center justify-center flex flex-col gap-2 ">
+            <Truck className="w-18 h-18 bg-primary/15 text-primary rounded-tl-4xl rounded-tr-2xl rounded-br-4xl rounded-bl-2xl p-4" />
+            <h2 className="p-2 text-gray-700 font-semibold text-lg sm:text-xl">
+              Найдвартай хүргэлт
+            </h2>
+            <p className="flex items-center justify-center text-center text-gray-500 text-sm max-w-xs px-8">
+              Таны захиалгыг баталгаажсанаас хойш товлосон хугацаанд найдвартай хүргэнэ.
+            </p>
+          </div>
+          <div className="p-4 items-center justify-center flex flex-col gap-2 ">
+            <Pointer className="w-18 h-18 bg-primary/15 text-primary rounded-tl-4xl rounded-tr-2xl rounded-br-4xl rounded-bl-2xl p-4" />
+            <h2 className="p-2 text-gray-700 font-semibold text-lg sm:text-xl">Хялбар захиалга</h2>
+            <p className="flex items-center justify-center text-center text-gray-500 text-sm max-w-xs px-8">
+              Гэр ахуйн бараагаа манай сайтаар хүссэн үедээ онлайнаар хялбар захиалаарай.
+            </p>
+          </div>
+          <div className="p-4 items-center justify-center flex flex-col gap-2 ">
+            <HandCoins className="w-18 h-18 bg-primary/15 text-primary rounded-tl-4xl rounded-tr-2xl rounded-br-4xl rounded-bl-2xl p-4" />
+            <h2 className="p-2 text-gray-700 font-semibold text-lg sm:text-xl">Аюулгүй төлбөр</h2>
+            <p className="flex items-center justify-center text-center text-gray-500 text-sm max-w-xs px-8">
+              QR код болон дурын банкны апп ашиглан аюулгүй төлбөр төлөх боломжтой.
+            </p>
+          </div>
+        </div> */}
+
         {/* Featured product lists (from features menu) */}
         {featuredCategories.length > 0 &&
           featuredCategories.map(feature => (
@@ -387,6 +464,17 @@ export default function Home() {
               featureName={feature.name}
             />
           ))}
+
+        <div className="gap-4 pt-12 pb-8 md:flex mx-auto items-center flex-row justify-center max-w-7xl mt-4 border-t border-gray-200 px-8">
+          <div className="flex flex-col items-center mb-12 mt-4 gap-2">
+            <h2 className="font-semibold text-2xl text-center">Та манай сайтад бүртгүүлээрэй</h2>
+            <p className="text-sm max-w-lg text-gray-500 mt-4 text-center">
+              Бүртгэлтэй хэрэглэгч болсноор захиалгаа хурдан баталгаажуулах, өмнөх захиалгаа харах,
+              дуртай бараагаа хадгалах болон хүргэлтийн хаягаа автоматаар ашиглах боломжтой.
+            </p>
+            <RegisterSectionButton />
+          </div>
+        </div>
       </main>
     </div>
   );

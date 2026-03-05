@@ -16,7 +16,7 @@ const Footer = dynamic(() => import('@/components/footer').then(mod => mod.HomeF
 });
 
 export const metadata: Metadata = {
-  title: 'Gerar household гэр ахуйн бараа бүтээгдэхүүн',
+  title: 'Gerar Household - Гэр ахуйн бараа бүтээгдэхүүн',
   description:
     'GERAR-д тавтай морил! Тавилга, гэрийн чимэглэл, гэрэлтүүлэг, орны даавуу, гал тогооны хэрэгсэл болон гэрийн тавилгын бүх хэрэгцээнд хамгийн сайн хямд үнэ, санал болголттой.',
   other: {

@@ -284,8 +284,8 @@ export default function ProductDetailPage() {
                   addFavoriteMutation.isPending || removeFavoriteMutation.isPending
                     ? 'Хүлээж байна...'
                     : isFavorite
-                    ? 'Дуртай жагсаалтаас устгах'
-                    : 'Дуртай жагсаалтад нэмэх'
+                      ? 'Дуртай жагсаалтаас устгах'
+                      : 'Дуртай жагсаалтад нэмэх'
                 }
               >
                 <Heart
@@ -307,17 +307,17 @@ export default function ProductDetailPage() {
                   isInCart
                     ? `${product.name} сагсанд байна`
                     : addToCartMutation.isPending
-                    ? 'Сагсанд нэмэж байна...'
-                    : `${product.name} сагсанд нэмэх`
+                      ? 'Сагсанд нэмж байна...'
+                      : `${product.name} сагсанд нэмэх`
                 }
               >
                 <ShoppingCart className="w-4 h-4 mr-2" aria-hidden="true" />
                 <span>
                   {addToCartMutation.isPending
-                    ? 'Нэмэж байна...'
+                    ? 'Нэмж байна...'
                     : isInCart
-                    ? `Сагслагдсан${cartQuantity > 1 ? ` (${cartQuantity})` : ''}`
-                    : 'Сагсанд нэмэх'}
+                      ? `Сагслагдсан${cartQuantity > 1 ? ` (${cartQuantity})` : ''}`
+                      : 'Сагсанд нэмэх'}
                 </span>
               </Button>
               <Button

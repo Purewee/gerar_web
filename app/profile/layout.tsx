@@ -12,7 +12,7 @@ type MenuItem = 'profile' | 'orders' | 'favorites' | 'addresses';
 const menuItems: { id: MenuItem; label: string; href: string; icon: typeof User }[] = [
   { id: 'profile', label: 'Миний профайл', href: '/profile', icon: User },
   { id: 'orders', label: 'Миний захиалгууд', href: '/profile/orders', icon: ShoppingBag },
-  { id: 'favorites', label: 'Миний дуртай', href: '/profile/favorites', icon: Heart },
+  { id: 'favorites', label: 'Миний хадгалсан', href: '/profile/favorites', icon: Heart },
   { id: 'addresses', label: 'Хаягууд', href: '/profile/addresses', icon: MapPin },
 ];
 
