@@ -105,7 +105,9 @@ export default function ProfileOrdersPage() {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4">
               <ShoppingBag className="w-10 h-10 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Одоогоор захиалга байхгүй</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Одоогоор захиалга байхгүй байна
+            </h3>
             <p className="text-muted-foreground mb-6">Анхны захиалгаа үүсгэх үү?</p>
             <Button variant="outline" asChild className="shadow-sm">
               <Link href="/">Дэлгүүрт орох</Link>

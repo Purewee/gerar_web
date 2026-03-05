@@ -44,6 +44,9 @@ import {
   Car,
   Hammer,
   EllipsisVertical,
+  GripVertical,
+  SoapDispenserDroplet,
+  SprayCan,
 } from 'lucide-react';
 
 export function Navigation() {
@@ -197,12 +200,22 @@ export function Navigation() {
   };
 
   const showSearchPopover = searchFocused && searchQuery.trim().length >= 3;
-  const { data: searchResults } = useQuery({
+  // Desktop search
+  const { data: searchResults, isLoading: searchLoading } = useQuery({
     queryKey: ['search-products', searchQuery.trim()],
     queryFn: () => productsApi.getAll({ search: searchQuery.trim(), limit: 8 }),
     enabled: showSearchPopover,
   });
   const searchProducts = searchResults?.data ?? [];
+
+  // Mobile search
+  const showMobileSearchPopover = mobileSearchQuery.trim().length >= 3 && mobileSearchOpen;
+  const { data: mobileSearchResults, isLoading: mobileSearchLoading } = useQuery({
+    queryKey: ['mobile-search-products', mobileSearchQuery.trim()],
+    queryFn: () => productsApi.getAll({ search: mobileSearchQuery.trim(), limit: 8 }),
+    enabled: showMobileSearchPopover,
+  });
+  const mobileSearchProducts = mobileSearchResults?.data ?? [];
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -476,7 +489,11 @@ export function Navigation() {
               </form>
               {showSearchPopover && (
                 <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto">
-                  {searchProducts.length === 0 ? (
+                  {searchLoading ? (
+                    <div className="flex items-center justify-center p-6">
+                      <Spinner className="w-6 h-6 text-primary" />
+                    </div>
+                  ) : searchProducts.length === 0 ? (
                     <div className="p-4 text-sm text-gray-500 text-center">Илэрц олдсонгүй</div>
                   ) : (
                     <ul className="py-2">
@@ -832,89 +849,117 @@ export function Navigation() {
                     ))}
                   </div>
                 ) : categories.length > 0 ? (
-                  categories.map((category, index) => {
-                    const hasChildren = category.children && category.children.length > 0;
-                    const isExpanded = expandedCategoryId === category.id;
-                    const isActive = finalActiveCategoryId === category.id;
-                    const hasActiveChild =
-                      activeCategoryInfo?.isChild && activeCategoryInfo?.parent?.id === category.id;
-                    // Parent is active if it's expanded, itself active, OR one of its children is active
-                    const isParentActive = isExpanded || isActive || hasActiveChild;
+                  <>
+                    {categories.map((category, index) => {
+                      const hasChildren = category.children && category.children.length > 0;
+                      const isExpanded = expandedCategoryId === category.id;
+                      const isActive = finalActiveCategoryId === category.id;
+                      const hasActiveChild =
+                        activeCategoryInfo?.isChild &&
+                        activeCategoryInfo?.parent?.id === category.id;
+                      // Parent is active if it's expanded, itself active, OR one of its children is active
+                      const isParentActive = isExpanded || isActive || hasActiveChild;
 
-                    const categoryIcons: LucideIcon[] = [
-                      BrushCleaning,
-                      CookingPot,
-                      UserRound,
-                      Mars,
-                      Venus,
-                      Baby,
-                      PawPrint,
-                      Cable,
-                      Car,
-                      Hammer,
-                    ];
-                    const Icon = categoryIcons[index] ?? EllipsisVertical;
+                      const categoryIcons: LucideIcon[] = [
+                        BrushCleaning,
+                        CookingPot,
+                        SoapDispenserDroplet,
+                        SprayCan,
+                        Mars,
+                        Venus,
+                        Baby,
+                        PawPrint,
+                        Cable,
+                        Car,
+                        Hammer,
+                      ];
+                      const Icon = categoryIcons[index] ?? EllipsisVertical;
 
-                    return (
-                      <button
-                        key={category.id}
-                        type="button"
-                        onClick={e => {
-                          if (hasChildren) {
-                            e.preventDefault();
-                            // Toggle expand/collapse on parent tap
-                            if (isExpanded) {
-                              setExpandedCategoryId(null);
-                              setSelectedChildCategoryId(null);
+                      return (
+                        <button
+                          key={category.id}
+                          type="button"
+                          onClick={e => {
+                            if (hasChildren) {
+                              e.preventDefault();
+                              // Toggle expand/collapse on parent tap
+                              if (isExpanded) {
+                                setExpandedCategoryId(null);
+                                setSelectedChildCategoryId(null);
+                              } else {
+                                setExpandedCategoryId(category.id);
+                                setSelectedChildCategoryId(null);
+                              }
                             } else {
-                              setExpandedCategoryId(category.id);
-                              setSelectedChildCategoryId(null);
+                              // Зөвхөн хүүхэдгүй parent дээр л линк рүү явна
+                              router.push(
+                                `/products?categoryId=${encodeURIComponent(category.id)}`,
+                              );
                             }
-                          } else {
-                            // Зөвхөн хүүхэдгүй parent дээр л линк рүү явна
-                            router.push(`/products?categoryId=${encodeURIComponent(category.id)}`);
+                          }}
+                          onBlur={e => {
+                            e.currentTarget.style.outline = 'none';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          onMouseDown={e => {
+                            e.currentTarget.style.outline = 'none';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                          className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-3.5 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
+                            isParentActive
+                              ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
+                              : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
+                          }`}
+                          aria-label={
+                            hasChildren
+                              ? `${category.name} ангиллын дэд ангилал ${
+                                  isExpanded ? 'хаах' : 'нээх'
+                                }`
+                              : `${category.name} ангиллын бараа харах`
                           }
-                        }}
-                        onBlur={e => {
-                          e.currentTarget.style.outline = 'none';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                        onMouseDown={e => {
-                          e.currentTarget.style.outline = 'none';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                        className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-3.5 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
-                          isParentActive
-                            ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
-                            : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
-                        }`}
-                        aria-label={
-                          hasChildren
-                            ? `${category.name} ангиллын дэд ангилал ${
-                                isExpanded ? 'хаах' : 'нээх'
-                              }`
-                            : `${category.name} ангиллын бараа харах`
-                        }
-                        aria-expanded={hasChildren ? isExpanded : undefined}
-                      >
-                        <Icon className="w-4 h-4 mr-1" />
-                        <span className="relative z-10">{category.name}</span>
-                        {hasChildren && (
-                          <ChevronDown
-                            className={`w-3.5 h-3.5 transition-all duration-300 relative z-10 ${
-                              isExpanded || hasActiveChild
-                                ? 'rotate-180 text-primary'
-                                : 'text-gray-700 group-hover:text-primary group-hover:translate-y-0.5'
-                            }`}
-                            aria-hidden="true"
-                          />
-                        )}
-                        {!isParentActive && (
-                          <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
-                        )}
-                      </button>
-                    );
-                  })
+                          aria-expanded={hasChildren ? isExpanded : undefined}
+                        >
+                          <Icon className="w-4 h-4 mr-1" />
+                          <span className="relative z-10">{category.name}</span>
+                          {hasChildren && (
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 transition-all duration-300 relative z-10 ${
+                                isExpanded || hasActiveChild
+                                  ? 'rotate-180 text-primary'
+                                  : 'text-gray-700 group-hover:text-primary group-hover:translate-y-0.5'
+                              }`}
+                              aria-hidden="true"
+                            />
+                          )}
+                          {!isParentActive && (
+                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
+                          )}
+                        </button>
+                      );
+                    })}
+                    {/* Бүх бараа button */}
+                    {(() => {
+                      const isAllActive = pathname === '/products' && !finalActiveCategoryId;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => router.push('/products')}
+                          className={`text-xs sm:text-sm font-semibold whitespace-nowrap py-2.5 px-3.5 shrink-0 flex items-center gap-1.5 rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
+                            isAllActive
+                              ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
+                              : 'text-gray-700 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
+                          }`}
+                          aria-label="Бүх бараа харах"
+                        >
+                          <GripVertical className="w-4 h-4 mr-1" />
+                          <span className="relative z-10">Бүх бараа</span>
+                          {!isAllActive && (
+                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
+                          )}
+                        </button>
+                      );
+                    })()}
+                  </>
                 ) : (
                   <span className="text-xs text-gray-500">Ангилал олдсонгүй</span>
                 )}
@@ -980,7 +1025,7 @@ export function Navigation() {
                 ref={mobileSearchInputRef}
                 type="text"
                 placeholder="Тавилга, чимэглэл, гэрийн хэрэгсэл хайх...."
-                className="pl-10 pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                className="pl-10 pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-[16px]"
                 value={mobileSearchQuery}
                 onChange={e =>
                   setMobileSearchQuery(e.target.value.replace(/[^^\p{L}\p{N}\s]/gu, ''))
@@ -1006,6 +1051,70 @@ export function Navigation() {
                 </svg>
               </button>
             </form>
+            {/* Mobile Search Suggestions */}
+            {showMobileSearchPopover && (
+              <div className="absolute left-0 right-0 mt-1 z-50 bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto">
+                {mobileSearchLoading ? (
+                  <div className="flex items-center justify-center p-6">
+                    <Spinner className="w-6 h-6 text-primary" />
+                  </div>
+                ) : mobileSearchProducts.length === 0 ? (
+                  <div className="p-4 text-sm text-gray-500 text-center">Илэрц олдсонгүй</div>
+                ) : (
+                  <ul className="py-2">
+                    {mobileSearchProducts.map(product => {
+                      const img = product?.firstImage || product?.images?.[0];
+                      const price = Number(product?.price) || 0;
+                      return (
+                        <li key={product.id}>
+                          <Link
+                            href={`/product/${product.id}`}
+                            onClick={() => {
+                              setMobileSearchOpen(false);
+                              setMobileSearchQuery('');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="shrink-0 w-10 h-10 rounded-md bg-gray-100 overflow-hidden">
+                              {img && (img.startsWith('http') || img.startsWith('/')) ? (
+                                <Image
+                                  src={img}
+                                  alt={product?.name ?? ''}
+                                  width={40}
+                                  height={40}
+                                  className="object-cover w-full h-full"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-lg">
+                                  📦
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {product?.name}
+                              </p>
+                              <p className="text-xs text-primary font-semibold">
+                                {price.toLocaleString()}₮
+                              </p>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                <div className="border-t border-gray-100 px-4 py-2">
+                  <Link
+                    href={`/products?search=${encodeURIComponent(mobileSearchQuery.trim())}`}
+                    onClick={() => setMobileSearchOpen(false)}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    Бүх үр дүнг харах →
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
