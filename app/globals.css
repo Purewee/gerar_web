@@ -105,8 +105,36 @@
 
     header > div > nav svg {
       transform: none !important;
-      transition: transform 0.2s ease, color 0.2s ease !important;
+      transition:
+        transform 0.2s ease,
+        color 0.2s ease !important;
     }
+  }
+}
+
+.scrollbar-responsive {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+@media (min-width: 640px) and (max-width: 1279px) {
+  /* sm - lg */
+  .scrollbar-responsive {
+    scrollbar-color: rgba(107, 114, 128, 0.7) transparent; /* Tailwind gray-500/transparent */
+  }
+}
+
+@media (min-width: 1280px) {
+  /* xl+ */
+  .scrollbar-responsive {
+    scrollbar-width: none; /* hide */
+  }
+}
+
+@media (max-width: 640px) {
+  /* sm */
+  .scrollbar-responsive {
+    scrollbar-width: none; /* hide */
   }
 }
 
@@ -157,7 +185,9 @@
     background: #fff !important;
     opacity: 1 !important;
     border-radius: 16px !important;
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 4px 6px -2px rgb(0 0 0 / 0.05);
   }
 
   /* Thin scrollbar for desktop product sliders */
@@ -319,12 +349,14 @@
 
 @layer utilities {
   .toast-animate-in {
-    animation: toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    animation:
+      toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
       toast-fade-in 0.4s ease-out;
   }
 
   .toast-animate-out {
-    animation: toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
+    animation:
+      toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
       toast-fade-out 0.3s ease-in;
   }
 
@@ -335,26 +367,30 @@
 
 /* Toast Animation Styles - Applied to Radix Toast Root */
 [data-radix-toast-root][data-state='open'] {
-  animation: toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+  animation:
+    toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     toast-fade-in 0.4s ease-out forwards !important;
   transform-origin: bottom right;
 }
 
 [data-radix-toast-root][data-state='closed'] {
-  animation: toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
+  animation:
+    toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
     toast-fade-out 0.3s ease-in forwards !important;
   transform-origin: bottom right;
 }
 
 /* Fallback for any toast element with data-state */
 .group[data-state='open'] {
-  animation: toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+  animation:
+    toast-slide-in-from-bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     toast-fade-in 0.4s ease-out forwards;
   transform-origin: bottom right;
 }
 
 .group[data-state='closed'] {
-  animation: toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
+  animation:
+    toast-slide-out-to-bottom 0.3s cubic-bezier(0.4, 0, 1, 1),
     toast-fade-out 0.3s ease-in forwards;
   transform-origin: bottom right;
 }
