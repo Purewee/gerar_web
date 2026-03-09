@@ -176,9 +176,9 @@ function ProductsContent() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-4">
+          {/* <div className="flex items-center justify-between gap-4">
             <div className="flex gap-2">
-              <Button
+               <Button
                 variant={isPriceAscActive ? 'default' : 'outline'}
                 onClick={handlePriceAsc}
                 className={`border-2 transition-colors
@@ -191,9 +191,9 @@ function ProductsContent() {
               >
                 Үнэ өсөхөөр
                 <ArrowUp10 className="ml-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              </Button>
+              </Button> 
 
-              <Button
+               <Button
                 variant={isPriceDescActive ? 'default' : 'outline'}
                 onClick={handlePriceDesc}
                 className={`border-2 transition-colors
@@ -206,9 +206,9 @@ function ProductsContent() {
               >
                 Үнэ буурахаар
                 <ArrowDown10 className="w-4 h-4 ml-2 transition-transform group-hover:-translate-x-1" />
-              </Button>
+              </Button> 
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Main Content with Sidebar */}
