@@ -262,7 +262,7 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-md sm:text-3xl lg:text-4xl px-8 sm:px-0 text-gray-500 mb-4 py-4 text-center">
+                <p className="text-md sm:text-xl lg:text-2xl px-8 sm:px-0 text-gray-500 mb-4 py-4 text-center">
                   {cartError ? 'Сагс ачаалахад алдаа гарлаа' : 'Таны сагс одоогоор хоосон байна'}
                 </p>
                 <p className="text-gray-600 mb-2 text-center max-w-lg text-lg leading-5">

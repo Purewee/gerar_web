@@ -9,7 +9,8 @@ import { useProducts, type ProductsQueryParams } from '@/lib/api';
 import { ProductCard } from '@/components/product-card';
 import { ProductGridSkeleton } from '@/components/skeleton';
 import { FilterSidebar } from '@/components/filter-sidebar';
-import { ArrowUp10, ArrowDown10, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { FilterSidebarMobile } from '@/components/filter-sidebar-mobile';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -143,13 +144,13 @@ function ProductsContent() {
     <div className="bg-linear-to-b from-gray-50 via-white to-gray-50 relative">
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8 h-full">
         {/* Header */}
-        <div className="flex flex-col gap-4 mb-8">
+        <div className="flex hidden sm:block flex-col gap-4 mb-8">
           {/* Top Row: Back Button and Title */}
           <div className="flex items-center gap-3 sm:gap-4">
             <Button
               variant="outline"
               onClick={() => router.back()}
-              className="sm:flex hidden items-center gap-2 px-3 sm:px-4 py-2 border-2 border-gray-200 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-200 rounded-lg shadow-sm hover:shadow-md group"
+              className="sm:flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-gray-200 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-200 rounded-lg shadow-sm hover:shadow-md group"
               aria-label="Өмнөх хуудас руу буцах"
             >
               <ArrowLeft
@@ -175,40 +176,6 @@ function ProductsContent() {
               </h1>
             </div>
           </div>
-
-          {/* <div className="flex items-center justify-between gap-4">
-            <div className="flex gap-2">
-               <Button
-                variant={isPriceAscActive ? 'default' : 'outline'}
-                onClick={handlePriceAsc}
-                className={`border-2 transition-colors
-      ${
-        isPriceAscActive
-          ? 'border-primary text-primary bg-primary/5 hover:border-primary hover:text-primary hover:bg-primary/10'
-          : 'border-gray-300 text-gray-700 hover:border-primary hover:text-primary'
-      }
-    `}
-              >
-                Үнэ өсөхөөр
-                <ArrowUp10 className="ml-2 w-4 h-4 transition-transform group-hover:-translate-x-1" />
-              </Button> 
-
-               <Button
-                variant={isPriceDescActive ? 'default' : 'outline'}
-                onClick={handlePriceDesc}
-                className={`border-2 transition-colors
-      ${
-        isPriceDescActive
-          ? 'border-primary text-primary bg-primary/5 hover:border-primary hover:text-primary hover:bg-primary/10'
-          : 'border-gray-300 text-gray-700 hover:border-primary hover:text-primary'
-      }
-    `}
-              >
-                Үнэ буурахаар
-                <ArrowDown10 className="w-4 h-4 ml-2 transition-transform group-hover:-translate-x-1" />
-              </Button> 
-            </div>
-          </div> */}
         </div>
 
         {/* Main Content with Sidebar */}
@@ -222,6 +189,11 @@ function ProductsContent() {
 
           {/* Products Section */}
           <main className="flex-1 min-w-0">
+            <FilterSidebarMobile
+              productsCount={products.length}
+              isLoading={loading}
+              className="sm:hidden"
+            />
             {!mounted || loading ? (
               <ProductGridSkeleton count={8} grid />
             ) : productsError ? (
