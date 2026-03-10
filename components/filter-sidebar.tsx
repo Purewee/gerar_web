@@ -422,14 +422,14 @@ export function FilterSidebar({ className, productsCount, isLoading }: FilterSid
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectLabel>Огноо</SelectLabel>
-                <SelectItem value="createdAt-desc">Шинэ эхэнд</SelectItem>
-                <SelectItem value="createdAt-asc">Хуучин эхэнд</SelectItem>
-              </SelectGroup>
-              <SelectGroup>
                 <SelectLabel>Үнэ</SelectLabel>
                 <SelectItem value="price-asc">Хямд → Үнэтэй</SelectItem>
                 <SelectItem value="price-desc">Үнэтэй → Хямд</SelectItem>
+              </SelectGroup>
+              <SelectGroup>
+                <SelectLabel>Огноо</SelectLabel>
+                <SelectItem value="createdAt-desc">Шинэ эхэнд</SelectItem>
+                <SelectItem value="createdAt-asc">Хуучин эхэнд</SelectItem>
               </SelectGroup>
               <SelectGroup>
                 <SelectLabel>Нэр</SelectLabel>

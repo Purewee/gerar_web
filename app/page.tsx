@@ -159,6 +159,8 @@ export function ProductListSection({
   );
 }
 
+import { MobileHomeFooter } from '@/components/mobile-footer';
+
 export default function Home() {
   const router = useRouter();
 
@@ -227,7 +229,7 @@ export default function Home() {
           <div className="relative">
             {!bannersLoading && carouselItems.length > 0 ? (
               <div className="relative hero-carousel">
-                <div className="hero-carousel relative w-full max-w-7xl mx-auto aspect-[4/5] sm:aspect-[16/9] min-h-[300px] sm:h-[400px] lg:h-[500px]">
+                <div className="hero-carousel relative w-full max-w-7xl mx-auto aspect-[4/3] sm:aspect-[16/9] min-h-[300px] sm:h-[400px] lg:h-[500px]">
                   {carouselItems.length > 1 && (
                     <>
                       <button
@@ -476,6 +478,10 @@ export default function Home() {
           </div>
         </div>
       </main>
+      {/* Mobile: зөвхөн homepage дээр footer */}
+      <div className="block md:hidden">
+        <MobileHomeFooter />
+      </div>
     </div>
   );
 }

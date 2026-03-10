@@ -733,16 +733,16 @@ export function Navigation() {
                                         : 'hover:bg-neutral-50'
                                     }`}
                                   >
-                                    <Link
-                                      href={`/products?categoryId=${cat.id}`}
-                                      className="flex items-center gap-2 w-full text-gray-800 group-hover:text-primary font-medium"
+                                    <button
+                                      onClick={e => e.preventDefault()}
+                                      className="flex items-center gap-2 w-full text-gray-800 group-hover:text-primary font-medium cursor-pointer"
                                     >
                                       <Icon
                                         className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
                                         aria-hidden="true"
                                       />
                                       <span className="group-hover:text-primary">{cat.name}</span>
-                                    </Link>
+                                    </button>
 
                                     {cat.children && cat.children.length > 0 && (
                                       <ChevronRight
@@ -1072,10 +1072,10 @@ export function Navigation() {
                         >
                           <div className="flex ml-3.5 gap-1">
                             <GripVertical className="w-4 h-4" />
-                            <span className="relative z-10 uppercase">Бүх бараа</span>
+                            <span className="relative z-10">Бүх бараа</span>
                           </div>
                           {!isAllActive && (
-                            <span className="absolute inset-0 bg-linear-to-r from-primary/15 to-primary/15 duration-300 rounded-lg" />
+                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
                           )}
                           <MoveRight className="w-4 h-4 mr-2" />
                         </button>
