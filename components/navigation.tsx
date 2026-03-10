@@ -281,6 +281,10 @@ export function Navigation() {
     activeCategoryId !== null && !isNaN(activeCategoryId) && activeCategoryId > 0;
   const finalActiveCategoryId = isValidCategoryId ? activeCategoryId : null;
 
+  // Get active featureId from URL (for featured categories section)
+  const featureIdParam = searchParams?.get('featureId');
+  const activeFeatureId = featureIdParam ? parseInt(featureIdParam, 10) : null;
+
   // Find the active category (could be parent or child)
   const findActiveCategory = () => {
     if (!finalActiveCategoryId) return null;
@@ -911,11 +915,12 @@ export function Navigation() {
                     {featuredCategories.length > 0 && (
                       <div className="flex items-center gap-1 px-2 shrink-0 h-full">
                         {featuredCategories.map(category => {
-                          const isCategoryActive = finalActiveCategoryId === category.id;
+                          const isCategoryActive =
+                            activeFeatureId !== null && activeFeatureId === category.id;
                           return (
                             <Link
                               key={category.id}
-                              href={`/products?categoryId=${category.id}`}
+                              href={`/products?featureId=${category.id}`}
                               className={`flex gap-1 cursor-pointer select-none h-full hover:underline items-center rounded-sm px-1 py-2 text-sm font-medium outline-none hover:bg-white/10 uppercase ${
                                 isCategoryActive ? 'underline' : ''
                               }`}

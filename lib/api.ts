@@ -33,7 +33,7 @@ export const bannersApi = bannersApiFunctions;
 
 // ...existing code...
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 
 /**
  * Note: All queries default to refetchOnWindowFocus: false (configured in lib/providers.tsx).
@@ -46,6 +46,7 @@ export interface ApiResponse<T> {
   success: boolean;
   message: string;
   data?: T;
+  pagination?: Pagination;
   error?: {
     code: string;
     message: string;
@@ -677,6 +678,27 @@ export const useProducts = (params?: ProductsQueryParams) => {
   return useQuery({
     queryKey: queryKeys.products.list(params),
     queryFn: () => productsApiFunctions.getAll(params),
+  });
+};
+
+export const useInfiniteProducts = (params?: ProductsQueryParams) => {
+  return useInfiniteQuery({
+    queryKey: [...queryKeys.products.list(params), 'infinite'],
+    queryFn: ({ pageParam = 1 }) => productsApiFunctions.getAll({ ...params, page: pageParam, limit: 30 }),
+    getNextPageParam: (lastPage, allPages) => {
+      const lastPageData = lastPage.data || [];
+      const pagination = lastPage.pagination;
+      
+      if (pagination && pagination.page < pagination.totalPages) {
+        return pagination.page + 1;
+      }
+      
+      if (lastPageData.length < 30) {
+        return undefined;
+      }
+      return allPages.length + 1;
+    },
+    initialPageParam: 1,
   });
 };
 

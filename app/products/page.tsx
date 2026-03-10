@@ -1,16 +1,36 @@
 'use client';
 
-import { Suspense, useMemo, useState, useEffect } from 'react';
+import { Suspense, useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { useProducts, type ProductsQueryParams } from '@/lib/api';
+import { useInfiniteProducts, type ProductsQueryParams } from '@/lib/api';
 import { ProductCard } from '@/components/product-card';
 import { ProductGridSkeleton } from '@/components/skeleton';
 import { FilterSidebar } from '@/components/filter-sidebar';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { FilterSidebarMobile } from '@/components/filter-sidebar-mobile';
+
+function ObserverDiv({ onIntersect, disabled }: { onIntersect: () => void; disabled?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (disabled) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          onIntersect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [disabled, onIntersect]);
+
+  return <div ref={ref} className="h-4 w-full" />;
+}
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -26,6 +46,7 @@ function ProductsContent() {
   const queryParams: ProductsQueryParams = useMemo(() => {
     const params: ProductsQueryParams = {};
 
+    // Category filters
     const categoryId = searchParams.get('categoryId');
     if (categoryId) {
       const id = parseInt(categoryId, 10);
@@ -39,6 +60,22 @@ function ProductsContent() {
         .map(id => parseInt(id.trim(), 10))
         .filter(id => !isNaN(id));
       if (ids.length > 0) params.categoryIds = ids;
+    }
+
+    // Feature filters
+    const featureId = searchParams.get('featureId');
+    if (featureId) {
+      const id = parseInt(featureId, 10);
+      if (!isNaN(id)) params.featureId = id;
+    }
+
+    const featureIds = searchParams.get('featureIds');
+    if (featureIds) {
+      const ids = featureIds
+        .split(',')
+        .map(id => parseInt(id.trim(), 10))
+        .filter(id => !isNaN(id));
+      if (ids.length > 0) params.featureIds = ids;
     }
 
     const search = searchParams.get('search');
@@ -109,9 +146,18 @@ function ProductsContent() {
   const {
     data: productsResponse,
     isLoading: loading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
     error: productsError,
-  } = useProducts(queryParams);
-  const products = (productsResponse?.data || []).filter(p => p.isHidden !== true);
+  } = useInfiniteProducts(queryParams);
+
+  const pages = productsResponse?.pages || [];
+  const products = pages
+    .flatMap(page => page.data || [])
+    .filter(p => p.isHidden !== true);
+
+  const totalProductsCount = productsResponse?.pages?.[0]?.pagination?.total ?? products.length;
   const searchQuery = searchParams.get('search');
 
   const sortBy = searchParams.get('sortBy');
@@ -183,14 +229,14 @@ function ProductsContent() {
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block shrink-0 max-w-[350px] w-full">
             <div className="sticky top-40">
-              <FilterSidebar productsCount={products.length} isLoading={loading} />
+              <FilterSidebar productsCount={totalProductsCount} isLoading={loading} />
             </div>
           </aside>
 
           {/* Products Section */}
           <main className="flex-1 min-w-0">
             <FilterSidebarMobile
-              productsCount={products.length}
+              productsCount={totalProductsCount}
               isLoading={loading}
               className="sm:hidden"
             />
@@ -233,17 +279,37 @@ function ProductsContent() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4 sm:gap-5">
-                {products.map((product, index) => (
-                  <div
-                    key={product.id}
-                    className="animate-in fade-in slide-in-from-bottom-4"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <ProductCard product={product} inGrid={true} className="h-full" />
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {products.map((product, index) => (
+                    <div
+                      key={product.id}
+                      className="animate-in fade-in slide-in-from-bottom-4"
+                    >
+                      <ProductCard product={product} inGrid={true} className="h-full" />
+                    </div>
+                  ))}
+                </div>
+                
+                {hasNextPage && (
+                  <div className="mt-8 flex justify-center">
+                    <ObserverDiv 
+                      onIntersect={() => {
+                        if (!isFetchingNextPage) {
+                          fetchNextPage();
+                        }
+                      }} 
+                      disabled={isFetchingNextPage}
+                    />
+                    {isFetchingNextPage && (
+                      <div className="flex items-center gap-2 text-primary">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span className="font-medium">Уншиж байна...</span>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </main>
         </div>
