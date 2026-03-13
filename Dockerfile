@@ -3,7 +3,10 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+# Install pnpm globally
+RUN npm install -g pnpm
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 RUN npm run build
