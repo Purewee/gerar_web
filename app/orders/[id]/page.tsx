@@ -360,7 +360,8 @@ export default function OrderDetailPage() {
                                 {/* Icon */}
                                 <div className="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden">
                                   {url.logo ? (
-                                    <Image
+                                    /* eslint-disable-next-line @next/next/no-img-element */
+                                    <img
                                       src={url.logo}
                                       alt={url.name}
                                       className="w-9 h-9 object-contain"
