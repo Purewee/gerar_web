@@ -35,6 +35,8 @@ const nextConfig = {
     },
     // Optimize build size
     compress: true,
+    // Enable standalone output for minimal Docker image size
+    output: "standalone",
     // Reduce bundle size
     experimental: {
       optimizePackageImports: [
