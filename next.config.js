@@ -14,6 +14,10 @@ const nextConfig = {
           hostname: "api.gerar.mn",
         },
         {
+          protocol: "https",
+          hostname: "v1.gerar.mn",
+        },
+        {
           protocol: "http",
           hostname: "localhost",
         },
@@ -27,7 +31,7 @@ const nextConfig = {
         },
         {
           protocol: "http",
-          hostname: "192.168.1.3",
+          hostname: "192.168.1.4",
         },
       ],
       // Disable optimization for development to avoid localhost private IP resolution issues
