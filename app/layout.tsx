@@ -15,11 +15,54 @@ const Footer = dynamic(() => import('@/components/footer').then(mod => mod.HomeF
 });
 
 export const metadata: Metadata = {
-  title: 'Gerar Household - Гэр ахуйн бараа бүтээгдэхүүн',
+  metadataBase: new URL('https://gerar.mn'),
+  title: {
+    default: 'Gerar Household - Гэр ахуйн бараа бүтээгдэхүүн',
+    template: '%s | Gerar Household',
+  },
   description:
-    'Gerar Household-д тавтай морил! Манай гэр ахуйн барааны дэлгүүр нь таны өдөр тутмын хэрэгцээг бүрэн хангах өргөн сонголттой бүтээгдэхүүнийг нэг дороос санал болгож байна. Гал тогооны хэрэгсэл, цэвэрлэгээний бүтээгдэхүүн, цахилгаан хэрэгслийн дагалдах хэрэгсэл, гоо сайхан болон автомашин, гар багаж зэрэг зайлшгүй шаардлагатай бараануудыг худалдаалж байна. Таны амьдралыг илүү хялбар, цэгцтэй, тав тухтай болгох нь бидний зорилго.',
-  other: {
-    'google-fonts': 'https://fonts.googleapis.com',
+    'Gerar Household-д тавтай морил! Манай гэр ахуйн барааны дэлгүүр нь таны өдөр тутмын хэрэгцээг бүрэн хангах өргөн сонголттой бүтээгдэхүүнийг нэг дороос санал болгож байна. Гал тогооны хэрэгсэл, цэвэрлэгээний бүтээгдэхүүн, цахилгаан хэрэгслийн дагалдах хэрэгсэл, гоо сайхан болон автомашин, гар багаж зэрэг зайлшгүй шаардлагатай бараануудыг худалдаалж байна.',
+  keywords: ['гэр ахуй', 'бараа', 'монгол', 'gerar', 'household', 'kitchenware', 'cleaning'],
+  authors: [{ name: 'Gerar Household' }],
+  creator: 'Gerar Household',
+  publisher: 'Gerar Household',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'mn_MN',
+    url: 'https://gerar.mn',
+    siteName: 'Gerar Household',
+    title: 'Gerar Household - Гэр ахуйн бараа бүтээгдэхүүн',
+    description: 'Манай гэр ахуйн барааны дэлгүүр нь таны өдөр тутмын хэрэгцээг бүрэн хангах өргөн сонголттой бүтээгдэхүүнийг нэг дороос санал болгож байна.',
+    images: [
+      {
+        url: '/logo3.svg',
+        width: 800,
+        height: 600,
+        alt: 'Gerar Household Logo',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Gerar Household - Гэр ахуйн бараа бүтээгдэхүүн',
+    description: 'Манай гэр ахуйн барааны дэлгүүр нь таны өдөр тутмын хэрэгцээг бүрэн хангах өргөн сонголттой бүтээгдэхүүнийг нэг дороос санал болгож байна.',
+    images: ['/logo3.svg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 

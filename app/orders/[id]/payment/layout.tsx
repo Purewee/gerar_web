@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Захиалга үүсгэх',
+  title: 'Төлбөр төлөх',
 };
 
-export default function OrderCreateLayout({
+export default function PaymentLayout({
   children,
 }: {
   children: React.ReactNode;

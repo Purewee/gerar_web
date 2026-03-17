@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Захиалга үүсгэх',
+  title: 'Сагс',
 };
 
-export default function OrderCreateLayout({
+export default function CartLayout({
   children,
 }: {
   children: React.ReactNode;
