@@ -15,7 +15,11 @@ const Footer = dynamic(() => import('@/components/footer').then(mod => mod.HomeF
 });
 
 export const metadata: Metadata = {
-  title: 'Gerar Household - Гэр ахуйн бараа бүтээгдэхүүн',
+  metadataBase: new URL('https://gerar.mn'),
+  title: {
+    default: 'Gerar Household - Гэр ахуйн бараа бүтээгдэхүүн',
+    template: '%s | Gerar Household',
+  },
   description:
     'Gerar Household-д тавтай морил! Манай гэр ахуйн барааны дэлгүүр нь таны өдөр тутмын хэрэгцээг бүрэн хангах өргөн сонголттой бүтээгдэхүүнийг нэг дороос санал болгож байна. Гал тогооны хэрэгсэл, цэвэрлэгээний бүтээгдэхүүн, цахилгаан хэрэгслийн дагалдах хэрэгсэл, гоо сайхан болон автомашин, гар багаж зэрэг зайлшгүй шаардлагатай бараануудыг худалдаалж байна. Таны амьдралыг илүү хялбар, цэгцтэй, тав тухтай болгох нь бидний зорилго.',
   openGraph: {

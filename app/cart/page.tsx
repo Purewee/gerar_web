@@ -211,16 +211,8 @@ export default function CartPage() {
       toast.error('Сагс хоосон байна');
       return;
     }
-
-    try {
-      setIsProceeding(true);
-      // Navigate to checkout page without awaiting so UI doesn't block.
-      router.push('/orders/create');
-      setIsProceeding(false);
-    } catch (error: any) {
-      setIsProceeding(false);
-      toast.error(error.message || 'Алдаа гарлаа');
-    }
+    setIsProceeding(true);
+    router.push('/orders/create');
   };
 
   return (
