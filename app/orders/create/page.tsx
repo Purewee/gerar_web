@@ -31,8 +31,11 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { getDeliveryFee } from '@/lib/utils';
+import { getSessionToken } from '@/lib/api';
 
 export default function OrderCreatePage() {
+  // ...existing code...
+
   const router = useRouter();
   const createOrderMutation = useOrderCreate();
   const createAddressMutation = useAddressCreate();
@@ -155,23 +158,37 @@ export default function OrderCreatePage() {
     if (isAuthenticated) {
       const name = localStorage.getItem('user_name') || '';
       const phone = localStorage.getItem('mobile') || '';
-      setUserName(name);
-      setUserEmail(email);
-      setUserPhone(phone);
 
-      // User info is now in contact section, no need to pre-fill address form
+      if (!userName) setUserName(name);
+      if (!userEmail) setUserEmail(email);
+      if (!userPhone) setUserPhone(phone);
     } else {
-      // For guest users, try to get phone from localStorage if available
       const phone = localStorage.getItem('mobile') || '';
-      setUserPhone(phone);
+
+      if (!userPhone) setUserPhone(phone);
+
       if (phone) {
         setGuestAddress(prev => ({
           ...prev,
-          phoneNumber: phone,
+          phoneNumber: prev.phoneNumber || phone,
         }));
       }
     }
-  }, [isAuthenticated, addresses.length]);
+  }, [isAuthenticated]);
+
+  // useEffect(() => {
+  //   const email = localStorage.getItem('user_email') || '';
+  //   setSavedEmailPlaceholder(email);
+
+  //   if (isAuthenticated) {
+  //     const name = localStorage.getItem('user_name') || '';
+  //     const phone = localStorage.getItem('mobile') || '';
+
+  //     setUserName(name);
+  //     setUserEmail(email);
+  //     setUserPhone(phone);
+  //   }
+  // }, [isAuthenticated]); // ❗ a
 
   // Reset khoroo when district changes (but not when editing an address)
   useEffect(() => {
@@ -238,7 +255,10 @@ export default function OrderCreatePage() {
     if (!deliveryDate || !deliveryTimeSlot) return;
 
     // Slot is off for this date (global or date-specific)
-    if (offTimeSlots.includes(deliveryTimeSlot) || offTimeSlotsByDate[deliveryDate]?.includes(deliveryTimeSlot)) {
+    if (
+      offTimeSlots.includes(deliveryTimeSlot) ||
+      offTimeSlotsByDate[deliveryDate]?.includes(deliveryTimeSlot)
+    ) {
       setDeliveryTimeSlot('');
       return;
     }
@@ -248,7 +268,11 @@ export default function OrderCreatePage() {
     const currentTimeInHours = today.getHours() + today.getMinutes() / 60;
 
     // Tomorrow's first slot (whatever it is in DELIVERY_SLOT_ORDER) is unavailable after 20:50 today
-    if (deliveryDate > todayDateStr && deliveryTimeSlot === DELIVERY_SLOT_ORDER[0] && currentTimeInHours >= 20 + 50 / 60) {
+    if (
+      deliveryDate > todayDateStr &&
+      deliveryTimeSlot === DELIVERY_SLOT_ORDER[0] &&
+      currentTimeInHours >= 20 + 50 / 60
+    ) {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
@@ -351,144 +375,6 @@ export default function OrderCreatePage() {
     return true;
   };
 
-  // const handleCreateOrder = async () => {
-  //   if (cartItems.length === 0) {
-  //     toast.warning('Сагс хоосон', {
-  //       description: 'Захиалга үүсгэхийн тулд сагсанд бүтээгдэхүүн байх ёстой',
-  //     });
-  //     router.push('/cart');
-  //     return;
-  //   }
-
-  //   if (!deliveryDate) {
-  //     toast.warning('Хүргэлтийн огноо сонгоно уу');
-  //     return;
-  //   }
-
-  //   if (!deliveryTimeSlot) {
-  //     toast.warning('Хүргэлтийн цаг сонгоно уу');
-  //     return;
-  //   }
-
-  //   if (!validateContactInfo()) {
-  //     return;
-  //   }
-
-  //   if (isAuthenticated) {
-  //     // Authenticated user flow
-  //     let addressIdToUse = selectedAddressId;
-
-  //     // If no address selected and user has no addresses, create one from form
-  //     if (!selectedAddressId && addresses.length === 0) {
-  //       if (!validateAddress(newAddress)) {
-  //         return;
-  //       }
-
-  //       // Include user's name and phone from contact section
-  //       const addressData: CreateAddressRequest = {
-  //         ...newAddress,
-  //         fullName: userName,
-  //         phoneNumber: userPhone,
-  //       };
-
-  //       try {
-  //         // Create address first
-  //         const addressResponse = await createAddressMutation.mutateAsync(addressData);
-  //         if (addressResponse.data) {
-  //           addressIdToUse = addressResponse.data.id;
-  //           // Refetch addresses to update the list
-  //           await refetchAddresses();
-  //         }
-  //       } catch (error: any) {
-  //         toast.error(error.message || 'Хаяг үүсгэхэд алдаа гарлаа');
-  //         return;
-  //       }
-  //     }
-
-  //     if (!addressIdToUse) {
-  //       toast.warning('Хүргэлтийн хаяг сонгоно уу');
-  //       return;
-  //     }
-
-  //     try {
-  //       const response = await createOrderMutation.mutateAsync({
-  //         addressId: addressIdToUse,
-  //         fullName: userName.trim(),
-  //         phoneNumber: userPhone.trim(),
-  //         email: userEmail.trim(),
-  //         deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
-  //         deliveryDate: deliveryDate,
-  //       });
-
-  //       if (response.data && response.data.id) {
-  //         if (userEmail && userEmail.trim()) {
-  //           localStorage.setItem('user_email', userEmail.trim());
-  //         }
-  //         if (userName && userName.trim()) {
-  //           localStorage.setItem('user_name', userName.trim());
-  //         }
-  //         await router.push(`/orders/${response.data.id}`);
-  //         toast.success('Захиалга үүслээ');
-  //       } else {
-  //         toast.error('Захиалгын ID олдсонгүй');
-  //       }
-  //     } catch (error: any) {
-  //       toast.error(error.message || 'Захиалга үүсгэхэд алдаа гарлаа');
-  //     }
-  //   } else {
-  //     // if (!guestAddress.label?.trim()) {
-  //     //   toast.warning('Хаягийн гарчиг оруулна уу');
-  //     //   return;
-  //     // }
-  //     if (!validateAddress(guestAddress)) {
-  //       return;
-  //     }
-
-  //     try {
-  //       const response = await createOrderMutation.mutateAsync({
-  //         address: {
-  //           fullName: guestAddress.fullName.trim(),
-  //           phoneNumber: guestAddress.phoneNumber.trim(),
-  //           provinceOrDistrict: guestAddress.provinceOrDistrict.trim(),
-  //           khorooOrSoum: guestAddress.khorooOrSoum.trim(),
-  //           street: guestAddress.street?.trim() || undefined,
-  //           neighborhood: guestAddress.neighborhood?.trim() || undefined,
-  //           residentialComplex: guestAddress.residentialComplex?.trim() || undefined,
-  //           building: guestAddress.building?.trim() || undefined,
-  //           entrance: guestAddress.entrance?.trim() || undefined,
-  //           apartmentNumber: guestAddress.apartmentNumber?.trim() || undefined,
-  //           addressNote: guestAddress.addressNote?.trim() || undefined,
-  //           // label: guestAddress.label.trim(),
-  //         },
-  //         fullName: guestAddress.fullName.trim(),
-  //         phoneNumber: guestAddress.phoneNumber.trim(),
-  //         email: (guestAddress.email || '').trim(),
-  //         deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
-  //         deliveryDate: deliveryDate,
-  //       });
-
-  //       if (response.data && response.data.id) {
-  //         // Save email to localStorage for guest users (in case they register later)
-  //         if (guestAddress.email && guestAddress.email.trim()) {
-  //           localStorage.setItem('user_email', guestAddress.email.trim());
-  //         }
-  //         if (response.data?.id) {
-  //           if (userEmail?.trim()) localStorage.setItem('user_email', userEmail.trim());
-  //           if (userName?.trim()) localStorage.setItem('user_name', userName.trim());
-
-  //           await router.push(`/orders/${response.data.id}`); // ⬅️ ЧУХАЛ
-
-  //           toast.success('Захиалга үүслээ');
-  //         }
-  //       } else {
-  //         toast.error('Захиалгын ID олдсонгүй');
-  //       }
-  //     } catch (error: any) {
-  //       toast.error(error.message || 'Захиалга үүсгэхэд алдаа гарлаа');
-  //     }
-  //   }
-  // };
-
   const handleCreateOrder = async () => {
     try {
       setIsSubmitting(true); // ⬅️ spinner эхэлнэ
@@ -518,7 +404,9 @@ export default function OrderCreatePage() {
           slotOrder: [...DELIVERY_SLOT_ORDER],
         });
       } catch (err: any) {
-        toast.error(err.message || 'Invalid or unavailable delivery time slot for the selected date.');
+        toast.error(
+          err.message || 'Invalid or unavailable delivery time slot for the selected date.',
+        );
         return;
       }
 
@@ -530,31 +418,85 @@ export default function OrderCreatePage() {
 
       const addressIdToUse = selectedAddressId;
 
-      if (!userName?.trim() || userName.trim().length < 2) {
+      const nameToValidate = isAuthenticated ? userName : guestAddress.fullName;
+      const phoneToValidate = isAuthenticated ? userPhone : guestAddress.phoneNumber;
+      const emailToValidate = isAuthenticated ? userEmail : guestAddress.email;
+
+      if (!nameToValidate?.trim() || nameToValidate.trim().length < 2) {
         toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
         setIsSubmitting(false);
         return;
       }
 
-      if (!userPhone?.trim()) {
+      if (!phoneToValidate?.trim()) {
         toast.warning('Утасны дугаар оруулна уу');
         setIsSubmitting(false);
         return;
       }
 
-      if (!userEmail?.trim()) {
+      if (!emailToValidate?.trim()) {
         toast.warning('Имэйл оруулна уу');
         setIsSubmitting(false);
         return;
       }
 
+      // const response = await createOrderMutation.mutateAsync({
+      //   addressId: addressIdToUse ?? undefined,
+      //   fullName: userName.trim(),
+      //   phoneNumber: userPhone.trim(),
+      //   email: userEmail.trim(),
+      //   deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
+      //   deliveryDate: deliveryDate,
+      // });
+
+      const contact = isAuthenticated
+        ? {
+            fullName: userName,
+            phoneNumber: userPhone,
+            email: userEmail,
+          }
+        : {
+            fullName: guestAddress.fullName,
+            phoneNumber: guestAddress.phoneNumber,
+            email: guestAddress.email || '',
+          };
+
+      // Нэр
+      if (!contact.fullName?.trim() || contact.fullName.trim().length < 2) {
+        toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Утас
+      if (!contact.phoneNumber || contact.phoneNumber.length !== 8) {
+        toast.warning('8 оронтой утасны дугаар оруулна уу');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Имэйл
+      if (!contact.email?.trim() || !contact.email.includes('@')) {
+        toast.warning('Зөв имэйл хаяг оруулна уу');
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await createOrderMutation.mutateAsync({
-        addressId: addressIdToUse ?? undefined,
-        fullName: userName.trim(),
-        phoneNumber: userPhone.trim(),
-        email: userEmail.trim(),
-        deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
-        deliveryDate: deliveryDate,
+        ...(isAuthenticated
+          ? {
+              addressId: addressIdToUse ?? undefined,
+              ...contact,
+              deliveryTimeSlot,
+              deliveryDate,
+            }
+          : {
+              address: guestAddress,
+              sessionToken: typeof window !== 'undefined' ? getSessionToken() || '' : '',
+              ...contact,
+              deliveryTimeSlot,
+              deliveryDate,
+            }),
       });
 
       if (!response.data?.id) {
@@ -1306,7 +1248,10 @@ export default function OrderCreatePage() {
                     const isTimeSlotAvailable = (): boolean => {
                       if (!deliveryDate) return false;
                       // Off for every date (global) or for this date only
-                      if (offTimeSlots.includes(slot) || offTimeSlotsByDate[deliveryDate]?.includes(slot))
+                      if (
+                        offTimeSlots.includes(slot) ||
+                        offTimeSlotsByDate[deliveryDate]?.includes(slot)
+                      )
                         return false;
 
                       const today = new Date();
@@ -1318,7 +1263,11 @@ export default function OrderCreatePage() {
                         const tomorrow = new Date(today);
                         tomorrow.setDate(tomorrow.getDate() + 1);
                         const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
-                        if (deliveryDate === tomorrowStr && currentTimeInHours >= 20 + 50 / 60 && slotIndex === 0) {
+                        if (
+                          deliveryDate === tomorrowStr &&
+                          currentTimeInHours >= 20 + 50 / 60 &&
+                          slotIndex === 0
+                        ) {
                           return false;
                         }
                         return true;
@@ -1357,10 +1306,7 @@ export default function OrderCreatePage() {
                         }
 
                         // Skip the next (first future) slot; only second slot and later are available
-                        if (
-                          firstFutureSlotIndex !== null &&
-                          slotIndex === firstFutureSlotIndex
-                        ) {
+                        if (firstFutureSlotIndex !== null && slotIndex === firstFutureSlotIndex) {
                           return false;
                         }
 

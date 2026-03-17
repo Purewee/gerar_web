@@ -498,7 +498,7 @@ export function Navigation() {
               <form onSubmit={e => handleSearch(e, searchQuery)} className="relative w-full">
                 <Input
                   type="text"
-                  placeholder="Тавилга, чимэглэл, гэрийн хэрэгсэл хайх...."
+                  placeholder="Цэвэрлэгээ, гал тогоо, гэрийн хэрэгсэл хайх...."
                   className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value.replace(/[^\p{L}\p{N}\s]/gu, ''))}
@@ -1151,7 +1151,7 @@ export function Navigation() {
               <Input
                 ref={mobileSearchInputRef}
                 type="text"
-                placeholder="Тавилга, чимэглэл, гэрийн хэрэгсэл хайх...."
+                placeholder="Цэвэрлэгээ, гал тогоо, гэрийн хэрэгсэл хайх...."
                 className="pl-10 pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-[16px]"
                 value={mobileSearchQuery}
                 onChange={e =>
