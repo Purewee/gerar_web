@@ -1276,7 +1276,16 @@ export function Navigation() {
                   </div>
                 </div>
               ) : (
-                <h2 className="text-lg font-semibold text-gray-900">Цэс</h2>
+                <div className="pt-8 pl-2 pb-2">
+                  <img
+                    src="/profile.png"
+                    className="w-16 h-16 mb-2 bg-linear-to-br from-primary to-primary/70 rounded-full border border-gray-200 shadow-md"
+                  />
+                  <div className="pl-1">
+                    <h2 className="text-lg font-semibold text-gray-900">Таны нэр</h2>
+                    <p className="text-xs text-gray-500">Таны имэйл хаяг</p>
+                  </div>
+                </div>
               )}
             </div>
             <button
@@ -1402,7 +1411,7 @@ export function Navigation() {
                     setMobileProfileMenuOpen(false);
                     setLoginModalOpen(true);
                   }}
-                  className="flex items-center gap-3 p-3 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
+                  className="flex items-center gap-3 p-3 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 pl-5 w-full text-left"
                 >
                   <User className="w-5 h-5" />
                   <span>Нэвтрэх</span>
