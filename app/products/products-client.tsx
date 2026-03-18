@@ -157,9 +157,33 @@ function ProductsContent() {
   const category = categoryResponse?.data;
 
   const pages = productsResponse?.pages || [];
-  const products = pages
+  let products = pages
     .flatMap(page => page.data || [])
     .filter(p => p.isHidden !== true);
+
+  // Shuffle products if no filter/search/category is applied (show all products randomly)
+  const noFilter =
+    !searchParams.get('categoryId') &&
+    !searchParams.get('categoryIds') &&
+    !searchParams.get('featureId') &&
+    !searchParams.get('featureIds') &&
+    !searchParams.get('search') &&
+    !searchParams.get('onSale') &&
+    !searchParams.get('minPrice') &&
+    !searchParams.get('maxPrice') &&
+    !searchParams.get('minStock') &&
+    !searchParams.get('maxStock') &&
+    !searchParams.get('createdAfter') &&
+    !searchParams.get('createdBefore');
+
+  if (noFilter && products.length > 1) {
+    // Fisher-Yates shuffle
+    products = [...products];
+    for (let i = products.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [products[i], products[j]] = [products[j], products[i]];
+    }
+  }
 
   const totalProductsCount = productsResponse?.pages?.[0]?.pagination?.total ?? products.length;
   const searchQuery = searchParams.get('search');

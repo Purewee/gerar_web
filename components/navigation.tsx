@@ -53,6 +53,7 @@ import {
   Shrink,
   GripVertical,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 const categoryIcons: LucideIcon[] = [
   BrushCleaning,
@@ -108,6 +109,7 @@ export function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   // Hide categories on payment, cart, and order create pages
   const hideCategories =
@@ -475,6 +477,18 @@ export function Navigation() {
     return pathname?.startsWith(href);
   };
 
+  // Listen for cartUpdated event and invalidate+refetch cart query
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['cart', 'items'] });
+      queryClient.refetchQueries({ queryKey: ['cart', 'items'] });
+    };
+    window.addEventListener('cartUpdated', handleCartUpdated);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdated);
+    };
+  }, [queryClient]);
+
   return (
     <>
       <header className="bg-white backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-40 shadow-sm">
@@ -498,7 +512,7 @@ export function Navigation() {
               <form onSubmit={e => handleSearch(e, searchQuery)} className="relative w-full">
                 <Input
                   type="text"
-                  placeholder="Тавилга, чимэглэл, гэрийн хэрэгсэл хайх...."
+                  placeholder="Цэвэрлэгээ, гал тогоо, гэрийн хэрэгсэл хайх...."
                   className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value.replace(/[^\p{L}\p{N}\s]/gu, ''))}
@@ -1151,7 +1165,7 @@ export function Navigation() {
               <Input
                 ref={mobileSearchInputRef}
                 type="text"
-                placeholder="Тавилга, чимэглэл, гэрийн хэрэгсэл хайх...."
+                placeholder="Цэвэрлэгээ, гал тогоо, гэрийн хэрэгсэл хайх...."
                 className="pl-10 pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 text-[16px]"
                 value={mobileSearchQuery}
                 onChange={e =>

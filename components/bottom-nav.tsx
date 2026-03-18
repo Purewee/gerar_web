@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, ListOrdered, Heart, User, ShoppingCart } from 'lucide-react';
 import { useCart } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
 
 const navItems = [
   { href: '/', label: 'Нүүр', labelEn: 'Home', icon: Home },
@@ -19,6 +20,7 @@ export function BottomNav() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: cartResponse } = useCart();
   const cartItems = cartResponse?.data ?? [];
   const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
@@ -29,6 +31,18 @@ export function BottomNav() {
       typeof window !== 'undefined' && localStorage.getItem('isAuthenticated') === 'true';
     setIsAuthenticated(auth);
   }, []);
+
+  // Listen for cartUpdated event and invalidate cart query
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['cart', 'items'] });
+      queryClient.refetchQueries({ queryKey: ['cart', 'items'] });
+    };
+    window.addEventListener('cartUpdated', handleCartUpdated);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdated);
+    };
+  }, [queryClient]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -62,12 +76,12 @@ export function BottomNav() {
             href === '/'
               ? pathname === '/'
               : href === '/profile'
-              ? pathname === '/profile'
-              : href === '/profile/orders'
-              ? pathname === '/profile/orders'
-              : href === '/profile/favorites'
-              ? pathname === '/profile/favorites'
-              : pathname?.startsWith(href);
+                ? pathname === '/profile'
+                : href === '/profile/orders'
+                  ? pathname === '/profile/orders'
+                  : href === '/profile/favorites'
+                    ? pathname === '/profile/favorites'
+                    : pathname?.startsWith(href);
 
           const needsLoginButton = isProfile || isFavorites || isOrders;
           const isGuestAuthItem = isGuestProfile || isGuestFavorites || isGuestOrders;
