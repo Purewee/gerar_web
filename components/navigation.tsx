@@ -53,6 +53,7 @@ import {
   Shrink,
   GripVertical,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 const categoryIcons: LucideIcon[] = [
   BrushCleaning,
@@ -108,6 +109,7 @@ export function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   // Hide categories on payment, cart, and order create pages
   const hideCategories =
@@ -474,6 +476,18 @@ export function Navigation() {
     if (href === '/profile') return pathname === '/profile';
     return pathname?.startsWith(href);
   };
+
+  // Listen for cartUpdated event and invalidate+refetch cart query
+  useEffect(() => {
+    const handleCartUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['cart', 'items'] });
+      queryClient.refetchQueries({ queryKey: ['cart', 'items'] });
+    };
+    window.addEventListener('cartUpdated', handleCartUpdated);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdated);
+    };
+  }, [queryClient]);
 
   return (
     <>
