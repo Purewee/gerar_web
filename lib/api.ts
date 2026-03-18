@@ -684,15 +684,16 @@ export const useProducts = (params?: ProductsQueryParams) => {
 export const useInfiniteProducts = (params?: ProductsQueryParams) => {
   return useInfiniteQuery({
     queryKey: [...queryKeys.products.list(params), 'infinite'],
-    queryFn: ({ pageParam = 1 }) => productsApiFunctions.getAll({ ...params, page: pageParam, limit: 30 }),
+    queryFn: ({ pageParam = 1 }) =>
+      productsApiFunctions.getAll({ ...params, page: pageParam, limit: 30 }),
     getNextPageParam: (lastPage, allPages) => {
       const lastPageData = lastPage.data || [];
       const pagination = lastPage.pagination;
-      
+
       if (pagination && pagination.page < pagination.totalPages) {
         return pagination.page + 1;
       }
-      
+
       if (lastPageData.length < 30) {
         return undefined;
       }
@@ -809,9 +810,9 @@ const cartApiFunctions = {
   get: async (): Promise<ApiResponse<CartItem[]>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
-    // Cart get requires either auth token or session token
+    // If no token/session, return empty cart (for initial guest load)
     if (!token && !sessionToken) {
-      throw new Error('Authentication or session required to view cart.');
+      return { success: true, message: 'No session', data: [] };
     }
     return apiFetch<CartItem[]>('/cart');
   },
@@ -894,22 +895,31 @@ const cartApiFunctions = {
 
 // Cart hooks
 export const useCart = () => {
-  const token = getAuthToken();
-  const sessionToken = getSessionToken();
   return useQuery({
     queryKey: queryKeys.cart.items(),
     queryFn: () => cartApiFunctions.get(),
-    enabled: !!token || !!sessionToken, // Only enable if authenticated or has session token
+    enabled: true,
   });
 };
 
 export const useCartAdd = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, quantity }: { productId: number; quantity: number }) =>
-      cartApiFunctions.add(productId, quantity),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
+    mutationFn: async ({ productId, quantity }: { productId: number; quantity: number }) => {
+      const beforeSession = getSessionToken();
+      const result = await cartApiFunctions.add(productId, quantity);
+      const afterSession = getSessionToken();
+      // If sessionToken was just created, force refetch
+      if (!beforeSession && afterSession) {
+        // Wait a tick for sessionToken to be available
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['cart', 'items'] });
+          queryClient.refetchQueries({ queryKey: ['cart', 'items'] });
+        }, 0);
+      } else {
+        queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
+      }
+      return result;
     },
   });
 };
