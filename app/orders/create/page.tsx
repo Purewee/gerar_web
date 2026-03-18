@@ -491,7 +491,7 @@ export default function OrderCreatePage() {
 
   const handleCreateOrder = async () => {
     try {
-      setIsSubmitting(true); // ⬅️ spinner эхэлнэ
+      setIsSubmitting(true);
 
       if (cartItems.length === 0) {
         toast.warning('Сагс хоосон', {
@@ -522,13 +522,10 @@ export default function OrderCreatePage() {
         return;
       }
 
-      if (!validateContactInfo()) return;
-
-      // ====== ADDRESS LOGIC unchanged ======
-
-      // const response = await createOrderMutation.mutateAsync({...});
-
-      const addressIdToUse = selectedAddressId;
+      if (!validateContactInfo()) {
+        setIsSubmitting(false);
+        return;
+      }
 
       if (!userName?.trim() || userName.trim().length < 2) {
         toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
@@ -548,28 +545,56 @@ export default function OrderCreatePage() {
         return;
       }
 
-      const response = await createOrderMutation.mutateAsync({
-        addressId: addressIdToUse ?? undefined,
+      let orderPayload: any = {
         fullName: userName.trim(),
         phoneNumber: userPhone.trim(),
         email: userEmail.trim(),
         deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
         deliveryDate: deliveryDate,
-      });
+      };
+
+      if (isAuthenticated) {
+        if (!selectedAddressId) {
+          toast.warning('Хүргэлтийн хаяг хуудсанаас сонгоно уу');
+          setIsSubmitting(false);
+          return;
+        }
+        orderPayload.addressId = selectedAddressId;
+      } else {
+        if (!validateAddress(guestAddress)) {
+          setIsSubmitting(false);
+          return;
+        }
+        orderPayload.address = {
+          fullName: guestAddress.fullName.trim(),
+          phoneNumber: guestAddress.phoneNumber.trim(),
+          provinceOrDistrict: guestAddress.provinceOrDistrict.trim(),
+          khorooOrSoum: guestAddress.khorooOrSoum.trim(),
+          street: guestAddress.street?.trim() || undefined,
+          neighborhood: guestAddress.neighborhood?.trim() || undefined,
+          residentialComplex: guestAddress.residentialComplex?.trim() || undefined,
+          building: guestAddress.building?.trim() || undefined,
+          entrance: guestAddress.entrance?.trim() || undefined,
+          apartmentNumber: guestAddress.apartmentNumber?.trim() || undefined,
+          addressNote: guestAddress.addressNote?.trim() || undefined,
+        };
+      }
+
+      const response = await createOrderMutation.mutateAsync(orderPayload);
 
       if (!response.data?.id) {
         toast.error('Захиалгын ID олдсонгүй');
+        setIsSubmitting(false);
         return;
       }
 
-      router.push(`/orders/${response.data.id}`); // Navigation started (non-blocking)
+      if (userEmail?.trim()) localStorage.setItem('user_email', userEmail.trim());
+      if (userName?.trim()) localStorage.setItem('user_name', userName.trim());
 
-      // toast.success('Захиалга үүслээ');
+      router.push(`/orders/${response.data.id}`);
     } catch (error: any) {
       toast.error(error.message || 'Захиалга үүсгэхэд алдаа гарлаа');
       setIsSubmitting(false);
-    } finally {
-      // setIsSubmitting(false); // ⬅️ шинэ page руу шилжсэний ДАРАА унтарна
     }
   };
 
