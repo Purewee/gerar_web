@@ -1399,6 +1399,10 @@ export interface CreateOrderRequest {
   email: string;
   deliveryDate?: string;
   deliveryTimeSlot?: '10-14' | '14-18' | '18-21' | '21-00';
+  // Ebarimt fields
+  ebarimtReceiverType?: 'CITIZEN' | 'COMPANY';
+  ebarimtReceiver?: string;
+  ebarimtReceiverName?: string;
 }
 
 // Orders API functions

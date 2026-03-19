@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronRight, ChevronLeft, Plus, Edit, Trash2 } from 'lucide-react';
+import { Loader2, ChevronRight, ChevronLeft, Plus, Edit, Trash2, Info, User, Building2 } from 'lucide-react';
 import { MongolianDatePicker } from '@/components/mongolian-date-picker';
 import {
   useOrderCreate,
@@ -109,6 +109,12 @@ export default function OrderCreatePage() {
         : [];
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Ebarimt state
+  const [ebarimtType, setEbarimtType] = useState<'CITIZEN' | 'COMPANY'>('CITIZEN');
+  const [ebarimtRegNo, setEbarimtRegNo] = useState('');
+  const [ebarimtOrgName, setEbarimtOrgName] = useState('');
+  const [isFetchingOrg, setIsFetchingOrg] = useState(false);
 
   // Debug: Log khoroo response
   useEffect(() => {
@@ -123,6 +129,37 @@ export default function OrderCreatePage() {
       }
     }
   }, [selectedDistrict, khorooResponse, khorooOptions, khorooLoading, khorooError]);
+
+  // Ebarimt Organization Info Fetcher
+  useEffect(() => {
+    const fetchOrgInfo = async () => {
+      if (ebarimtType === 'COMPANY' && ebarimtRegNo.length >= 7) {
+        setIsFetchingOrg(true);
+        try {
+          const response = await fetch(`https://info.ebarimt.mn/rest/merchant/info?regno=${ebarimtRegNo}`);
+          const data = await response.json();
+          if (data && data.found) {
+            setEbarimtOrgName(data.name);
+          } else {
+            setEbarimtOrgName('');
+          }
+        } catch (error) {
+          console.error('Error fetching organization info:', error);
+          setEbarimtOrgName('');
+        } finally {
+          setIsFetchingOrg(false);
+        }
+      } else {
+        setEbarimtOrgName('');
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchOrgInfo();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [ebarimtRegNo, ebarimtType]);
 
   // Address form state for authenticated users without addresses
   // fullName and phoneNumber come from contact section (userName, userPhone)
@@ -415,9 +452,27 @@ export default function OrderCreatePage() {
         return;
       }
 
+      if (ebarimtType === 'COMPANY') {
+        if (!ebarimtRegNo.trim()) {
+          toast.warning('Байгууллагын регистрийн дугаар оруулна уу');
+          setIsSubmitting(false);
+          return;
+        }
+        if (!ebarimtOrgName.trim()) {
+          toast.warning('Байгууллагын нэр олдсонгүй. Регистрийн дугаараа шалгана уу');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      const receiverPhone = (isAuthenticated ? userPhone : guestAddress.phoneNumber) || '';
+
       let orderPayload: any = {
         deliveryTimeSlot: deliveryTimeSlot as '10-14' | '14-18' | '18-21' | '21-00',
         deliveryDate: deliveryDate,
+        ebarimtReceiverType: ebarimtType,
+        ebarimtReceiver: ebarimtType === 'COMPANY' ? ebarimtRegNo : (receiverPhone || '').trim(),
+        ebarimtReceiverName: ebarimtType === 'COMPANY' ? ebarimtOrgName : undefined,
       };
 
       if (isAuthenticated) {
@@ -663,6 +718,8 @@ export default function OrderCreatePage() {
     !isContactValid ||
     !isAddressValid ||
     !isOrderInfoValid ||
+    (ebarimtType === 'COMPANY' && (!ebarimtRegNo || !ebarimtOrgName)) ||
+    isFetchingOrg ||
     createOrderMutation.isPending ||
     createAddressMutation.isPending ||
     isSubmitting;
@@ -1328,6 +1385,99 @@ export default function OrderCreatePage() {
                       </button>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* Ebarimt Section */}
+              <div className="mt-8 pt-8 border-t border-gray-100">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Image src="https://ebarimt.mn/img/ebarimt.png" alt="Ebarimt" width={20} height={20} className="w-5 h-5 object-contain" />
+                  </div>
+                  <h3 className="text-lg font-semibold">И-Баримт</h3>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Citizen Option */}
+                  <div 
+                    onClick={() => setEbarimtType('CITIZEN')}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      ebarimtType === 'CITIZEN' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        ebarimtType === 'CITIZEN' ? 'border-primary' : 'border-gray-300'
+                      }`}>
+                        {ebarimtType === 'CITIZEN' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                      </div>
+                      <span className="font-medium">Хувь хүн</span>
+                    </div>
+                  </div>
+
+                  {/* Organization Option */}
+                  <div 
+                    onClick={() => setEbarimtType('COMPANY')}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      ebarimtType === 'COMPANY' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        ebarimtType === 'COMPANY' ? 'border-primary' : 'border-gray-300'
+                      }`}>
+                        {ebarimtType === 'COMPANY' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                      </div>
+                      <span className="font-medium">Албан байгууллага</span>
+                    </div>
+
+                    {ebarimtType === 'COMPANY' && (
+                      <div className="mt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 flex gap-3">
+                          <Info className="w-5 h-5 text-amber-500 shrink-0" />
+                          <p className="text-sm text-amber-800 leading-snug">
+                            Та байгууллагын регистрийн дугаараа зөв бичнэ үү. Төлбөр төлөгдсөн тохиолдолд регистрийн дугаараа солих боломжгүйг анхаарна уу!
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
+                              Байгууллагын регистр <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                              <Input
+                                value={ebarimtRegNo}
+                                onChange={(e) => setEbarimtRegNo(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                placeholder="Регистрийн дугаар"
+                                className="bg-white border-gray-200"
+                              />
+                              {isFetchingOrg && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
+                              Байгууллагын нэр <span className="text-red-500">*</span>
+                            </label>
+                            <Input
+                              value={ebarimtOrgName}
+                              readOnly
+                              placeholder="Байгууллагын нэр"
+                              className="bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
