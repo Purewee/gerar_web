@@ -8,19 +8,19 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12 md:py-20">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="min-h-screen bg-gray-50 md:py-12">
+      <div className="max-w-4xl mx-auto px-0 md:px-6">
+        <div className="bg-white md:rounded-2xl shadow-sm border-b md:border border-gray-100 overflow-hidden">
           {/* Header */}
-          <div className="bg-linear-to-r from-blue-600 to-indigo-700 px-8 py-12 text-white text-center">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">Үйлчилгээний нөхцөл</h1>
-            <p className="text-blue-100 opacity-90 max-w-2xl mx-auto">
+          <div className="bg-linear-to-r from-blue-600 to-indigo-700 px-6 py-8 md:px-8 md:py-12 text-white text-center">
+            <h1 className="text-2xl md:text-4xl font-bold mb-3">Үйлчилгээний нөхцөл</h1>
+            <p className="text-blue-100 opacity-90 text-sm md:text-base max-w-2xl mx-auto">
               Gerar.mn сайтыг ашиглахаас өмнө энэхүү үйлчилгээний нөхцөлтэй анхааралтай танилцана уу.
             </p>
           </div>
 
           {/* Content */}
-          <div className="p-8 md:p-12 space-y-12">
+          <div className="p-5 md:p-12 space-y-8 md:space-y-12">
             {/* Section 1 */}
             <section className="space-y-4">
               <div className="flex items-center gap-3 text-blue-600">
@@ -172,7 +172,7 @@ export default function TermsPage() {
             </div>
           </div>
           
-          <div className="bg-gray-50 p-8 text-center text-gray-500 text-sm border-t border-gray-100 italic">
+          <div className="bg-gray-50 p-6 md:p-8 text-center text-gray-500 text-xs md:text-sm border-t border-gray-100 italic">
             Сайтыг ашигласнаар та эдгээр нөхцөлийг хүлээн зөвшөөрч байгаа болно.
           </div>
         </div>
