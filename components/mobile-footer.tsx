@@ -1,5 +1,6 @@
 'use client';
 import { Phone, Facebook, Instagram } from 'lucide-react';
+import Link from 'next/link';
 
 export function MobileHomeFooter() {
   const currentYear = new Date().getFullYear();
@@ -91,18 +92,18 @@ export function MobileHomeFooter() {
               хуулиар хамгаалагдсан.
             </p>
             <div className="flex gap-6">
-              <a
-                href="#"
+              <Link
+                href="/privacy"
                 className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium"
               >
-                Нууцлал
-              </a>
-              <a
-                href="#"
+                Нууцлалын бодлого
+              </Link>
+              <Link
+                href="/terms"
                 className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium"
               >
                 Үйлчилгээний нөхцөл
-              </a>
+              </Link>
             </div>
           </div>
         </div>

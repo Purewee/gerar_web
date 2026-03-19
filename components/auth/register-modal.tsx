@@ -4,6 +4,8 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import Link from 'next/link';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useOTPSend } from '@/lib/api';
 import { X } from 'lucide-react';
@@ -27,6 +29,7 @@ export function RegisterModal({
   const [name, setName] = useState('');
   const [password, setPassword] = useState(['', '', '', '']);
   const [confirmPassword, setConfirmPassword] = useState(['', '', '', '']);
+  const [agreed, setAgreed] = useState(false);
   const [errors, setErrors] = useState<{
     mobile?: string;
     name?: string;
@@ -157,6 +160,7 @@ export function RegisterModal({
     setName('');
     setPassword(['', '', '', '']);
     setConfirmPassword(['', '', '', '']);
+    setAgreed(false);
     setErrors({});
     onOpenChange(false);
   };
@@ -312,6 +316,39 @@ export function RegisterModal({
               )}
             </div>
 
+            <div className="flex items-start space-x-3 py-2">
+              <Checkbox
+                id="register-agree"
+                checked={agreed}
+                onChange={(e: any) => setAgreed(e.target.checked)}
+                className="mt-0.5"
+              />
+              <label
+                htmlFor="register-agree"
+                className="text-sm text-gray-600 leading-tight cursor-pointer select-none"
+              >
+                Би{' '}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  className="text-primary hover:underline font-medium"
+                  onClick={e => e.stopPropagation()}
+                >
+                  Үйлчилгээний нөхцөл
+                </Link>{' '}
+                болон{' '}
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  className="text-primary hover:underline font-medium"
+                  onClick={e => e.stopPropagation()}
+                >
+                  Нууцлалын бодлого
+                </Link>
+                -ийг хүлээн зөвшөөрч байна.
+              </label>
+            </div>
+
             <Button
               type="submit"
               disabled={
@@ -319,7 +356,8 @@ export function RegisterModal({
                 mobile.length !== 8 ||
                 !name.trim() ||
                 password.join('').length !== 4 ||
-                confirmPassword.join('').length !== 4
+                confirmPassword.join('').length !== 4 ||
+                !agreed
               }
               className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-200"
             >
