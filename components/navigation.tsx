@@ -55,19 +55,7 @@ import {
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
-const categoryIcons: LucideIcon[] = [
-  BrushCleaning,
-  CookingPot,
-  SoapDispenserDroplet,
-  SprayCan,
-  Mars,
-  Venus,
-  Baby,
-  PawPrint,
-  Cable,
-  Car,
-  Hammer,
-];
+const categoryIcons: LucideIcon[] = [BrushCleaning, CookingPot, SoapDispenserDroplet, Baby];
 
 export function Navigation() {
   const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
@@ -740,7 +728,7 @@ export function Navigation() {
                           <div className="flex gap-6">
                             <div className="w-1/3 space-y-0.5 border-r border-gray-200 pr-4">
                               {categories.map((cat, index) => {
-                                const Icon = categoryIcons[index] ?? EllipsisVertical;
+                                const Icon = categoryIcons[index] ?? GripVertical;
                                 return (
                                   <div
                                     key={cat.id}
@@ -841,7 +829,7 @@ export function Navigation() {
                         const hasActiveChild =
                           activeCategoryInfo?.isChild &&
                           activeCategoryInfo?.parent?.id === category.id;
-                        const Icon = categoryIcons[index] ?? EllipsisVertical;
+                        const Icon = categoryIcons[index] ?? GripVertical;
 
                         if (hasChildren) {
                           return (
@@ -1007,7 +995,7 @@ export function Navigation() {
                       // Parent is active if it's expanded, itself active, OR one of its children is active
                       const isParentActive = isExpanded || isActive || hasActiveChild;
 
-                      const Icon = categoryIcons[index] ?? EllipsisVertical;
+                      const Icon = categoryIcons[index] ?? GripVertical;
 
                       return (
                         <button
@@ -1090,7 +1078,7 @@ export function Navigation() {
                           aria-label="Бүх бараа харах"
                         >
                           <div className="flex ml-3.5 gap-1">
-                            <GripVertical className="w-4 h-4" />
+                            {/* <GripVertical className="w-4 h-4" /> */}
                             <span className="relative z-10">Бүх бараа</span>
                           </div>
                           {!isAllActive && (

@@ -92,16 +92,16 @@ export function HomeFooter() {
             </p>
             <div className="flex gap-6">
               <Link
+                href="/terms"
+                className="text-gray-600 hover:text-emerald-600 transition-colors text-sm font-medium"
+              >
+                Үйлчилгээний нөхцөл
+              </Link>
+              <Link
                 href="/privacy"
                 className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium"
               >
                 Нууцлалын бодлого
-              </Link>
-              <Link
-                href="/terms"
-                className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium"
-              >
-                Үйлчилгээний нөхцөл
               </Link>
             </div>
           </div>
