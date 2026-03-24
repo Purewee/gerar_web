@@ -721,7 +721,7 @@ export function Navigation() {
                           side="bottom"
                           align="start"
                           sideOffset={0}
-                          className="bg-white text-primary w-[800px] p-4 rounded-md shadow-lg border-gray-200"
+                          className="bg-white text-primary w-[850px] p-4 rounded-md shadow-lg border-gray-200"
                           onMouseEnter={() => setCategoryMenuHover(true)}
                           onMouseLeave={() => setCategoryMenuHover(false)}
                         >
@@ -785,7 +785,7 @@ export function Navigation() {
                                           <Link
                                             href={`/products?categoryId=${child.id}`}
                                             onClick={() => setSelectedChildCategoryId(child.id)}
-                                            className={`group flex items-center gap-2 w-full p-2 mb-1 text-sm font-medium border rounded transition ${
+                                            className={`group flex items-center gap-2 w-full p-2 mb-1 w-full text-sm font-medium border rounded transition ${
                                               isChildActive
                                                 ? 'text-primary border-primary/70 bg-primary/5 scale-101'
                                                 : 'text-gray-800 border-gray-100  hover:border-primary/70 hover:text-primary/70'
@@ -805,7 +805,7 @@ export function Navigation() {
                                               className={`${
                                                 isChildActive
                                                   ? 'text-primary/80'
-                                                  : 'text-gray-600 group-hover:text-primary/80'
+                                                  : 'text-gray-600 group-hover:text-primary/80 w-full'
                                               }`}
                                             >
                                               {child.name}
