@@ -506,7 +506,8 @@ export default function ProfileAddressesPage() {
                         {address.addressNote && (
                           <div className="pt-2 border-t border-gray-100">
                             <p className="text-sm text-gray-600">
-                              <span className="font-medium">Тэмдэглэл:</span> {address.addressNote}
+                              <span className="font-medium">Дэлгэрэнгүй хаяг:</span>{' '}
+                              {address.addressNote}
                             </p>
                           </div>
                         )}
