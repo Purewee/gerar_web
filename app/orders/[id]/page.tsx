@@ -507,7 +507,7 @@ export default function OrderDetailPage() {
         )}
 
         {/* Order Summary Card */}
-        <Card className="border border-dashed shadow-none bg-gray-50">
+        <Card className="border border-gray-300 shadow-none bg-gray-50">
           <CardContent className="p-4 space-y-3">
             {/* Order Header Section */}
             <div className="grid grid-cols-2 gap-4">
@@ -542,7 +542,7 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Total Payment */}
-            <div className="flex justify-between text-lg font-bold pt-2 border-t">
+            <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-300">
               <span>Нийт</span>
               <span className="text-primary">{totalAmount.toLocaleString()} ₮</span>
             </div>
@@ -559,7 +559,10 @@ export default function OrderDetailPage() {
 
               <div className="space-y-2">
                 {order.items.map(item => (
-                  <div key={item.id} className="flex gap-3 p-3 rounded-xl bg-gray-50 border">
+                  <div
+                    key={item.id}
+                    className="flex gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200"
+                  >
                     {/* Product Image */}
                     {item.product?.firstImage || item.product?.images?.[0] ? (
                       <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden shrink-0">
@@ -661,13 +664,14 @@ export default function OrderDetailPage() {
                 <p className="text-xs text-gray-500 mb-1">Хаяг</p>
                 <p className="text-xs text-gray-900">
                   {order.address.provinceOrDistrict}, {order.address.khorooOrSoum}
-                  {order.address.street && `, ${order.address.street}`}
-                  {order.address.building && `, ${order.address.building}`}
-                  {order.address.apartmentNumber && `, ${order.address.apartmentNumber}`}
+                  {order.address.residentialComplex &&
+                    `, Байр: ${order.address.residentialComplex}`}
+                  {order.address.entrance && `, Орц: ${order.address.entrance}`}
+                  {order.address.apartmentNumber && `, Тоот: ${order.address.apartmentNumber}`}
                 </p>
                 {order.address.addressNote && (
                   <div className="mt-1.5 p-1.5 bg-blue-50 border border-blue-200 rounded">
-                    <p className="text-xs font-medium text-blue-900 mb-0.5">Тэмдэглэл:</p>
+                    <p className="text-xs font-medium text-blue-900 mb-0.5">Дэлгэрэнгүй хаяг:</p>
                     <p className="text-xs text-blue-800">{order.address.addressNote}</p>
                   </div>
                 )}
@@ -683,13 +687,15 @@ export default function OrderDetailPage() {
           paymentStatus !== 'CANCELLED' && (
             <Card className="border border-red-200 bg-red-50 flex flex-col items-center justify-center shadow-none">
               <CardContent className="text-center py-2 space-y-2">
-                <p className="text-xs text-red-700">Төлбөр төлөхгүй бол захиалга цуцлагдана</p>
+                <p className="text-sm text-red-700">
+                  Төлбөр төлөгдөөгүй 60 минут болсон бол захиалга автоматаар цуцлагдана
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCancelPayment}
                   disabled={cancelPaymentMutation.isPending}
-                  className="border-red-300 text-red-700 hover:bg-red-100"
+                  className="border-red-300 text-red-700 hover:bg-red-100 px-4"
                 >
                   {cancelPaymentMutation.isPending ? (
                     <>
