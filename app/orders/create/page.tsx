@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 export const dynamic = 'force-dynamic';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import TermsPrivacyModal from '@/components/terms-privacy-modal';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -46,6 +48,9 @@ import { getSessionToken } from '@/lib/api';
 
 export default function OrderCreatePage() {
   // ...existing code...
+
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const router = useRouter();
   const createOrderMutation = useOrderCreate();
@@ -751,7 +756,7 @@ export default function OrderCreatePage() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f7]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6  py-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
         {/* Breadcrumbs */}
         <div className="mb-6 text-sm text-gray-600">
           <div className="flex items-center gap-2">
@@ -771,7 +776,7 @@ export default function OrderCreatePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Left Column - Contact and Delivery Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Contact Information Section */}
@@ -790,6 +795,7 @@ export default function OrderCreatePage() {
                         onChange={e => setUserName(e.target.value)}
                         placeholder="Нэр"
                         required
+                        className="text-sm"
                       />
                     </div>
                     <div>
@@ -802,6 +808,7 @@ export default function OrderCreatePage() {
                         placeholder="Утасны дугаар"
                         maxLength={8}
                         required
+                        className="text-sm"
                       />
                     </div>
                   </div>
@@ -815,6 +822,7 @@ export default function OrderCreatePage() {
                       onChange={e => setUserEmail(e.target.value)}
                       placeholder={savedEmailPlaceholder || 'Имэйл'}
                       required
+                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -832,6 +840,7 @@ export default function OrderCreatePage() {
                         }
                         placeholder="Нэр"
                         required
+                        className="text-sm"
                       />
                     </div>
                     <div>
@@ -849,6 +858,7 @@ export default function OrderCreatePage() {
                         placeholder={userPhone || 'Утасны дугаар'}
                         maxLength={8}
                         required
+                        className="text-sm"
                       />
                     </div>
                   </div>
@@ -862,6 +872,7 @@ export default function OrderCreatePage() {
                       onChange={e => setGuestAddress({ ...guestAddress, email: e.target.value })}
                       placeholder={savedEmailPlaceholder || 'Имэйл'}
                       required
+                      className="text-sm"
                     />
                   </div>
                   <p className="text-sm text-gray-600 mt-3">
@@ -974,8 +985,9 @@ export default function OrderCreatePage() {
                       <Input
                         value={newAddress.label || ''}
                         onChange={e => setNewAddress({ ...newAddress, label: e.target.value })}
-                        placeholder="Жишээ: Гэр, Ажил, Оффис"
+                        placeholder="Жишээ: гэр, ажил, оффис"
                         required
+                        className="text-sm"
                         disabled={
                           createAddressMutation.isPending || updateAddressMutation.isPending
                         }
@@ -1051,6 +1063,7 @@ export default function OrderCreatePage() {
                             setNewAddress({ ...newAddress, residentialComplex: e.target.value })
                           }
                           required
+                          className="text-sm"
                           placeholder="Байр"
                         />
                       </div>
@@ -1066,6 +1079,7 @@ export default function OrderCreatePage() {
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
+                          className="text-sm"
                         />
                       </div>
                       <div>
@@ -1082,6 +1096,7 @@ export default function OrderCreatePage() {
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
+                          className="text-sm"
                         />
                       </div>
                     </div>
@@ -1099,6 +1114,7 @@ export default function OrderCreatePage() {
                         }
                         placeholder="Дэлгэрэнгүй хаягийн мэдээлэл"
                         maxLength={500}
+                        className="text-sm"
                         rows={3}
                         disabled={
                           createAddressMutation.isPending || updateAddressMutation.isPending
@@ -1172,8 +1188,9 @@ export default function OrderCreatePage() {
                     <Input
                       value={guestAddress.label || ''}
                       onChange={e => setGuestAddress({ ...guestAddress, label: e.target.value })}
-                      placeholder="Жишээ: Гэр, Ажил, Оффис"
+                      placeholder="Жишээ: гэр, ажил, оффис"
                       required
+                      className="text-sm"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1239,6 +1256,7 @@ export default function OrderCreatePage() {
                         }
                         required
                         placeholder="Байр"
+                        className="text-sm"
                       />
                     </div>
                     <div>
@@ -1252,6 +1270,7 @@ export default function OrderCreatePage() {
                         }
                         required
                         placeholder="Орц"
+                        className="text-sm"
                       />
                     </div>
                     <div>
@@ -1265,6 +1284,7 @@ export default function OrderCreatePage() {
                         }
                         required
                         placeholder="Тоотоо оруулна уу"
+                        className="text-sm"
                       />
                     </div>
                   </div>
@@ -1431,11 +1451,11 @@ export default function OrderCreatePage() {
                   <h3 className="text-lg font-semibold">И-Баримт</h3>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-1 flex w-full gap-2">
                   {/* Citizen Option */}
                   <div
                     onClick={() => setEbarimtType('CITIZEN')}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    className={`p-2 w-1/2 rounded-xl border-2 cursor-pointer transition-all ${
                       ebarimtType === 'CITIZEN'
                         ? 'border-primary bg-primary/5'
                         : 'border-gray-100 bg-gray-50 hover:border-gray-200'
@@ -1443,7 +1463,7 @@ export default function OrderCreatePage() {
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           ebarimtType === 'CITIZEN' ? 'border-primary' : 'border-gray-300'
                         }`}
                       >
@@ -1451,22 +1471,22 @@ export default function OrderCreatePage() {
                           <div className="w-2.5 h-2.5 rounded-full bg-primary" />
                         )}
                       </div>
-                      <span className="font-medium">Хувь хүн</span>
+                      <span className="font-medium text-sm sm:text-base">Хувь хүн</span>
                     </div>
                   </div>
 
                   {/* Organization Option */}
                   <div
                     onClick={() => setEbarimtType('COMPANY')}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    className={`p-2 w-1/2 h-full rounded-xl border-2 cursor-pointer transition-all ${
                       ebarimtType === 'COMPANY'
                         ? 'border-primary bg-primary/5'
                         : 'border-gray-100 bg-gray-50 hover:border-gray-200'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 ">
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                           ebarimtType === 'COMPANY' ? 'border-primary' : 'border-gray-300'
                         }`}
                       >
@@ -1474,63 +1494,85 @@ export default function OrderCreatePage() {
                           <div className="w-2.5 h-2.5 rounded-full bg-primary" />
                         )}
                       </div>
-                      <span className="font-medium">Албан байгууллага</span>
+                      <span className="font-medium text-sm sm:text-base">Байгууллага</span>
                     </div>
-
-                    {ebarimtType === 'COMPANY' && (
-                      <div className="mt-4 space-y-4" onClick={e => e.stopPropagation()}>
-                        <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 flex gap-3">
-                          <Info className="w-5 h-5 text-amber-500 shrink-0" />
-                          <p className="text-sm text-amber-800 leading-snug">
-                            Та байгууллагын регистрийн дугаараа зөв бичнэ үү. Төлбөр төлөгдсөн
-                            тохиолдолд регистрийн дугаараа солих боломжгүйг анхаарна уу!
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
-                              Байгууллагын регистр <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                              <Input
-                                value={ebarimtRegNo}
-                                onChange={e =>
-                                  setEbarimtRegNo(e.target.value.replace(/\D/g, '').slice(0, 10))
-                                }
-                                placeholder="Регистрийн дугаар"
-                                className="bg-white border-gray-200"
-                              />
-                              {isFetchingOrg && (
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
-                              Байгууллагын нэр <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                              value={ebarimtOrgName}
-                              readOnly
-                              placeholder="Байгууллагын нэр"
-                              className="bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
+                {ebarimtType === 'COMPANY' && (
+                  <div className="mt-2 space-y-2" onClick={e => e.stopPropagation()}>
+                    <div className="bg-amber-50 border border-amber-100 rounded-lg p-2 flex gap-3">
+                      {/* <Info className="w-5 h-5 text-amber-500 shrink-0" /> */}
+                      <p className="text-xs text-amber-800 leading-snug text-justify">
+                        Та байгууллагын регистрийн дугаараа зөв бичнэ үү. Төлбөр төлөгдсөн
+                        тохиолдолд регистрийн дугаараа солих боломжгүйг анхаарна уу!
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
+                          Байгууллагын регистр <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Input
+                            value={ebarimtRegNo}
+                            onChange={e =>
+                              setEbarimtRegNo(e.target.value.replace(/\D/g, '').slice(0, 10))
+                            }
+                            placeholder="Регистрийн дугаар"
+                            className="bg-white border-gray-200 text-sm"
+                          />
+                          {isFetchingOrg && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
+                          Байгууллагын нэр <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          value={ebarimtOrgName}
+                          readOnly
+                          placeholder="Байгууллагын нэр"
+                          className="bg-gray-100 text-sm border-gray-200 text-gray-600 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Navigation */}
-              <div className="flex items-center mt-6 pt-6 border-t border-gray-200">
+              {/* Үйлчилгээний нөхцөл зөвшөөрөх хэсэг */}
+              <div className="flex flex-col gap-2 mt-6 pt-6 border-t border-gray-200">
+                <label className="flex gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={agreedTerms}
+                    onChange={e => setAgreedTerms(e.target.checked)}
+                    className="accent-primary w-5 h-5 "
+                  />
+                  <span>
+                    <button
+                      type="button"
+                      className="text-primary  font-semibold hover:text-primary/80 focus:outline-none"
+                      onClick={() => setShowTermsModal(true)}
+                    >
+                      Үйлчилгээний нөхцөл, нууцлалын бодлого
+                    </button>
+                    -ыг зөвшөөрч байна
+                  </span>
+                </label>
+                <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
+                  <DialogContent className="max-w-2xl">
+                    <TermsPrivacyModal onClose={() => setShowTermsModal(false)} />
+                  </DialogContent>
+                </Dialog>
                 <a
                   href="/cart"
-                  className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors group"
+                  className="inline-flex items-center mt-2 gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors group"
                 >
                   <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                   Сагс руу буцах
@@ -1539,7 +1581,7 @@ export default function OrderCreatePage() {
 
               <Button
                 onClick={handleCreateOrder}
-                disabled={isDisabled}
+                disabled={isDisabled || !agreedTerms}
                 className="w-full mt-4 bg-primary hover:bg-primary/90"
                 size="lg"
               >

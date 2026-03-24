@@ -322,6 +322,7 @@ export function RegisterModal({
                 checked={agreed}
                 onChange={(e: any) => setAgreed(e.target.checked)}
                 className="mt-0.5"
+                size={5}
               />
               <label
                 htmlFor="register-agree"
