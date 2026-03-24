@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 export default function TermsPrivacyModal({ onClose }: { onClose?: () => void }) {
   return (
     <div
-      className="relative space-y-6 p-4 max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+      className="relative space-y-6 max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 bg-white rounded-2xl p-4 sm:p-8 mx-2 sm:mx-0"
       style={{
         maxHeight: '70vh',
         overflowY: 'auto',

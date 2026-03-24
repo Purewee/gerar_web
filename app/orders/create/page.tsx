@@ -787,7 +787,7 @@ export default function OrderCreatePage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Нэр <span className="text-red-500">*</span>
                       </label>
                       <Input
@@ -795,11 +795,10 @@ export default function OrderCreatePage() {
                         onChange={e => setUserName(e.target.value)}
                         placeholder="Нэр"
                         required
-                        className="text-sm"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Утасны дугаар <span className="text-red-500">*</span>
                       </label>
                       <Input
@@ -808,12 +807,11 @@ export default function OrderCreatePage() {
                         placeholder="Утасны дугаар"
                         maxLength={8}
                         required
-                        className="text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    <label className="font-medium text-gray-700 mb-1 block">
                       И-мэйл хаяг <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -822,7 +820,6 @@ export default function OrderCreatePage() {
                       onChange={e => setUserEmail(e.target.value)}
                       placeholder={savedEmailPlaceholder || 'Имэйл'}
                       required
-                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -830,7 +827,7 @@ export default function OrderCreatePage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Нэр <span className="text-red-500">*</span>
                       </label>
                       <Input
@@ -839,12 +836,12 @@ export default function OrderCreatePage() {
                           setGuestAddress({ ...guestAddress, fullName: e.target.value })
                         }
                         placeholder="Нэр"
+                        className="placeholder:text-gray-300"
                         required
-                        className="text-sm"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Утасны дугаар <span className="text-red-500">*</span>
                       </label>
                       <Input
@@ -858,12 +855,11 @@ export default function OrderCreatePage() {
                         placeholder={userPhone || 'Утасны дугаар'}
                         maxLength={8}
                         required
-                        className="text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    <label className="font-medium text-gray-700 mb-1 block">
                       И-мэйл хаяг <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -872,7 +868,6 @@ export default function OrderCreatePage() {
                       onChange={e => setGuestAddress({ ...guestAddress, email: e.target.value })}
                       placeholder={savedEmailPlaceholder || 'Имэйл'}
                       required
-                      className="text-sm"
                     />
                   </div>
                   <p className="text-sm text-gray-600 mt-3">
@@ -979,7 +974,7 @@ export default function OrderCreatePage() {
                   <div className="space-y-4">
                     {/* Label input at the top */}
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className=" font-medium text-gray-700 mb-1 block">
                         Хаягийн гарчиг <span className="text-red-500">*</span>
                       </label>
                       <Input
@@ -987,7 +982,6 @@ export default function OrderCreatePage() {
                         onChange={e => setNewAddress({ ...newAddress, label: e.target.value })}
                         placeholder="Жишээ: гэр, ажил, оффис"
                         required
-                        className="text-sm"
                         disabled={
                           createAddressMutation.isPending || updateAddressMutation.isPending
                         }
@@ -996,7 +990,7 @@ export default function OrderCreatePage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className=" font-medium text-gray-700 mb-1 block">
                           Дүүрэг <span className="text-red-500">*</span>
                         </label>
                         <select
@@ -1009,7 +1003,7 @@ export default function OrderCreatePage() {
                               khorooOrSoum: '',
                             });
                           }}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           required
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
@@ -1024,7 +1018,7 @@ export default function OrderCreatePage() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className=" font-medium text-gray-700 mb-1 block">
                           Хороо <span className="text-red-500">*</span>
                         </label>
                         <select
@@ -1032,7 +1026,7 @@ export default function OrderCreatePage() {
                           onChange={e =>
                             setNewAddress({ ...newAddress, khorooOrSoum: e.target.value })
                           }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           required
                           disabled={
                             createAddressMutation.isPending || !selectedDistrict || khorooLoading
@@ -1054,7 +1048,7 @@ export default function OrderCreatePage() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className=" font-medium text-gray-700 mb-1 block">
                           Байр<span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -1063,12 +1057,11 @@ export default function OrderCreatePage() {
                             setNewAddress({ ...newAddress, residentialComplex: e.target.value })
                           }
                           required
-                          className="text-sm"
                           placeholder="Байр"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className=" font-medium text-gray-700 mb-1 block">
                           Орц<span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -1079,11 +1072,10 @@ export default function OrderCreatePage() {
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
-                          className="text-sm"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className=" font-medium text-gray-700 mb-1 block">
                           Тоот<span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -1096,12 +1088,11 @@ export default function OrderCreatePage() {
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
-                          className="text-sm"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className=" font-medium text-gray-700 mb-1 block">
                         Дэлгэрэнгүй хаяг
                       </label>
                       <Textarea
@@ -1114,8 +1105,8 @@ export default function OrderCreatePage() {
                         }
                         placeholder="Дэлгэрэнгүй хаягийн мэдээлэл"
                         maxLength={500}
-                        className="text-sm"
                         rows={3}
+                        className="text-base"
                         disabled={
                           createAddressMutation.isPending || updateAddressMutation.isPending
                         }
@@ -1182,7 +1173,7 @@ export default function OrderCreatePage() {
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    <label className=" font-medium text-gray-700 mb-1 block">
                       Хаягийн гарчиг <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -1190,12 +1181,11 @@ export default function OrderCreatePage() {
                       onChange={e => setGuestAddress({ ...guestAddress, label: e.target.value })}
                       placeholder="Жишээ: гэр, ажил, оффис"
                       required
-                      className="text-sm"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className=" font-medium text-gray-700 mb-1 block">
                         Дүүрэг <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -1205,7 +1195,7 @@ export default function OrderCreatePage() {
                           setSelectedDistrict(district);
                           setGuestAddress({ ...guestAddress, provinceOrDistrict: district });
                         }}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         required
                       >
                         <option value="">Дүүрэг сонгох</option>
@@ -1217,7 +1207,7 @@ export default function OrderCreatePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className=" font-medium text-gray-700 mb-1 block">
                         Хороо <span className="text-red-500">*</span>
                       </label>
                       <select
@@ -1225,7 +1215,7 @@ export default function OrderCreatePage() {
                         onChange={e =>
                           setGuestAddress({ ...guestAddress, khorooOrSoum: e.target.value })
                         }
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         required
                         disabled={!selectedDistrict || khorooLoading}
                       >
@@ -1246,7 +1236,7 @@ export default function OrderCreatePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className=" font-medium text-gray-700 mb-1 block">
                         Байр<span className="text-red-500">*</span>
                       </label>
                       <Input
@@ -1256,11 +1246,10 @@ export default function OrderCreatePage() {
                         }
                         required
                         placeholder="Байр"
-                        className="text-sm"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className=" font-medium text-gray-700 mb-1 block">
                         Орц<span className="text-red-500">*</span>
                       </label>
                       <Input
@@ -1270,11 +1259,10 @@ export default function OrderCreatePage() {
                         }
                         required
                         placeholder="Орц"
-                        className="text-sm"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className=" font-medium text-gray-700 mb-1 block">
                         Тоот<span className="text-red-500">*</span>
                       </label>
                       <Input
@@ -1284,12 +1272,11 @@ export default function OrderCreatePage() {
                         }
                         required
                         placeholder="Тоотоо оруулна уу"
-                        className="text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
+                    <label className=" font-medium text-gray-700 mb-1 block">
                       Дэлгэрэнгүй хаяг
                     </label>
                     <Textarea
@@ -1302,6 +1289,7 @@ export default function OrderCreatePage() {
                       }
                       placeholder="Хаягийн дэлгэрэнгүй мэдээлэл"
                       maxLength={500}
+                      className="text-base"
                       rows={3}
                     />
                   </div>
@@ -1310,7 +1298,7 @@ export default function OrderCreatePage() {
 
               {/* Delivery Date */}
               <div className="mt-6">
-                <label className="mb-3 text-sm font-medium block">
+                <label className="mb-3  font-medium block">
                   Хүргэлтийн өдөр сонгох <span className="text-red-500">*</span>
                 </label>
                 <MongolianDatePicker
@@ -1323,7 +1311,7 @@ export default function OrderCreatePage() {
 
               {/* Delivery Time Slot */}
               <div className="mt-6">
-                <p className="mb-3 text-sm font-medium">
+                <p className="mb-3  font-medium">
                   Хүргэлтийн цаг сонгох <span className="text-red-500">*</span>
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1421,7 +1409,7 @@ export default function OrderCreatePage() {
                         key={slot}
                         onClick={() => isAvailable && setDeliveryTimeSlot(slot)}
                         disabled={!isAvailable}
-                        className={`p-3 border-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`p-3 border-2 rounded-lg  font-medium transition-colors ${
                           !isAvailable
                             ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed opacity-50'
                             : deliveryTimeSlot === slot
@@ -1510,7 +1498,7 @@ export default function OrderCreatePage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
+                        <label className="text-base  text-gray-500 mb-1 block ">
                           Байгууллагын регистр <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -1520,7 +1508,7 @@ export default function OrderCreatePage() {
                               setEbarimtRegNo(e.target.value.replace(/\D/g, '').slice(0, 10))
                             }
                             placeholder="Регистрийн дугаар"
-                            className="bg-white border-gray-200 text-sm"
+                            className="bg-white border-gray-200 "
                           />
                           {isFetchingOrg && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1530,14 +1518,14 @@ export default function OrderCreatePage() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
+                        <label className="text-base  text-gray-500 mb-1 block ">
                           Байгууллагын нэр <span className="text-red-500">*</span>
                         </label>
                         <Input
                           value={ebarimtOrgName}
                           readOnly
-                          placeholder="Байгууллагын нэр"
-                          className="bg-gray-100 text-sm border-gray-200 text-gray-600 cursor-not-allowed"
+                          placeholder=""
+                          className="bg-gray-100 text-base border-gray-200 text-gray-600 cursor-not-allowed placeholder:text-gray-700"
                         />
                       </div>
                     </div>
@@ -1566,7 +1554,7 @@ export default function OrderCreatePage() {
                   </span>
                 </label>
                 <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="sm:max-w-3xl max-w-lg">
                     <TermsPrivacyModal onClose={() => setShowTermsModal(false)} />
                   </DialogContent>
                 </Dialog>
