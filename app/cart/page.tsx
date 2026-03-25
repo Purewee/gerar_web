@@ -217,9 +217,9 @@ export default function CartPage() {
 
   return (
     <div className="sm:min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6 pt-4 sm:py-8">
         {/* Breadcrumbs */}
-        <div className="mb-6 text-sm text-gray-600">
+        <div className="mb-2 text-sm text-gray-600">
           <div className="flex items-center gap-2">
             <Link href="/" className="hover:text-primary">
               Нүүр хуудас

@@ -91,11 +91,11 @@ export function Navigation() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  // Hide categories on payment, cart, and order create pages
+  // Hide categories on payment, order create, and order detail pages (NOT on cart)
   const hideCategories =
     pathname?.includes('/payment') ||
-    pathname === '/cart' ||
     pathname === '/orders/create' ||
+    (pathname?.startsWith('/orders/') && pathname !== '/orders') ||
     false;
 
   // Validate session on mount — clears stale auth if token is expired
@@ -493,7 +493,7 @@ export function Navigation() {
                 <Input
                   type="text"
                   placeholder="Цэвэрлэгээ, гал тогоо, гэрийн хэрэгсэл хайх...."
-                  className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-gray-400"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value.replace(/[^\p{L}\p{N}\s]/gu, ''))}
                   onFocus={() => setSearchFocused(true)}
@@ -692,6 +692,7 @@ export function Navigation() {
                             aria-label="Ангилал нээх"
                             onMouseEnter={() => setCategoryMenuHover(true)}
                             onMouseLeave={() => setCategoryMenuHover(false)}
+                            onClick={() => router.push('/products')}
                           >
                             <div
                               className={`flex transition-all duration-300 text-gray-800 gap-1 p-1.5 rounded ${categoryMenuHover ? 'bg-neutral-100' : 'border-gray-800'}`}
