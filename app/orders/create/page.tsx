@@ -756,10 +756,10 @@ export default function OrderCreatePage() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f7]">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-6 pt-4">
         {/* Breadcrumbs */}
         <div className="mb-6 text-sm text-gray-600">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Link href="/" className="hover:text-primary">
               Нүүр хуудас
             </Link>

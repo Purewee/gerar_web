@@ -279,12 +279,12 @@ export default function OrderDetailPage() {
 
   return (
     <div className="min-h-[calc(100vh-525px)] bg-linear-to-b from-gray-50 to-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-5">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-4 pt-2 space-y-5">
         {/* Header */}
         <Button
           variant="ghost"
           onClick={() => router.push(ordersBackHref)}
-          className="group px-2 py-1 text-gray-600 hover:text-gray-900"
+          className="group px-2 pb-1 text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" />
           <span className="text-sm font-medium">{ordersBackLabel}</span>
@@ -683,7 +683,7 @@ export default function OrderDetailPage() {
           paymentStatus !== 'CANCELLED' && (
             <Card className="border border-red-200 bg-red-50 flex flex-col items-center justify-center shadow-none">
               <CardContent className="text-center py-2 space-y-2">
-                <p className="text-sm text-red-700">
+                <p className="text-xs text-red-700">
                   Төлбөр төлөгдөөгүй 60 минут болсон бол захиалга автоматаар цуцлагдана
                 </p>
                 <Button
