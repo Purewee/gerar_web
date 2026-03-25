@@ -24,8 +24,8 @@ export function FilterSidebarMobile({ className }: FilterSidebarProps) {
   const searchParams = useSearchParams();
 
   // Current values from URL
-  const sortBy = searchParams.get('sortBy') ?? 'price';
-  const sortOrder = searchParams.get('sortOrder') ?? 'asc';
+  const sortBy = searchParams.get('sortBy') ?? 'createdAt';
+  const sortOrder = searchParams.get('sortOrder') ?? 'desc';
 
   // Update query params
   const updateFilters = (updates: Record<string, string | null>) => {
