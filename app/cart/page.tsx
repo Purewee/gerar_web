@@ -427,7 +427,7 @@ export default function CartPage() {
                           </Link>
 
                           {/* Price, quantity, actions */}
-                          <div className="flex sm:flex-col items-center items-end justify-between gap-2 shrink-0">
+                          <div className="flex sm:flex-col items-center items-end gap-6 sm:gap-2 justify-center shrink-0">
                             <div className="hidden sm:block flex items-center gap-2">
                               {hasDiscount && (
                                 <span className="text-sm text-gray-400 line-through">
@@ -509,7 +509,7 @@ export default function CartPage() {
                                 removePending={removeCartMutation.isPending}
                               />
                             </div>
-                            <div className="text-sm text-gray-900 sm:flex-row sm:gap-1 flex flex-col">
+                            <div className="text-sm text-center text-gray-900 sm:flex-row sm:gap-1 flex flex-col">
                               Нийт дүн:{' '}
                               <span className="font-bold">
                                 {(price * item.quantity).toLocaleString()}₮

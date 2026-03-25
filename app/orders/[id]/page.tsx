@@ -314,14 +314,14 @@ export default function OrderDetailPage() {
                 ) : qrCode ? (
                   <div className="space-y-2">
                     <div className="flex flex-col items-center">
-                      <div className="p-4 rounded-2xl bg-white shadow-inner border flex justify-center">
+                      <div className="p-1 my-1 rounded-2xl bg-white shadow-inner border flex justify-center">
                         {/* Use regular img tag for base64 data URLs - Next.js Image doesn't handle them */}
                         <Image
                           src={qrCode}
                           alt="QR Code"
-                          className="w-60 h-60 object-contain"
-                          width={240}
-                          height={240}
+                          className="w-50 h-50 object-contain"
+                          width={200}
+                          height={200}
                           onError={_e => {
                             console.error('QR Code image failed to load');
                             console.error('QR Code value:', qrCode?.substring(0, 100));
@@ -431,7 +431,7 @@ export default function OrderDetailPage() {
 
                     {/* Refresh Status Button */}
                     {!shouldStopPolling && (
-                      <div className="flex justify-center">
+                      <div className="flex justify-center mt-6">
                         <Button
                           variant="outline"
                           size="sm"
@@ -483,9 +483,9 @@ export default function OrderDetailPage() {
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             {isPaid && (
-              <div className="px-3 py-1.5 bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg w-full sm:w-auto text-center sm:text-left">
-                <p className="text-md text-green-800 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
-                  <CheckCircle2 className="w-4.5 h-4.5" />
+              <div className="px-3 py-5 bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg w-full sm:w-auto text-center sm:text-left">
+                <p className="text-xl text-green-800 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
+                  <CheckCircle2 className="w-6 h-6" />
                   Төлөгдсөн
                 </p>
               </div>
@@ -495,7 +495,7 @@ export default function OrderDetailPage() {
 
         {/* Status Banner */}
         {isCancelled && (
-          <div className="flex gap-3 p-3 rounded-xl bg-yellow-50 border border-yellow-200">
+          <div className="flex gap-3 p-3 py-4 rounded-xl bg-yellow-50 border border-yellow-200">
             <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-yellow-900 font-bold">
               !
             </div>
@@ -542,7 +542,7 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Total Payment */}
-            <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-300">
+            <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
               <span>Нийт</span>
               <span className="text-primary">{totalAmount.toLocaleString()} ₮</span>
             </div>
@@ -551,18 +551,15 @@ export default function OrderDetailPage() {
 
         {/* Product Details Card */}
         {order?.items && order.items.length > 0 && (
-          <Card className="bg-white border border-gray-200 shadow-sm">
+          <Card className="bg-gray-50 border border-gray-200 shadow-sm">
             <CardContent className="p-3">
-              <div className="mb-2 pb-1.5 border-b border-gray-200">
-                <h2 className="text-base font-bold text-gray-900 mb-1">Бүтээгдэхүүн</h2>
+              <div className="mb-2 pb-1.5 ">
+                <h2 className="text-base font-bold text-gray-900 mb-1">Барааны жагсаалт</h2>
               </div>
 
               <div className="space-y-2">
                 {order.items.map(item => (
-                  <div
-                    key={item.id}
-                    className="flex gap-3 p-3 rounded-xl bg-gray-50 border border-gray-200"
-                  >
+                  <div key={item.id} className="flex gap-3 p-1 rounded-xl border-b border-gray-200">
                     {/* Product Image */}
                     {item.product?.firstImage || item.product?.images?.[0] ? (
                       <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden shrink-0">
@@ -581,11 +578,11 @@ export default function OrderDetailPage() {
                     )}
 
                     {/* Product Details */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pt-2">
                       <h3 className="text-sm font-semibold line-clamp-2">
                         {item.product?.name || 'Бүтээгдэхүүн'}
                       </h3>
-                      <div className="flex justify-between items-center pt-0.5 border-t border-gray-200 mt-0.5">
+                      <div className="flex justify-between items-center pt-0.5 mt-0.5">
                         <span className="text-xs text-gray-600">
                           {parseFloat(item.price).toLocaleString()} ₮ × {item.quantity}
                         </span>
@@ -598,19 +595,18 @@ export default function OrderDetailPage() {
                 ))}
               </div>
 
-              {/* Contact Info */}
-              <div className="flex items-center justify-end gap-1.5 mt-2 pt-1.5 border-t border-gray-200">
+              {/* <div className="flex items-center justify-end gap-1.5 mt-2 pt-1.5 border-t border-gray-200">
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded">
                   <Phone className="w-3 h-3 text-gray-600" />
                   <span className="text-xs font-medium text-gray-700">8886-0134</span>
                 </div>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         )}
 
         {/* Customer Information Card */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-gray-50 border border-gray-200 shadow-sm">
           <CardContent className="p-3">
             <h2 className="text-base font-bold text-gray-900 mb-2 pb-1.5 border-b border-gray-200">
               Захиалагчийн мэдээлэл
@@ -670,9 +666,9 @@ export default function OrderDetailPage() {
                   {order.address.apartmentNumber && `, Тоот: ${order.address.apartmentNumber}`}
                 </p>
                 {order.address.addressNote && (
-                  <div className="mt-1.5 p-1.5 bg-blue-50 border border-blue-200 rounded">
-                    <p className="text-xs font-medium text-blue-900 mb-0.5">Дэлгэрэнгүй хаяг:</p>
-                    <p className="text-xs text-blue-800">{order.address.addressNote}</p>
+                  <div className="mt-2.5 border-t border-gray-200 pt-2">
+                    <p className="text-xs font-medium text-gray-900 mb-0.5">Дэлгэрэнгүй хаяг:</p>
+                    <p className="text-xs text-gray-800 my-1 py-1">{order.address.addressNote}</p>
                   </div>
                 )}
               </div>

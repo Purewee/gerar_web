@@ -35,23 +35,15 @@ import {
   LucideIcon,
   BrushCleaning,
   CookingPot,
-  Mars,
-  Venus,
   Baby,
-  PawPrint,
-  Cable,
-  Car,
-  Hammer,
-  EllipsisVertical,
   SoapDispenserDroplet,
-  SprayCan,
   Workflow,
   LayoutList,
   Star,
   MoveRight,
-  ListCollapse,
   Shrink,
   GripVertical,
+  LayoutGrid,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -985,6 +977,35 @@ export function Navigation() {
                   </div>
                 ) : categories.length > 0 ? (
                   <>
+                    {/* Бүх бараа button */}
+                    {(() => {
+                      const isAllActive = pathname === '/products' && !finalActiveCategoryId;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedCategoryId(null);
+                            setSelectedChildCategoryId(null);
+                            router.push('/products');
+                          }}
+                          className={`text-xs font-semibold whitespace-nowrap py-2.5 shrink-0 flex items-center rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
+                            isAllActive
+                              ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
+                              : 'text-gray-800 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
+                          }`}
+                          aria-label="Бүх бараа харах"
+                        >
+                          <LayoutGrid className="w-4 h-4 mx-2" />
+                          <div className="flex mr-3.5 gap-1">
+                            {/* <GripVertical className="w-4 h-4" /> */}
+                            <span className="relative z-10">Бүх бараа</span>
+                          </div>
+                          {!isAllActive && (
+                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
+                          )}
+                        </button>
+                      );
+                    })()}
                     {categories.map((category, index) => {
                       const hasChildren = category.children && category.children.length > 0;
                       const isExpanded = expandedCategoryId === category.id;
@@ -1059,35 +1080,6 @@ export function Navigation() {
                         </button>
                       );
                     })}
-                    {/* Бүх бараа button */}
-                    {(() => {
-                      const isAllActive = pathname === '/products' && !finalActiveCategoryId;
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedCategoryId(null);
-                            setSelectedChildCategoryId(null);
-                            router.push('/products');
-                          }}
-                          className={`text-xs font-semibold whitespace-nowrap py-2.5 gap-3.5 shrink-0 flex items-center rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
-                            isAllActive
-                              ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
-                              : 'text-gray-800 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
-                          }`}
-                          aria-label="Бүх бараа харах"
-                        >
-                          <div className="flex ml-3.5 gap-1">
-                            {/* <GripVertical className="w-4 h-4" /> */}
-                            <span className="relative z-10">Бүх бараа</span>
-                          </div>
-                          {!isAllActive && (
-                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
-                          )}
-                          <MoveRight className="w-4 h-4 mr-2" />
-                        </button>
-                      );
-                    })()}
                   </>
                 ) : (
                   <span className="text-xs text-gray-500">Ангилал олдсонгүй</span>
