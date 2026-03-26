@@ -989,7 +989,11 @@ export function Navigation() {
                   <>
                     {/* Бүх бараа button */}
                     {(() => {
-                      const isAllActive = pathname === '/products' && !finalActiveCategoryId;
+                      // Do not highlight as active if viewing a feature's products page
+                      const isFeaturePage =
+                        pathname === '/products' && !!searchParams?.get('featureId');
+                      const isAllActive =
+                        pathname === '/products' && !finalActiveCategoryId && !isFeaturePage;
                       return (
                         <button
                           type="button"

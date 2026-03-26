@@ -46,7 +46,7 @@ function FeatureProductSection({
 }) {
   const { data, isLoading } = useProducts({
     featureId,
-    limit: 20,
+    limit: 100,
   });
   const raw = data?.data;
   const productsRaw = Array.isArray(raw) ? raw.filter(p => p && p.isHidden !== true) : [];
@@ -69,6 +69,7 @@ function FeatureProductSection({
       linkLabel={`${featureName} бүх бараа харах`}
       products={products}
       isLoading={isLoading}
+      description={undefined}
     />
   );
 }
@@ -91,6 +92,21 @@ export function ProductListSection({
   products: Product[];
   isLoading: boolean;
 }) {
+  const [limit, setLimit] = useState(10);
+
+  useEffect(() => {
+    const updateLimit = () => {
+      if (window.innerWidth >= 1024) {
+        setLimit(15); // desktop
+      } else {
+        setLimit(10); // mobile
+      }
+    };
+
+    updateLimit();
+    window.addEventListener('resize', updateLimit);
+    return () => window.removeEventListener('resize', updateLimit);
+  }, []);
   if (isLoading) {
     return (
       <section className="py-6 sm:py-10 bg-white">
@@ -109,7 +125,7 @@ export function ProductListSection({
   }
 
   return (
-    <section className="py-6 sm:py-10 bg-white">
+    <section className="sm:pt-4 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 gap-2 sm:gap-4">
           <div>
@@ -143,21 +159,22 @@ export function ProductListSection({
             <ChevronRight className="w-5 h-5 text-gray-700" aria-hidden="true" />
           </button>
           <Swiper
-            modules={[Navigation]}
+            modules={[Navigation, Pagination]}
             navigation={{
               prevEl: `.${sectionId}-swiper-prev`,
               nextEl: `.${sectionId}-swiper-next`,
             }}
-            slidesPerView={2}
+            slidesPerView={2.2}
+            pagination={{ clickable: true }}
             spaceBetween={16}
             breakpoints={{
               640: { slidesPerView: 3, spaceBetween: 16 },
               768: { slidesPerView: 4, spaceBetween: 16 },
               1024: { slidesPerView: 5, spaceBetween: 16 },
             }}
-            className={`product-list-swiper -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex [&_.swiper-slide]:flex-col [&_.swiper-slide>*]:flex-1 [&_.swiper-slide>*]:min-h-0 [&_.swiper-slide>*]:flex [&_.swiper-slide>*]:flex-col`}
+            className={`product-list-swiper overflow-visible [&_.swiper-pagination]:!relative [&_.swiper-pagination]:!mt-4 [&_.swiper-pagination-bullet]:!w-2.5 [&_.swiper-pagination-bullet]:!h-2.5 [&_.swiper-pagination-bullet]:!bg-gray-500 [&_.swiper-pagination-bullet-active]:!bg-primary mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex [&_.swiper-slide]:flex-col [&_.swiper-slide>*]:flex-1 [&_.swiper-slide>*]:min-h-0 [&_.swiper-slide>*]:flex [&_.swiper-slide>*]:flex-col`}
           >
-            {products.slice(0, 12).map(product => (
+            {products.slice(0, limit).map(product => (
               <SwiperSlide key={product.id} className="h-auto!">
                 <ProductCard inGrid product={product} />
               </SwiperSlide>
@@ -419,14 +436,16 @@ export default function HomeClient() {
           </div>
         </section>
 
-        {featuredCategories.length > 0 &&
-          featuredCategories.map(feature => (
-            <FeatureProductSection
-              key={feature.id}
-              featureId={feature.id}
-              featureName={feature.name}
-            />
-          ))}
+        <div className="pt-6 sm:pt-10 bg-white">
+          {featuredCategories.length > 0 &&
+            featuredCategories.map(feature => (
+              <FeatureProductSection
+                key={feature.id}
+                featureId={feature.id}
+                featureName={feature.name}
+              />
+            ))}
+        </div>
 
         <div className="gap-4 pt-12 pb-8 md:flex mx-auto items-center flex-row justify-center max-w-7xl mt-4 border-t border-gray-200 px-8">
           <div className="flex flex-col items-center mb-12 mt-4 gap-2">
