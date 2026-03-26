@@ -23,7 +23,7 @@ function ObserverDiv({ onIntersect, disabled }: { onIntersect: () => void; disab
           onIntersect();
         }
       },
-      { rootMargin: '200px' }
+      { rootMargin: '200px' },
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -157,27 +157,11 @@ function ProductsContent() {
   const category = categoryResponse?.data;
 
   const pages = productsResponse?.pages || [];
-  let products = pages
-    .flatMap(page => page.data || [])
-    .filter(p => p.isHidden !== true);
+  let products = pages.flatMap(page => page.data || []).filter(p => p.isHidden !== true);
 
-  // Shuffle products if no filter/search/category is applied (show all products randomly)
-  const noFilter =
-    !searchParams.get('categoryId') &&
-    !searchParams.get('categoryIds') &&
-    !searchParams.get('featureId') &&
-    !searchParams.get('featureIds') &&
-    !searchParams.get('search') &&
-    !searchParams.get('onSale') &&
-    !searchParams.get('minPrice') &&
-    !searchParams.get('maxPrice') &&
-    !searchParams.get('minStock') &&
-    !searchParams.get('maxStock') &&
-    !searchParams.get('createdAfter') &&
-    !searchParams.get('createdBefore');
-
-  if (noFilter && products.length > 1) {
-    // Fisher-Yates shuffle
+  // Shuffle products if viewing a feature (featureId) page
+  const featureId = searchParams.get('featureId');
+  if (featureId && products.length > 1) {
     products = [...products];
     for (let i = products.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -265,11 +249,14 @@ function ProductsContent() {
 
           {/* Products Section */}
           <main className="flex-1 min-w-0">
-            <FilterSidebarMobile
-              productsCount={totalProductsCount}
-              isLoading={loading}
-              className="sm:hidden"
-            />
+            {/* Hide FilterSidebarMobile if viewing a feature's products page */}
+            {!(featureId && products.length > 0) && (
+              <FilterSidebarMobile
+                productsCount={totalProductsCount}
+                isLoading={loading}
+                className="sm:hidden"
+              />
+            )}
             {!mounted || loading ? (
               <ProductGridSkeleton count={8} grid />
             ) : productsError ? (
@@ -312,23 +299,20 @@ function ProductsContent() {
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4 sm:gap-5">
                   {products.map((product, index) => (
-                    <div
-                      key={product.id}
-                      className="animate-in fade-in slide-in-from-bottom-4"
-                    >
+                    <div key={product.id} className="animate-in fade-in slide-in-from-bottom-4">
                       <ProductCard product={product} inGrid={true} className="h-full" />
                     </div>
                   ))}
                 </div>
-                
+
                 {hasNextPage && (
                   <div className="mt-8 flex justify-center">
-                    <ObserverDiv 
+                    <ObserverDiv
                       onIntersect={() => {
                         if (!isFetchingNextPage) {
                           fetchNextPage();
                         }
-                      }} 
+                      }}
                       disabled={isFetchingNextPage}
                     />
                     {isFetchingNextPage && (
