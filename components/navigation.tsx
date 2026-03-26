@@ -719,52 +719,61 @@ export function Navigation() {
                           onMouseLeave={() => setCategoryMenuHover(false)}
                         >
                           <div className="flex gap-6">
-                            <div className="w-1/3 space-y-0.5 border-r border-gray-200 pr-4">
-                              {categories.map((cat, index) => {
-                                const Icon = categoryIcons[index] ?? GripVertical;
-                                return (
-                                  <div
-                                    key={cat.id}
-                                    onMouseEnter={() => setDesktopActiveCategory(cat)}
-                                    className={`group flex justify-between w-full items-center p-2 rounded cursor-pointer text-sm hover:text-primary ${
-                                      desktopActiveCategory?.id === cat.id
-                                        ? 'bg-neutral-100'
-                                        : 'hover:bg-neutral-50'
-                                    }`}
-                                  >
-                                    <button
-                                      onClick={e => e.preventDefault()}
-                                      className="flex items-center gap-2 w-full text-gray-800 group-hover:text-primary font-medium cursor-pointer"
+                            <div
+                              className="w-1/3 flex flex-col h-full border-r border-gray-200 pr-4 relative"
+                              style={{ minHeight: '300px' }}
+                            >
+                              <div className="flex-1 space-y-0.5">
+                                {categories.map((cat, index) => {
+                                  const Icon = categoryIcons[index] ?? GripVertical;
+                                  return (
+                                    <div
+                                      key={cat.id}
+                                      onMouseEnter={() => setDesktopActiveCategory(cat)}
+                                      className={`group flex justify-between w-full items-center p-2 rounded cursor-pointer text-sm hover:text-primary ${
+                                        desktopActiveCategory?.id === cat.id
+                                          ? 'bg-neutral-100'
+                                          : 'hover:bg-neutral-50'
+                                      }`}
                                     >
-                                      <Icon
-                                        className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
-                                        aria-hidden="true"
-                                      />
-                                      <span className="group-hover:text-primary">{cat.name}</span>
-                                    </button>
-
-                                    {cat.children && cat.children.length > 0 && (
-                                      <ChevronRight
-                                        className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
-                                        aria-hidden="true"
-                                      />
-                                    )}
-                                  </div>
-                                );
-                              })}
-                              <Link
-                                href={`/products`}
-                                className={`flex cursor-pointer hover:underline select-none items-center rounded-sm px-2 mt-4 text-primary bg-primary/5 py-2 text-sm font-medium outline-none hover:bg-primary/10`}
-                                aria-label={`Бүх бараа харах`}
+                                      <button
+                                        onClick={e => e.preventDefault()}
+                                        className="flex items-center gap-2 w-full text-gray-800 group-hover:text-primary font-medium cursor-pointer"
+                                      >
+                                        <Icon
+                                          className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
+                                          aria-hidden="true"
+                                        />
+                                        <span className="group-hover:text-primary">{cat.name}</span>
+                                      </button>
+                                      {cat.children && cat.children.length > 0 && (
+                                        <ChevronRight
+                                          className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
+                                          aria-hidden="true"
+                                        />
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div
+                                className="mt-4 pt-2 pb-2"
+                                style={{ position: 'sticky', bottom: 0, background: 'white' }}
                               >
-                                <div className="flex justify-between w-full ">
-                                  <div className="flex gap-1 text-xs font-semibold">
-                                    {/* <ListCollapse className="w-4 h-4 mr-1" /> */}
-                                    <span> Бүх барааг харах </span>
+                                <Link
+                                  href={`/products`}
+                                  className={`flex cursor-pointer hover:underline select-none items-center rounded-sm px-2 text-primary bg-primary/5 py-2 text-sm font-medium outline-none hover:bg-primary/10 w-full`}
+                                  aria-label={`Бүх бараа харах`}
+                                >
+                                  <div className="flex justify-between w-full ">
+                                    <div className="flex gap-1 text-sm font-semibold">
+                                      {/* <ListCollapse className="w-4 h-4 mr-1" /> */}
+                                      <span> Бүх барааг харах </span>
+                                    </div>
+                                    <MoveRight className="right-0 w-4 h-4" />
                                   </div>
-                                  <MoveRight className="right-0 w-4 h-4" />
-                                </div>
-                              </Link>
+                                </Link>
+                              </div>
                             </div>
                             <div className="w-2/3">
                               {desktopActiveCategory?.children &&
