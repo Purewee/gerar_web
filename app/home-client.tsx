@@ -49,7 +49,17 @@ function FeatureProductSection({
     limit: 20,
   });
   const raw = data?.data;
-  const products = Array.isArray(raw) ? raw.filter(p => p && p.isHidden !== true) : [];
+  const productsRaw = Array.isArray(raw) ? raw.filter(p => p && p.isHidden !== true) : [];
+  // Shuffle products for random order
+  function shuffleArray<T>(array: T[]): T[] {
+    const arr = array.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+  const products = shuffleArray(productsRaw);
 
   return (
     <ProductListSection
@@ -163,7 +173,6 @@ import { MobileHomeFooter } from '@/components/mobile-footer';
 
 export default function HomeClient() {
   const router = useRouter();
-
   const featuredCategories = useCategoriesStore(state => state.featuredCategories);
 
   // Fetch banners for hero carousel
