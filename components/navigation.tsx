@@ -909,7 +909,7 @@ export function Navigation() {
                     </div>
                     {featuredCategories.length > 0 && (
                       <div className="flex items-center gap-1 px-2 shrink-0 h-full">
-                        {featuredCategories.map(category => {
+                        {featuredCategories.slice(0, 2).map(category => {
                           const isCategoryActive =
                             activeFeatureId !== null && activeFeatureId === category.id;
                           return (
