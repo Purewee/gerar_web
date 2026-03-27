@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { useInfiniteProducts, useCategory, type ProductsQueryParams } from '@/lib/api';
+import { useInfiniteProducts, useCategory, useFeature, type ProductsQueryParams } from '@/lib/api';
 import { ProductCard } from '@/components/product-card';
 import { ProductGridSkeleton } from '@/components/skeleton';
 import { FilterSidebar } from '@/components/filter-sidebar';
@@ -153,15 +153,21 @@ function ProductsContent() {
   } = useInfiniteProducts(queryParams);
 
   const categoryId = searchParams.get('categoryId');
+  const featureId = searchParams.get('featureId');
+  // Fetch category name only from category API
   const { data: categoryResponse } = useCategory(categoryId ? parseInt(categoryId) : 0);
   const category = categoryResponse?.data;
+  // Fetch feature name only from feature API
+  const { data: featureResponse } = useFeature(featureId ? parseInt(featureId) : 0);
+  const feature = featureResponse?.data;
 
   const pages = productsResponse?.pages || [];
   let products = pages.flatMap(page => page.data || []).filter(p => p.isHidden !== true);
 
-  // Shuffle products if viewing a feature (featureId) page
-  const featureId = searchParams.get('featureId');
-  if (featureId && products.length > 1) {
+  // featureId-г FilterSidebarMobile-д ашиглахын тулд дахин тодорхойлно
+  // const featureId = searchParams.get('featureId');
+  // Always shuffle products for random order
+  if (products.length > 1) {
     products = [...products];
     for (let i = products.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -201,7 +207,7 @@ function ProductsContent() {
   return (
     <div className="bg-linear-to-b from-gray-50 via-white to-gray-50 relative">
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8 h-full">
-        {/* Header */}
+        {/* Header (Desktop) */}
         <div className="flex hidden sm:block flex-col gap-4 mb-8">
           {/* Top Row: Back Button and Title */}
           <div className="flex items-center gap-3 sm:gap-4">
@@ -228,6 +234,8 @@ function ProductsContent() {
                   </>
                 ) : mounted && searchParams.get('onSale') === 'true' ? (
                   'Хямдралтай бараа'
+                ) : feature ? (
+                  feature.name
                 ) : category ? (
                   category.name
                 ) : (
@@ -236,6 +244,40 @@ function ProductsContent() {
               </h1>
             </div>
           </div>
+        </div>
+
+        {/* Header (Mobile) */}
+        <div className="flex sm:hidden items-center gap-3 mb-4">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="flex items-center gap-2 px-3 py-2 border-2 border-gray-200 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-200 rounded-lg shadow-sm hover:shadow-md group"
+            aria-label="Өмнөх хуудас руу буцах"
+          >
+            <ArrowLeft
+              className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
+              aria-hidden="true"
+            />
+            <span className="font-medium">Буцах</span>
+          </Button>
+          <h1 className="text-lg font-bold text-gray-900 truncate">
+            {mounted && searchQuery ? (
+              <>
+                Хайлтын үр дүн:{' '}
+                <span className="text-primary bg-primary/10 px-2 py-1 rounded-lg">
+                  {searchQuery}
+                </span>
+              </>
+            ) : mounted && searchParams.get('onSale') === 'true' ? (
+              'Хямдралтай бараа'
+            ) : feature ? (
+              feature.name
+            ) : category ? (
+              category.name
+            ) : (
+              'Бүх бүтээгдэхүүн'
+            )}
+          </h1>
         </div>
 
         {/* Main Content with Sidebar */}
