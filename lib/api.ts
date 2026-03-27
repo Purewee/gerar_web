@@ -749,6 +749,11 @@ const categoriesApiFunctions = {
   getFeaturedCategories: async (): Promise<ApiResponse<Category[]>> => {
     return apiFetch<Category[]>('/features');
   },
+
+  // Fetch a single feature by ID from the features API
+  getFeatureById: async (id: number): Promise<ApiResponse<Category>> => {
+    return apiFetch<Category>(`/features/${id}`);
+  },
 };
 
 // Categories hooks
@@ -767,6 +772,15 @@ export const useFeaturedCategories = (options?: { enabled?: boolean }) => {
     queryFn: () => categoriesApiFunctions.getFeaturedCategories(),
     staleTime: 1.5 * 60 * 60 * 1000, // 1.5 hours
     enabled: options?.enabled ?? true,
+  });
+};
+
+// Hook to fetch a single feature by ID from the features API
+export const useFeature = (id: number) => {
+  return useQuery({
+    queryKey: ['feature', id],
+    queryFn: () => categoriesApiFunctions.getFeatureById(id),
+    enabled: !!id,
   });
 };
 
