@@ -23,11 +23,15 @@ export function FilterSidebarMobile({ className }: FilterSidebarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Current values from URL
+  // Зөвхөн categoryId байгаа үед л харуулна
+  const categoryId = searchParams.get('categoryId');
+  if (!categoryId) return null;
+
+  // ...existing code...
   const sortBy = searchParams.get('sortBy') ?? 'createdAt';
   const sortOrder = searchParams.get('sortOrder') ?? 'desc';
 
-  // Update query params
+  // ...existing code...
   const updateFilters = (updates: Record<string, string | null>) => {
     const params = new URLSearchParams(searchParams.toString());
 

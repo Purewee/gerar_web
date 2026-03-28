@@ -166,8 +166,8 @@ function ProductsContent() {
 
   // featureId-г FilterSidebarMobile-д ашиглахын тулд дахин тодорхойлно
   // const featureId = searchParams.get('featureId');
-  // Always shuffle products for random order
-  if (products.length > 1) {
+  // Shuffle products randomly ONLY if categoryId is NOT present
+  if (!categoryId && products.length > 1) {
     products = [...products];
     for (let i = products.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
