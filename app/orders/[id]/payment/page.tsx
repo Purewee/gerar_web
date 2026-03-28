@@ -304,6 +304,18 @@ export default function PaymentPage() {
 
   const ordersBackHref = isAuthenticated ? '/profile/orders' : '/cart';
 
+  // Facebook Pixel Purchase event
+  useEffect(() => {
+    if (isPaid && order) {
+      if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'Purchase', {
+          value: parseFloat(order.totalAmount),
+          currency: 'MNT',
+        });
+      }
+    }
+  }, [isPaid, order]);
+
   if (!order) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">

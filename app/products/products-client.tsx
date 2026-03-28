@@ -34,6 +34,19 @@ function ObserverDiv({ onIntersect, disabled }: { onIntersect: () => void; disab
 
 function ProductsContent() {
   const searchParams = useSearchParams();
+  // ViewContent event for Facebook Pixel
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const categoryId = searchParams.get('categoryId');
+      const featureId = searchParams.get('featureId');
+      // Аль нэг нь байгаа үед track
+      if (categoryId || featureId) {
+        if (typeof (window as any).fbq === 'function') {
+          (window as any).fbq('track', 'ViewContent');
+        }
+      }
+    }
+  }, [searchParams]);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 

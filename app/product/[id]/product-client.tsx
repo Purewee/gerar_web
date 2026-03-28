@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,6 +17,12 @@ import Image from 'next/image';
 import { toast } from 'sonner';
 
 export default function ProductClient({ productId }: { productId: number }) {
+  // Facebook Pixel ViewContent event
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof (window as any) === 'function') {
+      (window as any).fbq('track', 'ViewContent');
+    }
+  }, []);
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -86,6 +92,9 @@ export default function ProductClient({ productId }: { productId: number }) {
       await addToCartMutation.mutateAsync({ productId: product.id, quantity });
       window.dispatchEvent(new Event('cartUpdated'));
       toast.success('Сагсанд нэмэгдсэн');
+      if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'AddToCart');
+      }
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
         description: error.message || 'Сагсанд нэмэхэд алдаа гарлаа',
