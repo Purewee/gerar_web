@@ -248,6 +248,22 @@ export default function OrderDetailPage() {
   const deliveryFee = getDeliveryFee(itemTotal);
   const totalAmount = itemTotal + deliveryFee;
 
+  const purchaseFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!isPaid || !order) return;
+    if (purchaseFiredRef.current) return;
+
+    purchaseFiredRef.current = true;
+
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'Purchase', {
+        value: totalAmount,
+        currency: 'MNT',
+      });
+    }
+  }, [isPaid, order]);
+
   // Show loading state until mounted and data is loaded
   if (!mounted || isLoading) {
     return (

@@ -212,6 +212,9 @@ export default function CartPage() {
       return;
     }
     setIsProceeding(true);
+    if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'InitiateCheckout');
+    }
     router.push('/orders/create');
   };
 
