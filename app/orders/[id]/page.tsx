@@ -350,6 +350,25 @@ export default function OrderDetailPage() {
                       <p className="text-xs text-gray-600 text-center my-2">
                         Qpay апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
                       </p>
+                      {/* Refresh Status Button */}
+                      {!shouldStopPolling && (
+                        <div className="flex justify-center mt-6">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => refetchPaymentStatus()}
+                            disabled={isFetchingPaymentStatus}
+                            className="text-xs"
+                          >
+                            <RefreshCw
+                              className={`w-3 h-3 mr-1.5 ${
+                                isFetchingPaymentStatus ? 'animate-spin' : ''
+                              }`}
+                            />
+                            Төлбөр шалгах
+                          </Button>
+                        </div>
+                      )}
                       {/* Bank/Wallet Buttons - Mobile Only */}
                       {isMobile && paymentUrls.length > 0 && (
                         <div className="w-full max-w-xs mt-3 px-1">
@@ -444,26 +463,6 @@ export default function OrderDetailPage() {
                         </div>
                       )}
                     </div>
-
-                    {/* Refresh Status Button */}
-                    {!shouldStopPolling && (
-                      <div className="flex justify-center mt-6">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => refetchPaymentStatus()}
-                          disabled={isFetchingPaymentStatus}
-                          className="text-xs"
-                        >
-                          <RefreshCw
-                            className={`w-3 h-3 mr-1.5 ${
-                              isFetchingPaymentStatus ? 'animate-spin' : ''
-                            }`}
-                          />
-                          Төлбөр шалгах
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="text-center py-4">
