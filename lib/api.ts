@@ -685,7 +685,7 @@ export const useInfiniteProducts = (params?: ProductsQueryParams) => {
   return useInfiniteQuery({
     queryKey: [...queryKeys.products.list(params), 'infinite'],
     queryFn: ({ pageParam = 1 }) =>
-      productsApiFunctions.getAll({ ...params, page: pageParam, limit: 30 }),
+      productsApiFunctions.getAll({ ...params, page: pageParam, limit: 100 }),
     getNextPageParam: (lastPage, allPages) => {
       const lastPageData = lastPage.data || [];
       const pagination = lastPage.pagination;
@@ -694,7 +694,7 @@ export const useInfiniteProducts = (params?: ProductsQueryParams) => {
         return pagination.page + 1;
       }
 
-      if (lastPageData.length < 30) {
+      if (lastPageData.length < 100) {
         return undefined;
       }
       return allPages.length + 1;
