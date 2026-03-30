@@ -3,7 +3,7 @@
 export default function Head() {
   return (
     <>
-      <meta name="facebook-domain-verification" content="bfj9qvfnuumo3b96iol46hzluo7s59" />
+      <meta name="facebook-domain-verification" content="mt2d8ptc1s10l8f4ux7tyfte65ut5p" />
     </>
   );
 }
