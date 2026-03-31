@@ -437,14 +437,47 @@ export default function HomeClient() {
         </section>
 
         <div className="pt-6 sm:pt-10 bg-white">
-          {featuredCategories.length > 0 &&
-            featuredCategories.map(feature => (
-              <FeatureProductSection
-                key={feature.id}
-                featureId={feature.id}
-                featureName={feature.name}
-              />
-            ))}
+          {featuredCategories.length > 0
+            ? featuredCategories.map(feature => (
+                <FeatureProductSection
+                  key={feature.id}
+                  featureId={feature.id}
+                  featureName={feature.name}
+                />
+              ))
+            : // Loading state: show 2-3 skeleton sections while categories are loading
+              [1, 2, 3].map(i => (
+                <section
+                  key={i}
+                  className="py-6 sm:py-10 bg-white animate-pulse opacity-80"
+                >
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="h-8 w-48 bg-gray-200 rounded" />
+                    </div>
+                    <div className="flex gap-4 lg:gap-6 pb-4 overflow-hidden">
+                      {[...Array(6)].map((_, j) => (
+                        <div key={j} className="shrink-0 w-44 sm:w-48 md:w-56 lg:w-64">
+                          <div className="border border-gray-200 rounded-lg overflow-hidden h-full bg-white">
+                            <div className="relative bg-gray-200 w-full" style={{ aspectRatio: '4/3' }}>
+                              <div className="w-full h-full bg-gray-200 animate-pulse" />
+                            </div>
+                            <div className="p-4 space-y-3">
+                              <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                              <div className="h-4 w-1/2 bg-gray-200 rounded" />
+                              <div className="flex gap-2">
+                                <div className="h-6 w-20 bg-gray-200 rounded" />
+                                <div className="h-6 w-16 bg-gray-200 rounded" />
+                              </div>
+                              <div className="h-9 w-full bg-gray-200 rounded" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              ))}
         </div>
 
         <div className="gap-4 pt-12 pb-8 md:flex mx-auto items-center flex-row justify-center max-w-7xl mt-4 border-t border-gray-200 px-8">

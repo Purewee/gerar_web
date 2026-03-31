@@ -499,9 +499,9 @@ export default function OrderDetailPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             {isPaid && (
               <div className="px-3 py-5 bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg w-full sm:w-auto text-center sm:text-left">
-                <p className="text-xl text-green-800 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
-                  <CheckCircle2 className="w-6 h-6" />
-                  Төлөгдсөн
+                <p className="text-xl text-green-800 font-semibold flex flex-col items-center gap-1.5 justify-center sm:justify-start">
+                  <CheckCircle2 className="w-12 h-12" />
+                  Төлбөр амжилттай
                 </p>
               </div>
             )}
