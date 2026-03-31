@@ -436,7 +436,7 @@ export default function OrderCreatePage() {
       setDistrictError('Дүүрэг сонгоно уу');
       if (districtInputRef.current) {
         districtInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        districtInputRef.current.focus();
+        // districtInputRef.current.focus();
       }
       return false;
     } else {
@@ -447,7 +447,7 @@ export default function OrderCreatePage() {
       setBuildingError('Байр оруулна уу');
       if (buildingInputRef.current) {
         buildingInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        buildingInputRef.current.focus();
+        // buildingInputRef.current.focus();
       }
       return false;
     } else {
@@ -458,7 +458,7 @@ export default function OrderCreatePage() {
       setApartmentError('Тоот оруулна уу');
       if (apartmentInputRef.current) {
         apartmentInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        apartmentInputRef.current.focus();
+        // apartmentInputRef.current.focus();
       }
       return false;
     } else {
@@ -497,7 +497,6 @@ export default function OrderCreatePage() {
         setPhoneError('8 оронтой утасны дугаар оруулна уу');
         if (phoneInputRef.current) {
           phoneInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          phoneInputRef.current.focus();
         }
         return false;
       } else {
@@ -1689,7 +1688,7 @@ export default function OrderCreatePage() {
 
               <Button
                 onClick={handleCreateOrder}
-                // disabled={isDisabled}
+                disabled={isSubmitting}
                 className="w-full mt-4 bg-primary hover:bg-primary/90"
                 size="lg"
               >

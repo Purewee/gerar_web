@@ -141,7 +141,7 @@ export function Spinner({
   // Allow color override via className, fallback to default
   const base = 'animate-spin rounded-full';
   const color = className.includes('border-white')
-    ? 'border-white border-t-white'
+    ? 'border-white/30 border-t-white'
     : 'border-primary/20 border-t-primary';
   return <div className={`${base} ${color} ${sizeClasses[size]} ${className}`} />;
 }
