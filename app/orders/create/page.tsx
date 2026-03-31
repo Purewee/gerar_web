@@ -202,7 +202,7 @@ export default function OrderCreatePage() {
   });
 
   // Guest address form state
-  const [guestAddress, setGuestAddress] = useState<GuestAddress & { email?: string }>({
+  const [guestAddress, setGuestAddress] = useState<GuestAddress>({
     fullName: '',
     phoneNumber: '',
     provinceOrDistrict: '',
@@ -215,7 +215,6 @@ export default function OrderCreatePage() {
     apartmentNumber: '',
     addressNote: '',
     label: '',
-    email: '',
   });
 
   // Load user info from localStorage
@@ -435,10 +434,7 @@ export default function OrderCreatePage() {
         toast.warning('8 оронтой утасны дугаар оруулна уу');
         return false;
       }
-      if (!guestAddress.email?.trim() || !guestAddress.email.includes('@')) {
-        toast.warning('Зөв имэйл хаяг оруулна уу');
-        return false;
-      }
+      // Guest үед email шалгахгүй
     }
     return true;
   };
@@ -539,7 +535,7 @@ export default function OrderCreatePage() {
         }
         orderPayload.fullName = guestAddress.fullName.trim();
         orderPayload.phoneNumber = guestAddress.phoneNumber.trim();
-        orderPayload.email = (guestAddress.email || '').trim();
+        orderPayload.email = 'gerarhousehold@gmail.com';
 
         if (!orderPayload.fullName || orderPayload.fullName.length < 2) {
           toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
@@ -734,7 +730,7 @@ export default function OrderCreatePage() {
 
   const isContactValid = isAuthenticated
     ? userName && userPhone?.length === 8 && userEmail
-    : guestAddress.fullName && guestAddress.phoneNumber?.length === 8 && guestAddress.email;
+    : guestAddress.fullName && guestAddress.phoneNumber?.length === 8;
 
   const isAddressValid = isAuthenticated
     ? addresses.length > 0
@@ -857,18 +853,6 @@ export default function OrderCreatePage() {
                         required
                       />
                     </div>
-                  </div>
-                  <div>
-                    <label className="font-medium text-gray-700 mb-1 block">
-                      И-мэйл хаяг <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="email"
-                      value={guestAddress.email || ''}
-                      onChange={e => setGuestAddress({ ...guestAddress, email: e.target.value })}
-                      placeholder={savedEmailPlaceholder || 'Имэйл'}
-                      required
-                    />
                   </div>
                   <p className="text-sm text-gray-600 mt-3">
                     Бүртгэлтэй хэрэглэгч?{' '}
