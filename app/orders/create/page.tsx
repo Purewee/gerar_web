@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // Force dynamic rendering to prevent build errors
 export const dynamic = 'force-dynamic';
@@ -48,6 +48,19 @@ import { getSessionToken } from '@/lib/api';
 
 export default function OrderCreatePage() {
   // ...existing code...
+  // Phone, district, building, apartment, delivery date/time error state
+  const [phoneError, setPhoneError] = useState('');
+  const [districtError, setDistrictError] = useState('');
+  const [buildingError, setBuildingError] = useState('');
+  const [apartmentError, setApartmentError] = useState('');
+  const [deliveryDateError, setDeliveryDateError] = useState('');
+  const [deliveryTimeSlotError, setDeliveryTimeSlotError] = useState('');
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const districtInputRef = useRef<HTMLSelectElement>(null);
+  const buildingInputRef = useRef<HTMLInputElement>(null);
+  const apartmentInputRef = useRef<HTMLInputElement>(null);
+  const deliveryDateRef = useRef<HTMLDivElement>(null);
+  const deliveryTimeSlotRef = useRef<HTMLDivElement>(null);
 
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -123,6 +136,24 @@ export default function OrderCreatePage() {
     const [y, m, d] = dateString.split('-').map(Number);
     const date = new Date(y, m - 1, d);
     const weekday = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const now = new Date();
+    const isToday =
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate();
+    // Last day of month logic
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const isLastDayOfMonth =
+      now.getFullYear() === lastDayOfMonth.getFullYear() &&
+      now.getMonth() === lastDayOfMonth.getMonth() &&
+      now.getDate() === lastDayOfMonth.getDate();
+    if (isLastDayOfMonth && now.getHours() >= 18) {
+      // Disable all days this month (including today)
+      if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()) {
+        return true;
+      }
+    }
+    if (isToday && now.getHours() >= 18) return true;
     return offWeekdays.includes(weekday);
   };
 
@@ -142,6 +173,7 @@ export default function OrderCreatePage() {
   // Ebarimt state
   const [ebarimtType, setEbarimtType] = useState<'CITIZEN' | 'COMPANY'>('CITIZEN');
   const [ebarimtRegNo, setEbarimtRegNo] = useState('');
+  const [ebarimtRegNoError, setEbarimtRegNoError] = useState('');
   const [ebarimtOrgName, setEbarimtOrgName] = useState('');
   const [isFetchingOrg, setIsFetchingOrg] = useState(false);
 
@@ -211,10 +243,8 @@ export default function OrderCreatePage() {
     neighborhood: '',
     residentialComplex: '',
     building: '',
-    entrance: '',
     apartmentNumber: '',
     addressNote: '',
-    label: '',
   });
 
   // Load user info from localStorage
@@ -395,16 +425,47 @@ export default function OrderCreatePage() {
     provinceOrDistrict: string;
     khorooOrSoum: string;
     label?: string;
+    residentialComplex?: string;
+    apartmentNumber?: string;
   }): boolean => {
     if (address.label !== undefined && !address.label.trim()) {
       toast.warning('Хаягийн гарчиг оруулна уу');
       return false;
     }
     if (!address.provinceOrDistrict.trim()) {
-      toast.warning('Аймаг/Дүүрэг оруулна уу');
+      setDistrictError('Дүүрэг сонгоно уу');
+      if (districtInputRef.current) {
+        districtInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        districtInputRef.current.focus();
+      }
       return false;
+    } else {
+      setDistrictError('');
     }
-    if (!address.khorooOrSoum.trim()) {
+    // Байр
+    if (!address.residentialComplex || !address.residentialComplex.trim()) {
+      setBuildingError('Байр оруулна уу');
+      if (buildingInputRef.current) {
+        buildingInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        buildingInputRef.current.focus();
+      }
+      return false;
+    } else {
+      setBuildingError('');
+    }
+    // Тоот
+    if (!address.apartmentNumber || !address.apartmentNumber.trim()) {
+      setApartmentError('Тоот оруулна уу');
+      if (apartmentInputRef.current) {
+        apartmentInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        apartmentInputRef.current.focus();
+      }
+      return false;
+    } else {
+      setApartmentError('');
+    }
+    // Guest үед khoroo/soum шалгахгүй
+    if (isAuthenticated && !address.khorooOrSoum.trim()) {
       toast.warning('Хороо/Сум оруулна уу');
       return false;
     }
@@ -418,47 +479,78 @@ export default function OrderCreatePage() {
         return false;
       }
       if (!userPhone || userPhone.length !== 8) {
-        toast.warning('8 оронтой утасны дугаар оруулна уу');
+        setPhoneError('8 оронтой утасны дугаар оруулна уу');
+        if (phoneInputRef.current) {
+          phoneInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          phoneInputRef.current.focus();
+        }
         return false;
+      } else {
+        setPhoneError('');
       }
       if (!userEmail.trim() || !userEmail.includes('@')) {
         toast.warning('Зөв имэйл хаяг оруулна уу');
         return false;
       }
     } else {
-      if (!guestAddress.fullName.trim()) {
-        toast.warning('Нэр оруулна уу');
-        return false;
-      }
       if (!guestAddress.phoneNumber || guestAddress.phoneNumber.length !== 8) {
-        toast.warning('8 оронтой утасны дугаар оруулна уу');
+        setPhoneError('8 оронтой утасны дугаар оруулна уу');
+        if (phoneInputRef.current) {
+          phoneInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          phoneInputRef.current.focus();
+        }
         return false;
+      } else {
+        setPhoneError('');
       }
-      // Guest үед email шалгахгүй
+      // Guest үед нэр шалгахгүй
     }
     return true;
   };
 
   const handleCreateOrder = async () => {
     try {
-      setIsSubmitting(true);
-
+      // Бүх шаардлагатай талбаруудыг шалгана
       if (cartItems.length === 0) {
         toast.warning('Сагс хоосон', {
           description: 'Захиалга үүсгэхийн тулд сагсанд бүтээгдэхүүн байх ёстой',
         });
-        router.push('/cart');
+        if (!isSubmitting) {
+          router.push('/cart');
+        }
         return;
+      }
+
+      if (!validateContactInfo()) return;
+
+      if (isAuthenticated) {
+        if (addresses.length === 0 && !validateAddress(newAddress)) return;
+        if (addresses.length > 0 && !selectedAddressId) {
+          toast.warning('Хүргэлтийн хаяг хуудсанаас сонгоно уу');
+          return;
+        }
+      } else {
+        if (!validateAddress(guestAddress)) return;
       }
 
       if (!deliveryDate) {
-        toast.warning('Хүргэлтийн огноо сонгоно уу');
+        setDeliveryDateError('Хүргэлтийн огноо сонгоно уу');
+        if (deliveryDateRef.current) {
+          deliveryDateRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         return;
+      } else {
+        setDeliveryDateError('');
       }
 
       if (!deliveryTimeSlot) {
-        toast.warning('Хүргэлтийн цаг сонгоно уу');
+        setDeliveryTimeSlotError('Хүргэлтийн цаг сонгоно уу');
+        if (deliveryTimeSlotRef.current) {
+          deliveryTimeSlotRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         return;
+      } else {
+        setDeliveryTimeSlotError('');
       }
 
       try {
@@ -474,23 +566,23 @@ export default function OrderCreatePage() {
         return;
       }
 
-      if (!validateContactInfo()) {
-        setIsSubmitting(false);
-        return;
-      }
-
       if (ebarimtType === 'COMPANY') {
         if (!ebarimtRegNo.trim()) {
-          toast.warning('Байгууллагын регистрийн дугаар оруулна уу');
-          setIsSubmitting(false);
+          setEbarimtRegNoError('Байгууллагын регистрийн дугаар оруулна уу');
           return;
+        } else {
+          setEbarimtRegNoError('');
         }
         if (!ebarimtOrgName.trim()) {
-          toast.warning('Байгууллагын нэр олдсонгүй. Регистрийн дугаараа шалгана уу');
-          setIsSubmitting(false);
+          setEbarimtRegNoError('Байгууллагын нэр олдсонгүй. Регистрийн дугаараа шалгана уу');
           return;
+        } else {
+          setEbarimtRegNoError('');
         }
       }
+
+      // Бүх validation амжилттай болсны дараа л isSubmitting true болгоно
+      setIsSubmitting(true);
 
       const receiverPhone = (isAuthenticated ? userPhone : guestAddress.phoneNumber) || '';
 
@@ -529,11 +621,16 @@ export default function OrderCreatePage() {
           return;
         }
       } else {
+        // Guest үед эхлээд холбоо барих мэдээлэл шалгана
+        if (!validateContactInfo()) {
+          setIsSubmitting(false);
+          return;
+        }
         if (!validateAddress(guestAddress)) {
           setIsSubmitting(false);
           return;
         }
-        orderPayload.fullName = guestAddress.fullName.trim();
+        orderPayload.fullName = guestAddress.fullName.trim() || 'Хэрэглэгч';
         orderPayload.phoneNumber = guestAddress.phoneNumber.trim();
         orderPayload.email = 'gerarhousehold@gmail.com';
 
@@ -547,25 +644,20 @@ export default function OrderCreatePage() {
           setIsSubmitting(false);
           return;
         }
-        // NOTE: Optional guest email enforcement
-        // if (!orderPayload.email || !orderPayload.email.includes('@')) {
-        //   toast.warning('Зөв имэйл хаяг оруулна уу');
-        //   setIsSubmitting(false);
-        //   return;
-        // }
 
         orderPayload.address = {
           fullName: orderPayload.fullName,
           phoneNumber: orderPayload.phoneNumber,
           provinceOrDistrict: guestAddress.provinceOrDistrict.trim(),
-          khorooOrSoum: guestAddress.khorooOrSoum.trim(),
+          khorooOrSoum: '1-р хороо', // Guest үед default
           street: guestAddress.street?.trim() || undefined,
           neighborhood: guestAddress.neighborhood?.trim() || undefined,
           residentialComplex: guestAddress.residentialComplex?.trim() || undefined,
           building: guestAddress.building?.trim() || undefined,
-          entrance: guestAddress.entrance?.trim() || undefined,
+          entrance: '1',
           apartmentNumber: guestAddress.apartmentNumber?.trim() || undefined,
           addressNote: guestAddress.addressNote?.trim() || undefined,
+          label: 'Гэр',
         };
         orderPayload.sessionToken = typeof window !== 'undefined' ? getSessionToken() || '' : '';
       }
@@ -612,7 +704,6 @@ export default function OrderCreatePage() {
       address.neighborhood,
       address.residentialComplex,
       address.building,
-      address.entrance,
       address.apartmentNumber,
     ].filter(Boolean);
     return parts.join(', ');
@@ -630,7 +721,6 @@ export default function OrderCreatePage() {
       neighborhood: address.neighborhood || undefined,
       residentialComplex: address.residentialComplex || undefined,
       building: address.building || undefined,
-      entrance: address.entrance || undefined,
       apartmentNumber: address.apartmentNumber || undefined,
       addressNote: address.addressNote || undefined,
     } as Omit<CreateAddressRequest, 'fullName' | 'phoneNumber'>);
@@ -730,21 +820,25 @@ export default function OrderCreatePage() {
 
   const isContactValid = isAuthenticated
     ? userName && userPhone?.length === 8 && userEmail
-    : guestAddress.fullName && guestAddress.phoneNumber?.length === 8;
+    : guestAddress.phoneNumber?.length === 8;
 
   const isAddressValid = isAuthenticated
     ? addresses.length > 0
       ? selectedAddressId
       : newAddress.label?.trim() && newAddress.provinceOrDistrict && newAddress.khorooOrSoum
-    : guestAddress.label?.trim() && guestAddress.provinceOrDistrict && guestAddress.khorooOrSoum;
+    : guestAddress.provinceOrDistrict &&
+      guestAddress.residentialComplex &&
+      guestAddress.apartmentNumber;
 
-  const isOrderInfoValid = deliveryDate && deliveryTimeSlot;
+  const isOrderInfoValid =
+    deliveryDate &&
+    deliveryTimeSlot &&
+    (ebarimtType === 'CITIZEN' || (ebarimtType === 'COMPANY' && ebarimtRegNo && ebarimtOrgName));
 
   const isDisabled =
     !isContactValid ||
     !isAddressValid ||
     !isOrderInfoValid ||
-    (ebarimtType === 'COMPANY' && (!ebarimtRegNo || !ebarimtOrgName)) ||
     isFetchingOrg ||
     createOrderMutation.isPending ||
     createAddressMutation.isPending ||
@@ -798,12 +892,24 @@ export default function OrderCreatePage() {
                         Утасны дугаар <span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={phoneInputRef}
                         value={userPhone}
-                        onChange={e => setUserPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                        onChange={e => {
+                          setUserPhone(e.target.value.replace(/\D/g, '').slice(0, 8));
+                          if (phoneError) setPhoneError('');
+                        }}
                         placeholder="Утасны дугаар"
                         maxLength={8}
                         required
+                        className={
+                          phoneError
+                            ? 'border-2 border-red-500 focus:border-red-500 focus-visible:ring-0 focus-visible:ring-offset-0'
+                            : ''
+                        }
                       />
+                      {phoneError && (
+                        <span className="text-xs text-red-500 mt-1 block">{phoneError}</span>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -824,32 +930,42 @@ export default function OrderCreatePage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="font-medium text-gray-700 mb-1 block">
-                        Нэр <span className="text-red-500">*</span>
+                        Утасны дугаар <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        ref={phoneInputRef}
+                        value={guestAddress.phoneNumber}
+                        onChange={e => {
+                          setGuestAddress({
+                            ...guestAddress,
+                            phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
+                          });
+                          if (phoneError) setPhoneError('');
+                        }}
+                        placeholder={userPhone || 'Утасны дугаар'}
+                        maxLength={8}
+                        required
+                        className={
+                          phoneError
+                            ? 'border-2 border-red-500 focus:border-red-500 focus-visible:ring-0 focus-visible:ring-offset-0'
+                            : ''
+                        }
+                      />
+                      {phoneError && (
+                        <span className="text-xs text-red-500 mt-1 block">{phoneError}</span>
+                      )}
+                    </div>
+                    <div>
+                      <label className="font-medium text-gray-700 mb-1 block">
+                        Нэр (заавал биш)
                       </label>
                       <Input
                         value={guestAddress.fullName}
                         onChange={e =>
                           setGuestAddress({ ...guestAddress, fullName: e.target.value })
                         }
-                        placeholder="Нэр"
+                        placeholder="Хэрэглэгч"
                         className="placeholder:text-gray-300"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="font-medium text-gray-700 mb-1 block">
-                        Утасны дугаар <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        value={guestAddress.phoneNumber}
-                        onChange={e =>
-                          setGuestAddress({
-                            ...guestAddress,
-                            phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
-                          })
-                        }
-                        placeholder={userPhone || 'Утасны дугаар'}
-                        maxLength={8}
                         required
                       />
                     </div>
@@ -956,28 +1072,30 @@ export default function OrderCreatePage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Label input at the top */}
-                    <div>
-                      <label className=" font-medium text-gray-700 mb-1 block">
-                        Хаягийн гарчиг <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        value={newAddress.label || ''}
-                        onChange={e => setNewAddress({ ...newAddress, label: e.target.value })}
-                        placeholder="Жишээ: гэр, ажил, оффис"
-                        required
-                        disabled={
-                          createAddressMutation.isPending || updateAddressMutation.isPending
-                        }
-                      />
-                    </div>
-
+                    {/* Label input at the top - ONLY for authenticated users */}
+                    {isAuthenticated && (
+                      <div>
+                        <label className=" font-medium text-gray-700 mb-1 block">
+                          Хаягийн гарчиг <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          value={newAddress.label || ''}
+                          onChange={e => setNewAddress({ ...newAddress, label: e.target.value })}
+                          placeholder="Жишээ: гэр, ажил, оффис"
+                          required
+                          disabled={
+                            createAddressMutation.isPending || updateAddressMutation.isPending
+                          }
+                        />
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className=" font-medium text-gray-700 mb-1 block">
                           Дүүрэг <span className="text-red-500">*</span>
                         </label>
                         <select
+                          ref={districtInputRef}
                           value={selectedDistrict}
                           onChange={e => {
                             setSelectedDistrict(e.target.value);
@@ -986,8 +1104,16 @@ export default function OrderCreatePage() {
                               provinceOrDistrict: e.target.value,
                               khorooOrSoum: '',
                             });
+                            if (districtError) setDistrictError('');
                           }}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          className={`flex h-10 w-full rounded-md bg-background px-3 py-2 
+  appearance-none
+  focus:outline-none
+  ${
+    districtError
+      ? 'border-2 border-red-500 focus:ring-0'
+      : 'border border-input focus:ring-2 focus:ring-ring'
+  }`}
                           required
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
@@ -1000,79 +1126,90 @@ export default function OrderCreatePage() {
                             </option>
                           ))}
                         </select>
+                        {districtError && (
+                          <span className="text-xs text-red-500 mt-1 block">{districtError}</span>
+                        )}
                       </div>
-                      <div>
-                        <label className=" font-medium text-gray-700 mb-1 block">
-                          Хороо <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={newAddress.khorooOrSoum}
-                          onChange={e =>
-                            setNewAddress({ ...newAddress, khorooOrSoum: e.target.value })
-                          }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          required
-                          disabled={
-                            createAddressMutation.isPending || !selectedDistrict || khorooLoading
-                          }
-                        >
-                          <option value="">
-                            {khorooLoading
-                              ? 'Ачаалж байна...'
-                              : selectedDistrict
-                                ? 'Хороо/Сум сонгох'
-                                : 'Эхлээд дүүрэг сонгоно уу'}
-                          </option>
-                          {selectedDistrict &&
-                            khorooOptions.map(khoroo => (
-                              <option key={khoroo} value={khoroo}>
-                                {khoroo}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
+                      {isAuthenticated && (
+                        <div>
+                          <label className=" font-medium text-gray-700 mb-1 block">
+                            Хороо <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={newAddress.khorooOrSoum}
+                            onChange={e =>
+                              setNewAddress({ ...newAddress, khorooOrSoum: e.target.value })
+                            }
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            required
+                            disabled={
+                              createAddressMutation.isPending || !selectedDistrict || khorooLoading
+                            }
+                          >
+                            <option value="">
+                              {khorooLoading
+                                ? 'Ачаалж байна...'
+                                : selectedDistrict
+                                  ? 'Хороо/Сум сонгох'
+                                  : 'Эхлээд дүүрэг сонгоно уу'}
+                            </option>
+                            {selectedDistrict &&
+                              khorooOptions.map(khoroo => (
+                                <option key={khoroo} value={khoroo}>
+                                  {khoroo}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      )}
                       <div>
                         <label className=" font-medium text-gray-700 mb-1 block">
                           Байр<span className="text-red-500">*</span>
                         </label>
                         <Input
+                          ref={buildingInputRef}
                           value={newAddress.residentialComplex}
-                          onChange={e =>
-                            setNewAddress({ ...newAddress, residentialComplex: e.target.value })
-                          }
+                          onChange={e => {
+                            setNewAddress({ ...newAddress, residentialComplex: e.target.value });
+                            if (buildingError) setBuildingError('');
+                          }}
                           required
                           placeholder="Байр"
-                        />
-                      </div>
-                      <div>
-                        <label className=" font-medium text-gray-700 mb-1 block">
-                          Орц<span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          value={newAddress.entrance || ''}
-                          onChange={e => setNewAddress({ ...newAddress, entrance: e.target.value })}
-                          placeholder="Орцны дугаар"
-                          required
-                          disabled={
-                            createAddressMutation.isPending || updateAddressMutation.isPending
+                          className={
+                            buildingError
+                              ? 'border-2 border-red-500 focus:border-red-500 focus-visible:ring-0 focus-visible:ring-offset-0'
+                              : ''
                           }
                         />
+                        {buildingError && (
+                          <span className="text-xs text-red-500 mt-1 block">{buildingError}</span>
+                        )}
                       </div>
                       <div>
                         <label className=" font-medium text-gray-700 mb-1 block">
                           Тоот<span className="text-red-500">*</span>
                         </label>
                         <Input
+                          ref={apartmentInputRef}
                           value={newAddress.apartmentNumber || ''}
-                          onChange={e =>
-                            setNewAddress({ ...newAddress, apartmentNumber: e.target.value })
-                          }
+                          onChange={e => {
+                            setNewAddress({ ...newAddress, apartmentNumber: e.target.value });
+                            if (apartmentError) setApartmentError('');
+                          }}
                           placeholder="Тоот"
                           required
+                          className={
+                            apartmentError
+                              ? 'border-2 border-red-500 focus:border-red-500 focus-visible:ring-0 focus-visible:ring-offset-0'
+                              : ''
+                          }
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
                         />
+                        {apartmentError && (
+                          <span className="text-xs text-red-500 mt-1 block">{apartmentError}</span>
+                        )}
                       </div>
                     </div>
                     <div>
@@ -1156,30 +1293,28 @@ export default function OrderCreatePage() {
                 )
               ) : (
                 <div className="space-y-4">
-                  <div>
-                    <label className=" font-medium text-gray-700 mb-1 block">
-                      Хаягийн гарчиг <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      value={guestAddress.label || ''}
-                      onChange={e => setGuestAddress({ ...guestAddress, label: e.target.value })}
-                      placeholder="Жишээ: гэр, ажил, оффис"
-                      required
-                    />
-                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className=" font-medium text-gray-700 mb-1 block">
                         Дүүрэг <span className="text-red-500">*</span>
                       </label>
                       <select
+                        ref={districtInputRef}
                         value={selectedDistrict}
                         onChange={e => {
                           const district = e.target.value;
                           setSelectedDistrict(district);
                           setGuestAddress({ ...guestAddress, provinceOrDistrict: district });
+                          if (districtError) setDistrictError('');
                         }}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className={`flex h-10 w-full rounded-md bg-background px-3 py-2 
+  appearance-none
+  focus:outline-none
+  ${
+    districtError
+      ? 'border-2 border-red-500 focus:ring-0'
+      : 'border border-input focus:ring-2 focus:ring-ring'
+  }`}
                         required
                       >
                         <option value="">Дүүрэг сонгох</option>
@@ -1189,74 +1324,55 @@ export default function OrderCreatePage() {
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div>
-                      <label className=" font-medium text-gray-700 mb-1 block">
-                        Хороо <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={guestAddress.khorooOrSoum}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, khorooOrSoum: e.target.value })
-                        }
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2  ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        required
-                        disabled={!selectedDistrict || khorooLoading}
-                      >
-                        <option value="">
-                          {khorooLoading
-                            ? 'Ачаалж байна...'
-                            : selectedDistrict
-                              ? 'Хороо/Сум сонгох'
-                              : 'Эхлээд дүүрэг сонгоно уу'}
-                        </option>
-                        {Array.isArray(khorooOptions) &&
-                          khorooOptions.length > 0 &&
-                          khorooOptions.map(khoroo => (
-                            <option key={khoroo} value={khoroo}>
-                              {khoroo}
-                            </option>
-                          ))}
-                      </select>
+                      {districtError && (
+                        <span className="text-xs text-red-500 mt-1 block">{districtError}</span>
+                      )}
                     </div>
                     <div>
                       <label className=" font-medium text-gray-700 mb-1 block">
                         Байр<span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={buildingInputRef}
                         value={guestAddress.residentialComplex}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, residentialComplex: e.target.value })
-                        }
+                        onChange={e => {
+                          setGuestAddress({ ...guestAddress, residentialComplex: e.target.value });
+                          if (buildingError) setBuildingError('');
+                        }}
                         required
                         placeholder="Байр"
-                      />
-                    </div>
-                    <div>
-                      <label className=" font-medium text-gray-700 mb-1 block">
-                        Орц<span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        value={guestAddress.entrance}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, entrance: e.target.value })
+                        className={
+                          buildingError
+                            ? 'border-2 border-red-500 focus:border-red-500 focus-visible:ring-0 focus-visible:ring-offset-0'
+                            : ''
                         }
-                        required
-                        placeholder="Орц"
                       />
+                      {buildingError && (
+                        <span className="text-xs text-red-500 mt-1 block">{buildingError}</span>
+                      )}
                     </div>
                     <div>
                       <label className=" font-medium text-gray-700 mb-1 block">
                         Тоот<span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={apartmentInputRef}
                         value={guestAddress.apartmentNumber}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, apartmentNumber: e.target.value })
-                        }
+                        onChange={e => {
+                          setGuestAddress({ ...guestAddress, apartmentNumber: e.target.value });
+                          if (apartmentError) setApartmentError('');
+                        }}
                         required
                         placeholder="Тоотоо оруулна уу"
+                        className={
+                          apartmentError
+                            ? 'border-2 border-red-500 focus:border-red-500 focus-visible:ring-0 focus-visible:ring-offset-0'
+                            : ''
+                        }
                       />
+                      {apartmentError && (
+                        <span className="text-xs text-red-500 mt-1 block">{apartmentError}</span>
+                      )}
                     </div>
                   </div>
                   <div>
@@ -1281,24 +1397,37 @@ export default function OrderCreatePage() {
               )}
 
               {/* Delivery Date */}
-              <div className="mt-6">
-                <label className="mb-3  font-medium block">
+              <div className="mt-6" ref={deliveryDateRef}>
+                <label className="mb-3 font-medium block">
                   Хүргэлтийн өдөр сонгох <span className="text-red-500">*</span>
                 </label>
-                <MongolianDatePicker
-                  value={deliveryDate}
-                  onChange={setDeliveryDate}
-                  minDate={new Date().toISOString().split('T')[0]}
-                  isDateDisabled={isDeliveryDateDisabled}
-                />
+                <div>
+                  <MongolianDatePicker
+                    value={deliveryDate}
+                    onChange={d => {
+                      setDeliveryDate(d);
+                      if (deliveryDateError) setDeliveryDateError('');
+                    }}
+                    minDate={new Date().toISOString().split('T')[0]}
+                    isDateDisabled={isDeliveryDateDisabled}
+                    className={
+                      deliveryDateError ? 'border-2 border-red-500 rounded-md p-2 max-w-max' : ''
+                    }
+                  />
+                </div>
+                {deliveryDateError && (
+                  <span className="text-xs text-red-500 mt-1 block">{deliveryDateError}</span>
+                )}
               </div>
 
               {/* Delivery Time Slot */}
-              <div className="mt-6">
-                <p className="mb-3  font-medium">
+              <div className="mt-6" ref={deliveryTimeSlotRef}>
+                <p className="mb-3 font-medium">
                   Хүргэлтийн цаг сонгох <span className="text-red-500">*</span>
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div
+                  className={`grid grid-cols-2 sm:grid-cols-4 gap-3 ${deliveryTimeSlotError ? 'border-2 border-red-500 rounded-md p-2' : ''}`}
+                >
                   {DELIVERY_SLOT_ORDER.map((slot, slotIndex) => {
                     const formatTimeSlot = (s: string) => {
                       const [start, end] = s.split('-');
@@ -1391,7 +1520,12 @@ export default function OrderCreatePage() {
                     return (
                       <button
                         key={slot}
-                        onClick={() => isAvailable && setDeliveryTimeSlot(slot)}
+                        onClick={() => {
+                          if (isAvailable) {
+                            setDeliveryTimeSlot(slot);
+                            if (deliveryTimeSlotError) setDeliveryTimeSlotError('');
+                          }
+                        }}
                         disabled={!isAvailable}
                         className={`p-3 border-2 rounded-lg  font-medium transition-colors ${
                           !isAvailable
@@ -1406,6 +1540,9 @@ export default function OrderCreatePage() {
                     );
                   })}
                 </div>
+                {deliveryTimeSlotError && (
+                  <span className="text-xs text-red-500 mt-1 block">{deliveryTimeSlotError}</span>
+                )}
               </div>
 
               {/* Ebarimt Section */}
@@ -1482,17 +1619,18 @@ export default function OrderCreatePage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-base  text-gray-500 mb-1 block ">
+                        <label className="text-base text-gray-500 mb-1 block">
                           Байгууллагын регистр <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <Input
                             value={ebarimtRegNo}
-                            onChange={e =>
-                              setEbarimtRegNo(e.target.value.replace(/\D/g, '').slice(0, 10))
-                            }
+                            onChange={e => {
+                              setEbarimtRegNo(e.target.value.replace(/\D/g, '').slice(0, 10));
+                              if (ebarimtRegNoError) setEbarimtRegNoError('');
+                            }}
                             placeholder="Регистрийн дугаар"
-                            className="bg-white border-gray-200 "
+                            className={`bg-white ${ebarimtRegNoError ? 'border-2 border-red-500 focus:border-red-500 focus-visible:ring-0 focus-visible:ring-offset-0' : 'border-gray-200'}`}
                           />
                           {isFetchingOrg && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1500,6 +1638,11 @@ export default function OrderCreatePage() {
                             </div>
                           )}
                         </div>
+                        {ebarimtRegNoError && (
+                          <span className="text-xs text-red-500 mt-1 block">
+                            {ebarimtRegNoError}
+                          </span>
+                        )}
                       </div>
                       <div>
                         <label className="text-base  text-gray-500 mb-1 block ">
@@ -1517,26 +1660,19 @@ export default function OrderCreatePage() {
                 )}
               </div>
 
-              {/* Үйлчилгээний нөхцөл зөвшөөрөх хэсэг */}
+              {/* Үйлчилгээний нөхцлийн текст */}
               <div className="flex flex-col gap-2 mt-6 pt-6 border-t border-gray-200">
-                <label className="flex gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={agreedTerms}
-                    onChange={e => setAgreedTerms(e.target.checked)}
-                    className="accent-primary w-5 h-5 "
-                  />
-                  <span>
-                    <button
-                      type="button"
-                      className="text-primary  font-semibold hover:text-primary/80 focus:outline-none"
-                      onClick={() => setShowTermsModal(true)}
-                    >
-                      Үйлчилгээний нөхцөл, нууцлалын бодлого
-                    </button>
-                    -ыг зөвшөөрч байна
-                  </span>
-                </label>
+                <span className="text-sm text-gray-600">
+                  Төлбөр төлөх товч дарснаар та манай{' '}
+                  <button
+                    type="button"
+                    className="text-primary font-semibold hover:text-primary/80 focus:outline-none"
+                    onClick={() => setShowTermsModal(true)}
+                  >
+                    үйлчилгээний нөхцөл
+                  </button>
+                  -ийг зөвшөөрсөнд тооцно
+                </span>
                 <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
                   <DialogContent className="sm:max-w-3xl max-w-lg">
                     <TermsPrivacyModal onClose={() => setShowTermsModal(false)} />
@@ -1553,11 +1689,28 @@ export default function OrderCreatePage() {
 
               <Button
                 onClick={handleCreateOrder}
-                disabled={isDisabled || !agreedTerms}
+                // disabled={isDisabled}
                 className="w-full mt-4 bg-primary hover:bg-primary/90"
                 size="lg"
               >
-                {isSubmitting ? (
+                {isSubmitting &&
+                (!isAuthenticated
+                  ? guestAddress.phoneNumber?.length === 8 &&
+                    guestAddress.provinceOrDistrict &&
+                    guestAddress.residentialComplex &&
+                    guestAddress.apartmentNumber &&
+                    deliveryDate &&
+                    deliveryTimeSlot
+                  : userName &&
+                    userPhone?.length === 8 &&
+                    userEmail &&
+                    (addresses.length > 0
+                      ? selectedAddressId
+                      : newAddress.label?.trim() &&
+                        newAddress.provinceOrDistrict &&
+                        newAddress.khorooOrSoum) &&
+                    deliveryDate &&
+                    deliveryTimeSlot) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Захиалга үүсгэж байна...
