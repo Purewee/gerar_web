@@ -49,7 +49,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <span className="flex items-center justify-center p-1">
-            <Spinner data-icon="inline-start" className="!border-white !border-t-white" size="sm" />
+            <Spinner
+              data-icon="inline-start"
+              className="!border-white/30 !border-t-white"
+              size="sm"
+            />
           </span>
         ) : (
           props.children
