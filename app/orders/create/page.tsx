@@ -724,6 +724,89 @@ export default function OrderCreatePage() {
     createAddressMutation.isPending ||
     isSubmitting;
 
+  const orderSummaryContent = (
+    <>
+      <h3 className="text-lg font-semibold mb-4">Захиалгын хураангуй</h3>
+
+      {/* Products */}
+      <div className="space-y-4 mb-6">
+        {cartItems.map(item => (
+          <div key={item.id} className="flex gap-4">
+            <div className="relative w-20 h-20 shrink-0">
+              <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
+                {item.product?.firstImage || item.product?.images?.[0] ? (
+                  <Image
+                    src={item.product.firstImage || item.product.images[0]}
+                    alt={item.product.name}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    quality={75}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl">
+                    📦
+                  </div>
+                )}
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-semibold z-10">
+                {item.quantity}
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-sm line-clamp-2 mb-1">
+                {item.product?.name || 'Бүтээгдэхүүн'}
+              </h4>
+              <p className="text-sm font-semibold text-gray-900">
+                {parseFloat(item.product?.price || '0').toLocaleString()}₮
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Price Breakdown */}
+      <div className="space-y-3 border-t border-gray-200 pt-4">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">
+            {cartItems.reduce((sum, item) => sum + item.quantity, 0)} барааны дүн
+          </span>
+          <span className="font-semibold">{subtotal.toLocaleString()}₮</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Хүргэлт</span>
+          <span className="font-semibold">{deliveryFee.toLocaleString()}₮</span>
+        </div>
+        <div className="border-t border-gray-200 pt-3 mt-3">
+          <div className="flex justify-between">
+            <span className="text-lg font-semibold">Нийт төлөх дүн</span>
+            <span className="text-xl font-bold text-primary">
+              {total.toLocaleString()}₮
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pay button */}
+      <Button
+        onClick={handleCreateOrder}
+        disabled={isDisabled}
+        className="w-full mt-4 bg-primary hover:bg-primary/90"
+        size="lg"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Захиалга үүсгэж байна...
+          </>
+        ) : (
+          'Төлбөр төлөх'
+        )}
+      </Button>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-[#f7f7f7]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6  py-6">
@@ -1481,8 +1564,13 @@ export default function OrderCreatePage() {
                 </div>
               </div>
 
-              {/* Navigation */}
-              <div className="flex items-center mt-6 pt-6 border-t border-gray-200">
+              {/* Mobile Order Summary & Navigation */}
+              <div className="lg:hidden mt-6 pt-6 border-t border-gray-200 space-y-4">
+                {orderSummaryContent}
+              </div>
+
+              {/* Desktop Navigation */}
+              <div className="hidden lg:flex items-center mt-6 pt-6 border-t border-gray-200">
                 <a
                   href="/cart"
                   className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors group"
@@ -1491,106 +1579,24 @@ export default function OrderCreatePage() {
                   Сагс руу буцах
                 </a>
               </div>
-
-              <Button
-                onClick={handleCreateOrder}
-                disabled={isDisabled}
-                className="w-full mt-4 bg-primary hover:bg-primary/90"
-                size="lg"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Захиалга үүсгэж байна...
-                  </>
-                ) : (
-                  'Төлбөр төлөх'
-                )}
-              </Button>
+              
+              {/* Mobile Navigation */}
+              <div className="flex lg:hidden items-center justify-center mt-4">
+                <a
+                  href="/cart"
+                  className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors group"
+                >
+                  <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                  Сагс руу буцах
+                </a>
+              </div>
             </div>
           </div>
 
           {/* Right Column - Order Summary */}
-          <div className="hidden lg:col-span-1">
+          <div className="hidden lg:block lg:col-span-1">
             <div className="bg-white rounded-lg p-6 sticky top-6">
-              <h3 className="text-lg font-semibold mb-4">Захиалгын хураангуй</h3>
-
-              {/* Products */}
-              <div className="space-y-4 mb-6">
-                {cartItems.map(item => (
-                  <div key={item.id} className="flex gap-4">
-                    <div className="relative w-20 h-20 shrink-0">
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
-                        {item.product?.firstImage || item.product?.images?.[0] ? (
-                          <Image
-                            src={item.product.firstImage || item.product.images[0]}
-                            alt={item.product.name}
-                            width={80}
-                            height={80}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                            quality={75}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-2xl">
-                            📦
-                          </div>
-                        )}
-                      </div>
-                      <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-semibold z-10">
-                        {item.quantity}
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm line-clamp-2 mb-1">
-                        {item.product?.name || 'Бүтээгдэхүүн'}
-                      </h4>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {parseFloat(item.product?.price || '0').toLocaleString()}₮
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Price Breakdown */}
-              <div className="space-y-3 border-t border-gray-200 pt-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">
-                    {cartItems.reduce((sum, item) => sum + item.quantity, 0)} барааны дүн
-                  </span>
-                  <span className="font-semibold">{subtotal.toLocaleString()}₮</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Хүргэлт</span>
-                  <span className="font-semibold">{deliveryFee.toLocaleString()}₮</span>
-                </div>
-                <div className="border-t border-gray-200 pt-3 mt-3">
-                  <div className="flex justify-between">
-                    <span className="text-lg font-semibold">Нийт төлөх дүн</span>
-                    <span className="text-xl font-bold text-primary">
-                      {total.toLocaleString()}₮
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pay button */}
-              <Button
-                onClick={handleCreateOrder}
-                disabled={isDisabled}
-                className="w-full mt-4 bg-primary hover:bg-primary/90"
-                size="lg"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Захиалга үүсгэж байна...
-                  </>
-                ) : (
-                  'Төлбөр төлөх'
-                )}
-              </Button>
+              {orderSummaryContent}
             </div>
           </div>
         </div>
