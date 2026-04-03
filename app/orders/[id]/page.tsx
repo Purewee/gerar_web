@@ -243,10 +243,13 @@ export default function OrderDetailPage() {
   };
 
   // Calculate totals: main price = item total, delivery fee by tiers, total = itemTotal + deliveryFee
-  const itemTotal =
-    order?.items?.reduce((sum, item) => sum + parseFloat(item.price) * item.quantity, 0) || 0;
-  const deliveryFee = getDeliveryFee(itemTotal);
-  const totalAmount = itemTotal + deliveryFee;
+  const cashItemTotal =
+    order?.items?.reduce((sum, item) => sum + (item.isPointProduct ? 0 : parseFloat(item.price) * item.quantity), 0) || 0;
+  const pointsItemTotal =
+    order?.items?.reduce((sum, item) => sum + (item.isPointProduct ? (item.pointProduct?.pointsPrice || 0) * item.quantity : 0), 0) || 0;
+  const deliveryFee = getDeliveryFee(cashItemTotal);
+  const totalCashAmount = cashItemTotal + deliveryFee;
+  const earnedPoints = order?.earnedPoints || Math.floor(cashItemTotal / 150);
 
   const purchaseFiredRef = useRef(false);
 
@@ -258,7 +261,7 @@ export default function OrderDetailPage() {
 
     if (typeof window !== 'undefined' && (window as any).fbq) {
       (window as any).fbq('track', 'Purchase', {
-        value: totalAmount,
+        value: totalCashAmount,
         currency: 'MNT',
       });
     }
@@ -545,22 +548,45 @@ export default function OrderDetailPage() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">Барааны дүн</span>
                 <span className="text-sm font-semibold text-gray-900">
-                  {itemTotal.toLocaleString()} ₮
+                  {cashItemTotal.toLocaleString()} ₮
                 </span>
               </div>
+              {pointsItemTotal > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-yellow-700">Ашигласан оноо</span>
+                  <span className="text-sm font-bold text-yellow-600">
+                    {pointsItemTotal.toLocaleString()} оноо
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">Хүргэлтийн үнэ</span>
                 <span className="text-sm font-semibold text-gray-900">
                   {deliveryFee.toLocaleString()} ₮
                 </span>
               </div>
+              <div className="flex justify-between items-center pt-2 border-t border-gray-200/50">
+                  <div className="flex items-center gap-1.5 grayscale opacity-70">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
+                    <span className="text-[11px] font-medium text-gray-500">Цуглуулах оноо:</span>
+                  </div>
+                  <span className="text-xs font-bold text-blue-600">+{earnedPoints.toLocaleString()} оноо</span>
+              </div>
             </div>
 
             {/* Total Payment */}
             <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
-              <span>Нийт</span>
-              <span className="text-primary">{totalAmount.toLocaleString()} ₮</span>
+              <span className="text-gray-900">Нийт төлөх</span>
+              <span className="text-primary">{totalCashAmount.toLocaleString()} ₮</span>
             </div>
+            {pointsItemTotal > 0 && (
+                <div className="flex justify-between items-center pt-1">
+                    <span className="text-sm font-bold text-yellow-700">Нийт оноо</span>
+                    <span className="text-base font-bold text-yellow-600">
+                       {pointsItemTotal.toLocaleString()} оноо
+                    </span>
+                </div>
+            )}
           </CardContent>
         </Card>
 
@@ -573,14 +599,17 @@ export default function OrderDetailPage() {
               </div>
 
               <div className="space-y-2">
-                {order.items.map(item => (
-                  <div key={item.id} className="flex gap-3 p-1 rounded-xl border-b border-gray-200">
+                {order.items.map(item => {
+                  const productData = item.isPointProduct ? item.pointProduct : item.product;
+                  const price = item.isPointProduct ? (productData as any)?.pointsPrice : parseFloat(item.price);
+                  return (
+                    <div key={item.id} className={`flex gap-3 p-1 rounded-xl border-b border-gray-200 ${item.isPointProduct ? 'bg-yellow-50/30' : ''}`}>
                     {/* Product Image */}
-                    {item.product?.firstImage || item.product?.images?.[0] ? (
-                      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden shrink-0">
+                    {(productData?.firstImage || productData?.images?.[0]) ? (
+                      <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden shrink-0 border border-gray-100">
                         <Image
-                          src={item.product.firstImage || item.product.images[0]}
-                          alt={item.product.name}
+                          src={productData.firstImage || productData.images[0]}
+                          alt={productData.name}
                           width={56}
                           height={56}
                           className="w-full h-full object-cover"
@@ -593,21 +622,27 @@ export default function OrderDetailPage() {
                     )}
 
                     {/* Product Details */}
-                    <div className="flex-1 min-w-0 pt-2">
-                      <h3 className="text-sm font-semibold line-clamp-2">
-                        {item.product?.name || 'Бүтээгдэхүүн'}
-                      </h3>
-                      <div className="flex justify-between items-center pt-0.5 mt-0.5">
+                    <div className="flex-1 min-w-0 pt-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <h3 className="text-sm font-semibold line-clamp-1">
+                          {productData?.name || 'Бүтээгдэхүүн'}
+                        </h3>
+                        {item.isPointProduct && (
+                            <span className="text-[9px] bg-yellow-400 text-yellow-900 px-1 py-0.5 rounded font-bold uppercase">Оноо</span>
+                        )}
+                      </div>
+                      <div className="flex justify-between items-center">
                         <span className="text-xs text-gray-600">
-                          {parseFloat(item.price).toLocaleString()} ₮ × {item.quantity}
+                          {price.toLocaleString()} {item.isPointProduct ? 'оноо' : '₮'} × {item.quantity}
                         </span>
-                        <span className="font-bold text-sm text-primary">
-                          {(parseFloat(item.price) * item.quantity).toLocaleString()} ₮
+                        <span className={`font-bold text-sm ${item.isPointProduct ? 'text-yellow-600' : 'text-primary'}`}>
+                          {(price * item.quantity).toLocaleString()} {item.isPointProduct ? 'оноо' : '₮'}
                         </span>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* <div className="flex items-center justify-end gap-1.5 mt-2 pt-1.5 border-t border-gray-200">

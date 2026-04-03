@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { useCart, authApi, useSessionValidator, productsApi } from '@/lib/api';
+import { useCart, authApi, useSessionValidator, productsApi, useCurrentUser } from '@/lib/api';
 import { useCategoriesStore } from '@/lib/stores/categories';
 import { LoginModal } from '@/components/auth/login-modal';
 import { RegisterModal } from '@/components/auth/register-modal';
@@ -44,6 +44,7 @@ import {
   Shrink,
   GripVertical,
   LayoutGrid,
+  Coins,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -105,6 +106,10 @@ export function Navigation() {
   const { data: cartResponse } = useCart();
   const cartItems = cartResponse?.data || [];
   const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
+  // Fetch user points
+  const { data: userResponse } = useCurrentUser();
+  const user = userResponse?.data;
 
   useEffect(() => {
     setMounted(true);
@@ -598,9 +603,15 @@ export function Navigation() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="hidden sm:flex text-sm sm:text-base whitespace-nowrap hover:bg-gray-100 rounded-lg px-3 py-2 transition-all duration-200"
+                      className="hidden sm:flex items-center gap-1 text-sm sm:text-base whitespace-nowrap hover:bg-gray-100 rounded-lg px-2 py-1.5 transition-all duration-200"
                     >
-                      <div className="w-7 h-7 rounded-full bg-linear-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-xs shadow-sm">
+                      {mounted && user && (
+                        <div className="flex items-center gap-1 mr-1 px-2 py-1 bg-yellow-400/10 rounded-full border border-yellow-400/20 group">
+                          <Coins className="w-4 h-4 text-yellow-500 group-hover:scale-110 transition-transform" />
+                          <span className="text-[11px] font-bold text-yellow-700">{user.points.toLocaleString()} оноо</span>
+                        </div>
+                      )}
+                      <div className="w-8 h-8 rounded-full bg-linear-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-xs shadow-sm shadow-primary/20">
                         {userName ? getUserInitials(userName) : <User className="w-4 h-4" />}
                       </div>
                     </Button>
@@ -609,6 +620,13 @@ export function Navigation() {
                     align="end"
                     className="bg-white border border-gray-200 shadow-xl rounded-lg mt-2 w-48"
                   >
+                    <DropdownMenuItem asChild className="cursor-pointer bg-yellow-400/5 focus:bg-yellow-400/10">
+                      <Link href="/loyalty-store" className="flex items-center gap-2 w-full text-yellow-700 font-bold">
+                        <Coins className="w-4 h-4" />
+                        Онооны дэлгүүр
+                      </Link>
+                    </DropdownMenuItem>
+                    <div className="h-px bg-gray-100 my-1" />
                     <DropdownMenuItem asChild className="cursor-pointer">
                       <Link href="/profile" className="flex items-center gap-2 w-full">
                         <User className="w-4 h-4" />
@@ -787,7 +805,7 @@ export function Navigation() {
                                           <Link
                                             href={`/products?categoryId=${child.id}`}
                                             onClick={() => setSelectedChildCategoryId(child.id)}
-                                            className={`group flex items-center gap-2 w-full p-2 mb-1 w-full text-sm font-medium border rounded transition ${
+                                            className={`group flex items-center gap-2 w-full p-2 mb-1 text-sm font-medium border rounded transition ${
                                               isChildActive
                                                 ? 'text-primary border-primary/70 bg-primary/5 scale-101'
                                                 : 'text-gray-800 border-gray-100  hover:border-primary/70 hover:text-primary/70'

@@ -35,14 +35,16 @@ import { getDeliveryFee } from '@/lib/utils';
 
 function CartItemFavoriteRemove({
   productId,
+  isPointProduct = false,
   onRemove,
   removePending,
 }: {
   productId: number;
+  isPointProduct?: boolean;
   onRemove: () => void;
   removePending: boolean;
 }) {
-  const { data: statusRes } = useFavoriteStatus(productId);
+  const { data: statusRes } = useFavoriteStatus(productId, isPointProduct);
   const addFavoriteMutation = useFavoriteAdd();
   const removeFavoriteMutation = useFavoriteRemove();
   const isFavorited = statusRes?.data?.isFavorited ?? false;
@@ -55,7 +57,7 @@ function CartItemFavoriteRemove({
         await removeFavoriteMutation.mutateAsync(productId);
         toast.success('Барааг хассан');
       } else {
-        await addFavoriteMutation.mutateAsync(productId);
+        await addFavoriteMutation.mutateAsync({ productId, isPointProduct });
         toast.success('Барааг хадгалсан');
       }
     } catch (error: any) {
@@ -112,8 +114,14 @@ export default function CartPage() {
     refetch: refetchCart,
   } = useCart();
 
-  const cartItems = (cartResponse?.data || []).filter(
-    item => item.product == null || item.product.isHidden !== true,
+  // Filter out invalid items but be forgiving about missing product objects
+  // Robust detection of point products and filtering
+  const cartItems = (cartResponse?.data || []).map(item => ({
+    ...item,
+    // Infer isPointProduct if not explicitly provided but pointProduct data exists
+    _computedIsPointProduct: item.isPointProduct || (item as any).is_point_product || !!(item.pointProduct || (item as any).point_product)
+  })).filter(
+    item => (item.product || item.pointProduct || (item as any).point_product) != null,
   );
 
   const isAuthError =
@@ -128,15 +136,19 @@ export default function CartPage() {
   const clearCartMutation = useCartClear();
   const createOrderMutation = useOrderCreate();
 
-  const handleQuantityChange = async (productId: number, delta: number) => {
-    const item = cartItems.find(item => item.productId === productId);
+  const handleQuantityChange = async (productId: number, isPointProduct: boolean, delta: number) => {
+    // Be flexible with item lookup
+    const item = cartItems.find(item => 
+      item.productId === productId && 
+      ((item.isPointProduct === isPointProduct) || ((item as any).is_point_product === isPointProduct))
+    );
     if (!item) return;
 
     const newQuantity = item.quantity + delta;
     if (newQuantity < 1) return;
 
     try {
-      await updateCartMutation.mutateAsync({ productId, quantity: newQuantity });
+      await updateCartMutation.mutateAsync({ productId, quantity: newQuantity, isPointProduct });
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
@@ -164,7 +176,15 @@ export default function CartPage() {
     const newQuantity = Number.isNaN(parsed) || parsed < 1 ? 1 : parsed;
     if (newQuantity === currentQuantity) return;
     try {
-      await updateCartMutation.mutateAsync({ productId, quantity: newQuantity });
+      // Use normalized isPointProduct check
+      const item = cartItems.find(i => i.productId === productId);
+      const isPP = item?._computedIsPointProduct ?? false;
+      
+      await updateCartMutation.mutateAsync({ 
+        productId, 
+        quantity: newQuantity, 
+        isPointProduct: isPP 
+      });
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
@@ -173,9 +193,9 @@ export default function CartPage() {
     }
   };
 
-  const handleRemoveItem = async (productId: number) => {
+  const handleRemoveItem = async (productId: number, isPointProduct: boolean = false) => {
     try {
-      await removeCartMutation.mutateAsync(productId);
+      await removeCartMutation.mutateAsync({ productId, isPointProduct });
       window.dispatchEvent(new Event('cartUpdated'));
       toast.success('Сагснаас хасагдсан', {
         description: 'Барааг таны сагснаас хассан.',
@@ -199,12 +219,20 @@ export default function CartPage() {
     }
   };
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + parseFloat(item.product?.price || '0') * item.quantity,
-    0,
-  );
-  const deliveryFee = getDeliveryFee(subtotal);
-  const total = subtotal + deliveryFee;
+  const cashSubtotal = cartItems.reduce((sum, item) => {
+    if (item._computedIsPointProduct) return sum;
+    const productData = item.product || (item as any).product;
+    return sum + (parseFloat(productData?.price || '0') * item.quantity);
+  }, 0);
+
+  const pointsSubtotal = cartItems.reduce((sum, item) => {
+    if (!item._computedIsPointProduct) return sum;
+    const productData = item.pointProduct || (item as any).point_product || item.product;
+    return sum + ((productData as any)?.pointsPrice || 0) * item.quantity;
+  }, 0);
+  const earnedPoints = Math.floor(cashSubtotal / 150);
+  const deliveryFee = getDeliveryFee(cashSubtotal);
+  const totalCash = cashSubtotal + deliveryFee;
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
@@ -384,27 +412,29 @@ export default function CartPage() {
               {/* Cart item cards */}
               <div className="space-y-3">
                 {cartItems.map(item => {
-                  const price = parseFloat(item.product?.price || '0');
-                  const originalPrice = item.product?.originalPrice
-                    ? parseFloat(item.product.originalPrice)
+                  const _isPointProduct = item._computedIsPointProduct;
+                  const productData = _isPointProduct ? (item.pointProduct || (item as any).point_product || item.product) : item.product;
+                  const price = _isPointProduct ? (productData as any)?.pointsPrice || 0 : parseFloat((productData as any)?.price || '0');
+                  const originalPrice = !_isPointProduct && (productData as any)?.originalPrice
+                    ? parseFloat((productData as any).originalPrice)
                     : 0;
-                  const hasDiscount = originalPrice > price;
+                  const hasDiscount = !_isPointProduct && originalPrice > price;
                   return (
                     <Card
-                      key={item.id}
-                      className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden"
+                      key={`${item.id}-${_isPointProduct}`}
+                      className={`bg-white border shadow-sm rounded-xl overflow-hidden ${_isPointProduct ? 'border-yellow-200 bg-yellow-50/5' : 'border-gray-200'}`}
                     >
                       <CardContent className="p-4">
                         <div className="flex sm:flex-row flex-col gap-4">
                           <Link
-                            href={`/product/${item.productId}`}
+                            href={_isPointProduct ? `/loyalty-store/${item.productId}` : `/product/${item.productId}`}
                             className="flex flex-1 items-center min-w-0 gap-4 cursor-pointer hover:opacity-90 transition-opacity"
                           >
                             <div className="shrink-0 sm:w-26 w-20 sm:h-26 h-20 rounded-lg bg-gray-100 overflow-hidden">
-                              {item.product?.firstImage || item.product?.images?.[0] ? (
+                              {productData?.firstImage || productData?.images?.[0] ? (
                                 <Image
-                                  src={item.product.firstImage || item.product.images[0]}
-                                  alt={item.product.name}
+                                  src={productData.firstImage || productData.images[0]}
+                                  alt={productData.name}
                                   width={80}
                                   height={80}
                                   className="w-full h-full object-cover"
@@ -417,21 +447,24 @@ export default function CartPage() {
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              {/* <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
-                                {item.product?.categories?.[0]?.name || 'Бүтээгдэхүүн'}
-                              </p> */}
+                              <div className="flex items-center gap-2 mb-1">
+                                {item._computedIsPointProduct && (
+                                  <span className="px-2 py-0.5 rounded-full bg-yellow-400 text-[10px] font-bold text-yellow-900 uppercase">
+                                    Онооны бараа
+                                  </span>
+                                )}
+                              </div>
                               <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
-                                {item.product?.name || 'Бүтээгдэхүүн'}
+                                {productData?.name || 'Бүтээгдэхүүн'}
                               </h3>
                               <p className="text-sm text-green-700 mb-1">
-                                Үлдэгдэл: {item.product?.stock ?? 0}
+                                Үлдэгдэл: {productData?.stock ?? 0}
                               </p>
                             </div>
                           </Link>
 
-                          {/* Price, quantity, actions */}
-                          <div className="flex sm:flex-col items-center items-end gap-6 sm:gap-2 justify-center shrink-0">
-                            <div className="hidden sm:block flex items-center gap-2">
+                          <div className="flex sm:flex-col items-center sm:items-end gap-6 sm:gap-2 justify-center shrink-0">
+                            <div className="hidden sm:flex items-center gap-2">
                               {hasDiscount && (
                                 <span className="text-sm text-gray-400 line-through">
                                   {originalPrice.toLocaleString()}₮
@@ -439,16 +472,17 @@ export default function CartPage() {
                               )}
                               <span
                                 className={`text-base font-bold ${
-                                  hasDiscount ? 'text-primary' : 'text-gray-900'
+                                  _isPointProduct ? 'text-yellow-600' : hasDiscount ? 'text-primary' : 'text-gray-900'
                                 }`}
                               >
-                                {price.toLocaleString()}₮
+                                {price.toLocaleString()}{_isPointProduct ? ' оноо' : '₮'}
                               </span>
                             </div>
                             <div className="sm:hidden">
                               <CartItemFavoriteRemove
                                 productId={item.productId}
-                                onRemove={() => handleRemoveItem(item.productId)}
+                                isPointProduct={!!_isPointProduct}
+                                onRemove={() => handleRemoveItem(item.productId, !!_isPointProduct)}
                                 removePending={removeCartMutation.isPending}
                               />
                             </div>
@@ -457,7 +491,7 @@ export default function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-md hover:bg-white"
-                                onClick={() => handleQuantityChange(item.productId, -1)}
+                                onClick={() => handleQuantityChange(item.productId, !!_isPointProduct, -1)}
                                 disabled={updateCartMutation.isPending}
                               >
                                 <Minus className="w-3.5 h-3.5" />
@@ -499,7 +533,7 @@ export default function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-md hover:bg-white"
-                                onClick={() => handleQuantityChange(item.productId, 1)}
+                                onClick={() => handleQuantityChange(item.productId, !!_isPointProduct, 1)}
                                 disabled={updateCartMutation.isPending}
                               >
                                 <Plus className="w-3.5 h-3.5" />
@@ -508,14 +542,15 @@ export default function CartPage() {
                             <div className="sm:block hidden">
                               <CartItemFavoriteRemove
                                 productId={item.productId}
-                                onRemove={() => handleRemoveItem(item.productId)}
+                                isPointProduct={!!_isPointProduct}
+                                onRemove={() => handleRemoveItem(item.productId, !!_isPointProduct)}
                                 removePending={removeCartMutation.isPending}
                               />
                             </div>
                             <div className="text-sm text-center text-gray-900 sm:flex-row sm:gap-1 flex flex-col">
                               Нийт дүн:{' '}
-                              <span className="font-bold">
-                                {(price * item.quantity).toLocaleString()}₮
+                              <span className={`font-bold ${_isPointProduct ? 'text-yellow-600' : ''}`}>
+                                {(price * item.quantity).toLocaleString()}{_isPointProduct ? ' оноо' : '₮'}
                               </span>
                             </div>
                           </div>
@@ -533,11 +568,17 @@ export default function CartPage() {
 
               {/* Order summary card */}
               <Card className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
-                <CardContent className="p-4 space-y-2">
+                <CardContent className="p-4 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Бүтээгдэхүүний үнэ</span>
-                    <span className="font-medium text-gray-900">{subtotal.toLocaleString()}₮</span>
+                    <span className="font-medium text-gray-900">{cashSubtotal.toLocaleString()}₮</span>
                   </div>
+                  {pointsSubtotal > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-yellow-600 font-medium">Онооны дүн</span>
+                      <span className="font-bold text-yellow-600">{pointsSubtotal.toLocaleString()} оноо</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Хүргэлтийн үнэ</span>
                     <span className="font-medium text-gray-900">
@@ -545,6 +586,15 @@ export default function CartPage() {
                       {deliveryFee.toLocaleString()}₮
                     </span>
                   </div>
+                  
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                       <Sparkles className="w-4 h-4 text-blue-500" />
+                       <span className="text-xs font-semibold text-blue-700">Цуглуулах оноо:</span>
+                    </div>
+                    <span className="text-sm font-bold text-blue-800">+{earnedPoints.toLocaleString()} оноо</span>
+                  </div>
+
                   <div className="flex justify-between text-sm w-full">
                     <span className="text-gray-600 bg-orange-100 w-full border-orange-400 border rounded-md p-2">
                       <span> </span> 0 – 50,000₮ захиалга = 5,000₮ <br /> 50,000 – 90,000₮ захиалга
@@ -552,13 +602,21 @@ export default function CartPage() {
                       90,000₮ + захиалга = <span className="uppercase text-red-500">үнэгүй</span>
                     </span>
                   </div>
-                  <div className="border-t border-gray-200 pt-3 mt-3">
+                  <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-gray-900">Нийт төлөх дүн</span>
                       <span className="text-lg font-bold text-primary">
-                        {total.toLocaleString()}₮
+                        {totalCash.toLocaleString()}₮
                       </span>
                     </div>
+                    {pointsSubtotal > 0 && (
+                        <div className="flex justify-between items-center">
+                            <span className="font-bold text-yellow-700">Нийт ашиглах оноо</span>
+                            <span className="text-lg font-bold text-yellow-600">
+                                {pointsSubtotal.toLocaleString()} оноо
+                            </span>
+                        </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

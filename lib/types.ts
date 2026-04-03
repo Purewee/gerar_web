@@ -39,6 +39,7 @@ export interface User {
   name: string;
   email?: string;
   role: "USER" | "ADMIN";
+  points: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,6 +83,21 @@ export interface Product {
   isFavorite?: boolean;
   /** false = visible (default), true = hidden from catalog (still shown in order history) */
   isHidden?: boolean;
+  isPointProduct?: boolean;
+  pointsPrice?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PointProduct {
+  id: number;
+  name: string;
+  description: string;
+  pointsPrice: number;
+  images: string[];
+  firstImage: string | null;
+  stock: number;
+  isHidden?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -104,7 +120,9 @@ export interface CartItem {
   userId: number;
   productId: number;
   quantity: number;
+  isPointProduct: boolean;
   product?: Product;
+  pointProduct?: PointProduct;
   createdAt: string;
   updatedAt: string;
 }
@@ -163,7 +181,9 @@ export interface OrderItem {
   productId: number;
   quantity: number;
   price: string;
+  isPointProduct: boolean;
   product?: Product;
+  pointProduct?: PointProduct;
   createdAt: string;
   updatedAt: string;
 }
@@ -174,6 +194,9 @@ export interface Order {
   addressId: number | null;
   deliveryTimeSlot: string | null;
   totalAmount: string;
+  totalPoints: number;
+  earnedPoints: number;
+  usedPoints: number;
   status: string;
   createdAt: string;
   updatedAt: string;

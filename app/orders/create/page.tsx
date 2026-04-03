@@ -24,6 +24,7 @@ import {
   useOffDeliveryDates,
   validateDeliveryTimeSlot,
   authApi,
+  useCurrentUser,
   type CreateAddressRequest,
   type Address,
 } from '@/lib/api';
@@ -47,8 +48,16 @@ export default function OrderCreatePage() {
     refetch: refetchAddresses,
   } = useAddresses();
   const { data: cartResponse } = useCart();
+  const { data: userResponse } = useCurrentUser();
+  const currentUser = userResponse?.data;
   const addresses = addressesResponse?.data || [];
-  const cartItems = cartResponse?.data || [];
+  // Robust detection of point products and filtering
+  const cartItems = (cartResponse?.data || []).map(item => ({
+    ...item,
+    _computedIsPointProduct: item.isPointProduct || (item as any).is_point_product || !!(item.pointProduct || (item as any).point_product)
+  })).filter(
+    item => (item.product || item.pointProduct || (item as any).point_product) != null,
+  );
 
   // Use state to avoid hydration mismatch - localStorage is only available on client
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -426,11 +435,30 @@ export default function OrderCreatePage() {
 
       if (!deliveryDate) {
         toast.warning('Хүргэлтийн огноо сонгоно уу');
+        setIsSubmitting(false);
         return;
       }
 
       if (!deliveryTimeSlot) {
         toast.warning('Хүргэлтийн цаг сонгоно уу');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Points balance check
+      if (isAuthenticated && currentUser) {
+        if (pointsSubtotal > currentUser.points) {
+          toast.error('Урамшууллын оноо хүрэлцэхгүй байна', {
+            description: `Танд ${currentUser.points} оноо байгаа бөгөөд энэ захиалгад ${pointsSubtotal} оноо шаардлагатай байна.`,
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (pointsSubtotal > 0 && !isAuthenticated) {
+        toast.error('Нэвтрэх шаардлагатай', {
+          description: 'Онооны бараа худалдан авахын тулд заавал нэвтэрсэн байх шаардлагатай.',
+        });
+        setIsSubmitting(false);
         return;
       }
 
@@ -683,13 +711,19 @@ export default function OrderCreatePage() {
   };
 
   // Calculate totals
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + parseFloat(item.product?.price || '0') * item.quantity,
-    0,
-  );
-  const deliveryFee = getDeliveryFee(subtotal);
-  const walletBalance = 0;
-  const total = subtotal + deliveryFee - walletBalance;
+  const cashSubtotal = cartItems.reduce((sum, item) => {
+    if (item._computedIsPointProduct) return sum;
+    const productData = item.product || (item as any).product;
+    return sum + (parseFloat(productData?.price || '0') * item.quantity);
+  }, 0);
+
+  const pointsSubtotal = cartItems.reduce((sum, item) => {
+    if (!item._computedIsPointProduct) return sum;
+    const productData = item.pointProduct || (item as any).point_product || item.product;
+    return sum + ((productData as any)?.pointsPrice || 0) * item.quantity;
+  }, 0);
+  const deliveryFee = getDeliveryFee(cashSubtotal);
+  const total = cashSubtotal + deliveryFee;
 
   const _selectedAddress = addresses.find(addr => addr.id === selectedAddressId);
 
@@ -730,40 +764,54 @@ export default function OrderCreatePage() {
 
       {/* Products */}
       <div className="space-y-4 mb-6">
-        {cartItems.map(item => (
-          <div key={item.id} className="flex gap-4">
-            <div className="relative w-20 h-20 shrink-0">
-              <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
-                {item.product?.firstImage || item.product?.images?.[0] ? (
-                  <Image
-                    src={item.product.firstImage || item.product.images[0]}
-                    alt={item.product.name}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    quality={75}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl">
-                    📦
-                  </div>
-                )}
+        {cartItems.map(item => {
+          const _isPointProduct = item._computedIsPointProduct;
+          const productData = _isPointProduct ? (item.pointProduct || (item as any).point_product || item.product) : item.product;
+          const price = _isPointProduct 
+            ? (productData as any)?.pointsPrice || 0 
+            : parseFloat((productData as any)?.price || '0');
+          return (
+            <div key={`${item.id}-${_isPointProduct}`} className="flex gap-4">
+              <div className="relative w-20 h-20 shrink-0">
+                <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
+                  {productData?.firstImage || productData?.images?.[0] ? (
+                    <Image
+                      src={productData.firstImage || productData.images[0]}
+                      alt={productData.name || 'Бүтээгдэхүүн'}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      quality={75}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl">
+                      📦
+                    </div>
+                  )}
+                </div>
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-semibold z-10 shadow-sm">
+                  {item.quantity}
+                </div>
               </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-semibold z-10">
-                {item.quantity}
+              <div className="flex-1 min-w-0 py-1">
+                <h4 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">
+                  {productData?.name || 'Бүтээгдэхүүн'}
+                </h4>
+                <div className="flex items-center gap-1.5">
+                    <p className={`text-sm font-bold ${_isPointProduct ? 'text-yellow-600' : 'text-gray-900'}`}>
+                      {price.toLocaleString()}{_isPointProduct ? ' оноо' : '₮'}
+                    </p>
+                    {_isPointProduct && (
+                        <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tighter">
+                            Оноо
+                        </span>
+                    )}
+                </div>
               </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-sm line-clamp-2 mb-1">
-                {item.product?.name || 'Бүтээгдэхүүн'}
-              </h4>
-              <p className="text-sm font-semibold text-gray-900">
-                {parseFloat(item.product?.price || '0').toLocaleString()}₮
-              </p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Price Breakdown */}
@@ -772,19 +820,43 @@ export default function OrderCreatePage() {
           <span className="text-gray-600">
             {cartItems.reduce((sum, item) => sum + item.quantity, 0)} барааны дүн
           </span>
-          <span className="font-semibold">{subtotal.toLocaleString()}₮</span>
+          <span className="font-semibold">{cashSubtotal.toLocaleString()}₮</span>
         </div>
+        {pointsSubtotal > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-yellow-600 font-medium whitespace-nowrap">Урамшууллын оноогоор</span>
+            <span className="font-bold text-yellow-600">{pointsSubtotal.toLocaleString()} оноо</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Хүргэлт</span>
-          <span className="font-semibold">{deliveryFee.toLocaleString()}₮</span>
+          <span className="text-gray-600 text-xs">Хүргэлт</span>
+          <span className="font-semibold text-xs">{deliveryFee.toLocaleString()}₮</span>
         </div>
-        <div className="border-t border-gray-200 pt-3 mt-3">
-          <div className="flex justify-between">
-            <span className="text-lg font-semibold">Нийт төлөх дүн</span>
+        <div className="border-t border-gray-200 pt-3 mt-3 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold">Нийт төлөх</span>
             <span className="text-xl font-bold text-primary">
               {total.toLocaleString()}₮
             </span>
           </div>
+          
+          {isAuthenticated && currentUser && (
+             <div className={`p-4 rounded-xl border text-sm flex flex-col gap-2 ${pointsSubtotal > currentUser.points ? 'bg-red-50 border-red-200 text-red-800' : 'bg-yellow-50 border-yellow-200 text-yellow-800'}`}>
+                <div className="flex justify-between items-center">
+                    <span className="font-medium">Таны оноо:</span>
+                    <span className="font-bold">{currentUser.points.toLocaleString()} оноо</span>
+                </div>
+                {pointsSubtotal > 0 && (
+                    <div className="flex justify-between items-center pt-2 border-t border-yellow-200/50">
+                        <span className="font-medium">Ашиглах оноо:</span>
+                        <span className={`font-bold ${pointsSubtotal > currentUser.points ? 'text-red-600' : 'text-yellow-700'}`}>-{pointsSubtotal.toLocaleString()} оноо</span>
+                    </div>
+                )}
+                {pointsSubtotal > currentUser.points && (
+                    <p className="text-[10px] font-bold text-red-600 mt-1 uppercase text-center bg-white/50 py-1 rounded">Хүрэлцэхгүй байна</p>
+                )}
+             </div>
+          )}
         </div>
       </div>
 

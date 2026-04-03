@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOrders } from '@/lib/api';
-import { MapPin, ShoppingBag, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { MapPin, ShoppingBag, CheckCircle2, XCircle, Clock, Coins } from 'lucide-react';
 import { OrderCardSkeleton } from '@/components/skeleton';
 
 // Mongolian month names
@@ -173,13 +173,28 @@ export default function ProfileOrdersPage() {
                           {order.items?.length ?? 0} бүтээгдэхүүн
                         </p>
                       )}
+                      
+                      {order.usedPoints > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <div className="px-2 py-0.5 rounded bg-yellow-100 border border-yellow-200">
+                            <span className="text-[10px] font-bold text-yellow-700 flex items-center gap-1">
+                              <Coins className="w-3 h-3" />
+                              {order.usedPoints.toLocaleString()} оноо ашигласан
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* RIGHT */}
-                    <div className="sm:text-right">
+                    <div className="sm:text-right flex flex-col sm:items-end justify-center">
                       <p className="text-2xl font-bold text-primary">
                         {Number(order.totalAmount).toLocaleString()}₮
                       </p>
+                      {order.earnedPoints > 0 && (
+                        <p className="text-[11px] font-bold text-blue-600 mt-1 uppercase tracking-tight">
+                          +{order.earnedPoints.toLocaleString()} оноо цуглуулсан
+                        </p>
+                      )}
                       <p className="text-xs text-gray-400 mt-1">Дэлгэрэнгүй харах →</p>
                     </div>
                   </div>

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Loader2 } from 'lucide-react';
+import { Edit, Loader2, Coins, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCurrentUser, useUpdateProfile } from '@/lib/api';
 
@@ -140,6 +140,31 @@ export default function ProfilePage() {
       </CardHeader>
       <CardContent className="p-6 lg:p-8">
         <div className="space-y-8">
+          {/* Points Balance Card */}
+          <div className="bg-linear-to-br from-yellow-400/20 via-yellow-400/10 to-transparent border border-yellow-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3">
+                <Coins className="w-10 h-10 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-yellow-900 group-hover:text-yellow-600 transition-colors">Урамшууллын оноо</h3>
+                <p className="text-yellow-700/70 text-sm">Цуглуулсан оноогоо бэлгэнд солиорой</p>
+              </div>
+            </div>
+            <div className="flex flex-col items-center sm:items-end gap-1">
+              <span className="text-4xl font-black text-yellow-600 drop-shadow-sm">
+                {user.points.toLocaleString()} <span className="text-sm font-bold uppercase text-yellow-700/50">оноо</span>
+              </span>
+              <Button 
+                variant="link" 
+                className="text-yellow-700 hover:text-yellow-800 font-bold p-0 h-auto"
+                onClick={() => window.location.href = '/loyalty-store'}
+              >
+                Онооны дэлгүүр орох <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+
           <div className="flex flex-row items-start sm:items-center gap-6 pb-6 border-b border-gray-100">
             <div className="w-16 h-16 sm:w-28 sm:h-28 bg-linear-to-br from-primary/20 to-primary/5 rounded-full flex items-center justify-center shadow-lg ring-4 ring-primary/10 shrink-0">
               {name ? (

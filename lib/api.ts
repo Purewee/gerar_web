@@ -238,6 +238,15 @@ export const queryKeys = {
     detail: (id: number) => [...queryKeys.orders.details(), id] as const,
     paymentStatus: (id: number) => [...queryKeys.orders.detail(id), 'payment-status'] as const,
   },
+
+  // Point Products
+  pointProducts: {
+    all: ['pointProducts'] as const,
+    lists: () => [...queryKeys.pointProducts.all, 'list'] as const,
+    list: (params?: any) => [...queryKeys.pointProducts.lists(), params] as const,
+    details: () => [...queryKeys.pointProducts.all, 'detail'] as const,
+    detail: (id: number) => [...queryKeys.pointProducts.details(), id] as const,
+  },
 };
 
 // ==================== AUTHENTICATION ====================
@@ -261,6 +270,7 @@ export interface User {
   name: string;
   role: 'USER' | 'ADMIN';
   email: string;
+  points: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -573,6 +583,21 @@ export interface Product {
   category?: Category;
   /** false = visible (default), true = hidden from catalog (still shown in order history) */
   isHidden?: boolean;
+  isPointProduct?: boolean;
+  pointsPrice?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PointProduct {
+  id: number;
+  name: string;
+  description: string;
+  pointsPrice: number;
+  images: string[];
+  firstImage: string | null;
+  stock: number;
+  isHidden?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -713,6 +738,37 @@ export const useProduct = (id: number) => {
 
 export const productsApi = productsApiFunctions;
 
+// ==================== POINT PRODUCTS ====================
+
+// Point Products API functions
+const pointProductsApiFunctions = {
+  getAll: async (): Promise<ApiResponse<PointProduct[]>> => {
+    return apiFetch<PointProduct[]>('/point-products');
+  },
+
+  getById: async (id: number): Promise<ApiResponse<PointProduct>> => {
+    return apiFetch<PointProduct>(`/point-products/${id}`);
+  },
+};
+
+// Point Products hooks
+export const usePointProducts = () => {
+  return useQuery({
+    queryKey: queryKeys.pointProducts.lists(),
+    queryFn: () => pointProductsApiFunctions.getAll(),
+  });
+};
+
+export const usePointProduct = (id: number) => {
+  return useQuery({
+    queryKey: queryKeys.pointProducts.detail(id),
+    queryFn: () => pointProductsApiFunctions.getById(id),
+    enabled: !!id,
+  });
+};
+
+export const pointProductsApi = pointProductsApiFunctions;
+
 // ==================== CATEGORIES ====================
 
 export interface Category {
@@ -814,7 +870,9 @@ export interface CartItem {
   sessionToken?: string; // For guest users
   productId: number;
   quantity: number;
+  isPointProduct: boolean;
   product?: Product;
+  pointProduct?: PointProduct;
   createdAt: string;
   updatedAt: string;
 }
@@ -831,10 +889,14 @@ const cartApiFunctions = {
     return apiFetch<CartItem[]>('/cart');
   },
 
-  add: async (productId: number, quantity: number): Promise<ApiResponse<CartItem>> => {
+  add: async (
+    productId: number,
+    quantity: number,
+    isPointProduct: boolean = false,
+  ): Promise<ApiResponse<CartItem>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
-    const body: any = { productId, quantity };
+    const body: any = { productId, quantity, isPointProduct };
 
     // Add session token for guest users
     if (!token && sessionToken) {
@@ -847,10 +909,10 @@ const cartApiFunctions = {
     });
   },
 
-  update: async (productId: number, quantity: number): Promise<ApiResponse<CartItem>> => {
+  update: async (productId: number, quantity: number, isPointProduct: boolean = false): Promise<ApiResponse<CartItem>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
-    const body: any = { quantity };
+    const body: any = { quantity, isPointProduct };
 
     // Add session token for guest users
     if (!token && sessionToken) {
@@ -863,10 +925,10 @@ const cartApiFunctions = {
     });
   },
 
-  remove: async (productId: number): Promise<ApiResponse<CartItem>> => {
+  remove: async (productId: number, isPointProduct: boolean = false): Promise<ApiResponse<CartItem>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
-    const body: any = {};
+    const body: any = { isPointProduct };
 
     // Add session token for guest users
     if (!token && sessionToken) {
@@ -875,7 +937,7 @@ const cartApiFunctions = {
 
     return apiFetch<CartItem>(`/cart/${productId}/remove`, {
       method: 'POST',
-      body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
+      body: JSON.stringify(body),
     });
   },
 
@@ -919,9 +981,17 @@ export const useCart = () => {
 export const useCartAdd = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ productId, quantity }: { productId: number; quantity: number }) => {
+    mutationFn: async ({
+      productId,
+      quantity,
+      isPointProduct = false,
+    }: {
+      productId: number;
+      quantity: number;
+      isPointProduct?: boolean;
+    }) => {
       const beforeSession = getSessionToken();
-      const result = await cartApiFunctions.add(productId, quantity);
+      const result = await cartApiFunctions.add(productId, quantity, isPointProduct);
       const afterSession = getSessionToken();
       // If sessionToken was just created, force refetch
       if (!beforeSession && afterSession) {
@@ -941,8 +1011,8 @@ export const useCartAdd = () => {
 export const useCartUpdate = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, quantity }: { productId: number; quantity: number }) =>
-      cartApiFunctions.update(productId, quantity),
+    mutationFn: ({ productId, quantity, isPointProduct = false }: { productId: number; quantity: number, isPointProduct?: boolean }) =>
+      cartApiFunctions.update(productId, quantity, isPointProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
     },
@@ -952,7 +1022,8 @@ export const useCartUpdate = () => {
 export const useCartRemove = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (productId: number) => cartApiFunctions.remove(productId),
+    mutationFn: ({ productId, isPointProduct = false }: { productId: number, isPointProduct?: boolean }) => 
+      cartApiFunctions.remove(productId, isPointProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
     },
@@ -996,13 +1067,13 @@ const favoritesApiFunctions = {
     return apiFetch<Product[]>(`/favorites${query ? `?${query}` : ''}`, {}, true);
   },
 
-  add: async (productId: number): Promise<ApiResponse<Product>> => {
+  add: async (productId: number, isPointProduct: boolean = false): Promise<ApiResponse<Product>> => {
     requireAuth();
     return apiFetch<Product>(
       '/favorites',
       {
         method: 'POST',
-        body: JSON.stringify({ productId }),
+        body: JSON.stringify({ productId, isPointProduct }),
       },
       true,
     );
@@ -1022,10 +1093,11 @@ const favoritesApiFunctions = {
 
   checkStatus: async (
     productId: number,
+    isPointProduct: boolean = false,
   ): Promise<ApiResponse<{ productId: number; isFavorited: boolean }>> => {
     requireAuth();
     return apiFetch<{ productId: number; isFavorited: boolean }>(
-      `/favorites/${productId}/status`,
+      `/favorites/${productId}/status?isPointProduct=${isPointProduct}`,
       {},
       true,
     );
@@ -1042,10 +1114,10 @@ export const useFavorites = (params?: { page?: number; limit?: number }) => {
   });
 };
 
-export const useFavoriteStatus = (productId: number) => {
+export const useFavoriteStatus = (productId: number, isPointProduct: boolean = false) => {
   return useQuery({
-    queryKey: queryKeys.favorites.status(productId),
-    queryFn: () => favoritesApiFunctions.checkStatus(productId),
+    queryKey: [...queryKeys.favorites.status(productId), isPointProduct],
+    queryFn: () => favoritesApiFunctions.checkStatus(productId, isPointProduct),
     enabled: !!productId && !!getAuthToken(), // Only enable if authenticated
   });
 };
@@ -1053,7 +1125,8 @@ export const useFavoriteStatus = (productId: number) => {
 export const useFavoriteAdd = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (productId: number) => favoritesApiFunctions.add(productId),
+    mutationFn: ({ productId, isPointProduct = false }: { productId: number; isPointProduct?: boolean }) => 
+      favoritesApiFunctions.add(productId, isPointProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.favorites.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
@@ -1361,7 +1434,9 @@ export interface OrderItem {
   productId: number;
   quantity: number;
   price: string;
+  isPointProduct: boolean;
   product?: Product;
+  pointProduct?: PointProduct;
   createdAt: string;
   updatedAt: string;
 }
@@ -1372,6 +1447,9 @@ export interface Order {
   addressId: number | null;
   deliveryTimeSlot: string | null;
   totalAmount: string;
+  totalPoints: number;
+  earnedPoints: number;
+  usedPoints: number;
   status: string;
   createdAt: string;
   updatedAt: string;
