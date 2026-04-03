@@ -59,7 +59,7 @@ export function PointProductCard({
 
     try {
       await addToCartMutation.mutateAsync({
-        productId: product?.id,
+        productId: product.id,
         quantity: 1,
         isPointProduct: true,
       });
@@ -89,11 +89,11 @@ export function PointProductCard({
 
     try {
       if (isFavorited) {
-        await removeFavoriteMutation.mutateAsync(product?.id);
+        await removeFavoriteMutation.mutateAsync(product.id);
         setIsFavorited(false);
         toast.success('Амжилттай хасагдлаа');
       } else {
-        await addFavoriteMutation.mutateAsync({ productId: product?.id, isPointProduct: true });
+        await addFavoriteMutation.mutateAsync({ productId: product.id, isPointProduct: true });
         setIsFavorited(true);
         toast.success('Амжилттай нэмэгдлээ');
       }
