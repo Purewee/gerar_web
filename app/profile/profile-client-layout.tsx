@@ -70,7 +70,7 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
     <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-100/50 pb-20 lg:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-12">
         {/* Mobile: horizontal cohesive tab bar */}
-        <div className="lg:hidden mb-10 sticky top-4 z-40">
+        <div className="lg:hidden mb-10 sticky top-18 z-30">
           <nav className="flex items-center justify-between bg-white/80 backdrop-blur-xl p-1.5 rounded-2xl border border-white/50 shadow-2xl shadow-black/5 ring-1 ring-black/5">
             {menuItems.map(item => {
               const Icon = item.icon;
@@ -143,28 +143,27 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
                   </button>
                 </div>
               </div>
-
-              {/* Support or Info Card in Sidebar */}
-              <div className="bg-linear-to-br from-primary to-primary-light p-6 rounded-3xl shadow-xl shadow-primary/20 text-white relative overflow-hidden group">
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                <div className="relative z-10 space-y-4">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                    <Heart className="w-6 h-6 fill-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-black text-lg">Тусламж хэрэгтэй юу?</h4>
-                    <p className="text-white/70 text-xs font-medium mt-1 leading-relaxed">Бид танд 24/7 туслахад бэлэн байна. Лавлах утсаар холбогдоно уу.</p>
-                  </div>
-                  <button className="w-full py-2.5 bg-white text-primary font-black text-sm rounded-xl hover:bg-gray-50 transition-colors">
-                    7722-XXXX
-                  </button>
-                </div>
-              </div>
             </div>
           </aside>
 
           <main className="lg:col-span-3">
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">{children}</div>
+            <div className={`animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out ${pathname !== '/profile' ? 'sm:px-0' : ''}`}>
+              {/* Outer wrapper for sub-pages on mobile */}
+              {pathname !== '/profile' ? (
+                <>
+                  <div className="lg:hidden p-1.5 bg-white/30 backdrop-blur-md rounded-[2.5rem] border border-white/50 shadow-2xl shadow-black/5 ring-1 ring-black/5">
+                    <div className="overflow-hidden rounded-4xl">
+                      {children}
+                    </div>
+                  </div>
+                  <div className="hidden lg:block">
+                    {children}
+                  </div>
+                </>
+              ) : (
+                children
+              )}
+            </div>
           </main>
         </div>
 
