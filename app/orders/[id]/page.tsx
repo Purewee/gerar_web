@@ -248,6 +248,22 @@ export default function OrderDetailPage() {
   const deliveryFee = getDeliveryFee(itemTotal);
   const totalAmount = itemTotal + deliveryFee;
 
+  const purchaseFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!isPaid || !order) return;
+    if (purchaseFiredRef.current) return;
+
+    purchaseFiredRef.current = true;
+
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'Purchase', {
+        value: totalAmount,
+        currency: 'MNT',
+      });
+    }
+  }, [isPaid, order]);
+
   // Show loading state until mounted and data is loaded
   if (!mounted || isLoading) {
     return (
@@ -279,12 +295,12 @@ export default function OrderDetailPage() {
 
   return (
     <div className="min-h-[calc(100vh-525px)] bg-linear-to-b from-gray-50 to-white">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 space-y-5">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-4 pt-2 space-y-5">
         {/* Header */}
         <Button
           variant="ghost"
           onClick={() => router.push(ordersBackHref)}
-          className="group px-2 py-1 text-gray-600 hover:text-gray-900"
+          className="group px-2 pb-1 text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-1" />
           <span className="text-sm font-medium">{ordersBackLabel}</span>
@@ -314,14 +330,14 @@ export default function OrderDetailPage() {
                 ) : qrCode ? (
                   <div className="space-y-2">
                     <div className="flex flex-col items-center">
-                      <div className="p-4 rounded-2xl bg-white shadow-inner border flex justify-center">
+                      <div className="p-1 my-1 rounded-2xl bg-white shadow-inner border flex justify-center">
                         {/* Use regular img tag for base64 data URLs - Next.js Image doesn't handle them */}
                         <Image
                           src={qrCode}
                           alt="QR Code"
-                          className="w-60 h-60 object-contain"
-                          width={240}
-                          height={240}
+                          className="w-50 h-50 object-contain"
+                          width={200}
+                          height={200}
                           onError={_e => {
                             console.error('QR Code image failed to load');
                             console.error('QR Code value:', qrCode?.substring(0, 100));
@@ -334,6 +350,25 @@ export default function OrderDetailPage() {
                       <p className="text-xs text-gray-600 text-center my-2">
                         Qpay апп эсвэл банкны апп ашиглан QR кодыг уншуулна уу
                       </p>
+                      {/* Refresh Status Button */}
+                      {!shouldStopPolling && (
+                        <div className="flex justify-center mt-6">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => refetchPaymentStatus()}
+                            disabled={isFetchingPaymentStatus}
+                            className="text-xs"
+                          >
+                            <RefreshCw
+                              className={`w-3 h-3 mr-1.5 ${
+                                isFetchingPaymentStatus ? 'animate-spin' : ''
+                              }`}
+                            />
+                            Төлбөр шалгах
+                          </Button>
+                        </div>
+                      )}
                       {/* Bank/Wallet Buttons - Mobile Only */}
                       {isMobile && paymentUrls.length > 0 && (
                         <div className="w-full max-w-xs mt-3 px-1">
@@ -428,26 +463,6 @@ export default function OrderDetailPage() {
                         </div>
                       )}
                     </div>
-
-                    {/* Refresh Status Button */}
-                    {!shouldStopPolling && (
-                      <div className="flex justify-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => refetchPaymentStatus()}
-                          disabled={isFetchingPaymentStatus}
-                          className="text-xs"
-                        >
-                          <RefreshCw
-                            className={`w-3 h-3 mr-1.5 ${
-                              isFetchingPaymentStatus ? 'animate-spin' : ''
-                            }`}
-                          />
-                          Төлбөр шалгах
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <div className="text-center py-4">
@@ -483,10 +498,10 @@ export default function OrderDetailPage() {
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             {isPaid && (
-              <div className="px-3 py-1.5 bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg w-full sm:w-auto text-center sm:text-left">
-                <p className="text-md text-green-800 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
-                  <CheckCircle2 className="w-4.5 h-4.5" />
-                  Төлөгдсөн
+              <div className="px-3 py-5 bg-linear-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg w-full sm:w-auto text-center sm:text-left">
+                <p className="text-xl text-green-800 font-semibold flex flex-col items-center gap-1.5 justify-center sm:justify-start">
+                  <CheckCircle2 className="w-12 h-12" />
+                  Төлбөр амжилттай
                 </p>
               </div>
             )}
@@ -495,7 +510,7 @@ export default function OrderDetailPage() {
 
         {/* Status Banner */}
         {isCancelled && (
-          <div className="flex gap-3 p-3 rounded-xl bg-yellow-50 border border-yellow-200">
+          <div className="flex gap-3 p-3 py-4 rounded-xl bg-yellow-50 border border-yellow-200">
             <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-yellow-900 font-bold">
               !
             </div>
@@ -507,7 +522,7 @@ export default function OrderDetailPage() {
         )}
 
         {/* Order Summary Card */}
-        <Card className="border border-dashed shadow-none bg-gray-50">
+        <Card className="border border-gray-300 shadow-none bg-gray-50">
           <CardContent className="p-4 space-y-3">
             {/* Order Header Section */}
             <div className="grid grid-cols-2 gap-4">
@@ -542,7 +557,7 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Total Payment */}
-            <div className="flex justify-between text-lg font-bold pt-2 border-t">
+            <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
               <span>Нийт</span>
               <span className="text-primary">{totalAmount.toLocaleString()} ₮</span>
             </div>
@@ -551,15 +566,15 @@ export default function OrderDetailPage() {
 
         {/* Product Details Card */}
         {order?.items && order.items.length > 0 && (
-          <Card className="bg-white border border-gray-200 shadow-sm">
+          <Card className="bg-gray-50 border border-gray-200 shadow-sm">
             <CardContent className="p-3">
-              <div className="mb-2 pb-1.5 border-b border-gray-200">
-                <h2 className="text-base font-bold text-gray-900 mb-1">Бүтээгдэхүүн</h2>
+              <div className="mb-2 pb-1.5 ">
+                <h2 className="text-base font-bold text-gray-900 mb-1">Барааны жагсаалт</h2>
               </div>
 
               <div className="space-y-2">
                 {order.items.map(item => (
-                  <div key={item.id} className="flex gap-3 p-3 rounded-xl bg-gray-50 border">
+                  <div key={item.id} className="flex gap-3 p-1 rounded-xl border-b border-gray-200">
                     {/* Product Image */}
                     {item.product?.firstImage || item.product?.images?.[0] ? (
                       <div className="w-14 h-14 bg-gray-100 rounded overflow-hidden shrink-0">
@@ -578,11 +593,11 @@ export default function OrderDetailPage() {
                     )}
 
                     {/* Product Details */}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pt-2">
                       <h3 className="text-sm font-semibold line-clamp-2">
                         {item.product?.name || 'Бүтээгдэхүүн'}
                       </h3>
-                      <div className="flex justify-between items-center pt-0.5 border-t border-gray-200 mt-0.5">
+                      <div className="flex justify-between items-center pt-0.5 mt-0.5">
                         <span className="text-xs text-gray-600">
                           {parseFloat(item.price).toLocaleString()} ₮ × {item.quantity}
                         </span>
@@ -595,19 +610,18 @@ export default function OrderDetailPage() {
                 ))}
               </div>
 
-              {/* Contact Info */}
-              <div className="flex items-center justify-end gap-1.5 mt-2 pt-1.5 border-t border-gray-200">
+              {/* <div className="flex items-center justify-end gap-1.5 mt-2 pt-1.5 border-t border-gray-200">
                 <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded">
                   <Phone className="w-3 h-3 text-gray-600" />
                   <span className="text-xs font-medium text-gray-700">8886-0134</span>
                 </div>
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         )}
 
         {/* Customer Information Card */}
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-gray-50 border border-gray-200 shadow-sm">
           <CardContent className="p-3">
             <h2 className="text-base font-bold text-gray-900 mb-2 pb-1.5 border-b border-gray-200">
               Захиалагчийн мэдээлэл
@@ -661,14 +675,15 @@ export default function OrderDetailPage() {
                 <p className="text-xs text-gray-500 mb-1">Хаяг</p>
                 <p className="text-xs text-gray-900">
                   {order.address.provinceOrDistrict}, {order.address.khorooOrSoum}
-                  {order.address.street && `, ${order.address.street}`}
-                  {order.address.building && `, ${order.address.building}`}
-                  {order.address.apartmentNumber && `, ${order.address.apartmentNumber}`}
+                  {order.address.residentialComplex &&
+                    `, Байр: ${order.address.residentialComplex}`}
+                  {order.address.entrance && `, Орц: ${order.address.entrance}`}
+                  {order.address.apartmentNumber && `, Тоот: ${order.address.apartmentNumber}`}
                 </p>
                 {order.address.addressNote && (
-                  <div className="mt-1.5 p-1.5 bg-blue-50 border border-blue-200 rounded">
-                    <p className="text-xs font-medium text-blue-900 mb-0.5">Тэмдэглэл:</p>
-                    <p className="text-xs text-blue-800">{order.address.addressNote}</p>
+                  <div className="mt-2.5 border-t border-gray-200 pt-2">
+                    <p className="text-xs font-medium text-gray-900 mb-0.5">Дэлгэрэнгүй хаяг:</p>
+                    <p className="text-xs text-gray-800 my-1 py-1">{order.address.addressNote}</p>
                   </div>
                 )}
               </div>
@@ -683,13 +698,15 @@ export default function OrderDetailPage() {
           paymentStatus !== 'CANCELLED' && (
             <Card className="border border-red-200 bg-red-50 flex flex-col items-center justify-center shadow-none">
               <CardContent className="text-center py-2 space-y-2">
-                <p className="text-xs text-red-700">Төлбөр төлөхгүй бол захиалга цуцлагдана</p>
+                <p className="text-xs text-red-700">
+                  Төлбөр төлөгдөөгүй 60 минут болсон бол захиалга автоматаар цуцлагдана
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleCancelPayment}
                   disabled={cancelPaymentMutation.isPending}
-                  className="border-red-300 text-red-700 hover:bg-red-100"
+                  className="border-red-300 text-red-700 hover:bg-red-100 px-4"
                 >
                   {cancelPaymentMutation.isPending ? (
                     <>

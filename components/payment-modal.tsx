@@ -308,7 +308,17 @@ export function PaymentModal({ orderId, open, onOpenChange, onPaymentSuccess }: 
       </Dialog>
     );
   }
-
+  // Facebook Pixel Purchase event
+  useEffect(() => {
+    if (isPaid && order) {
+      if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'Purchase', {
+          value: parseFloat(order.totalAmount),
+          currency: 'MNT',
+        });
+      }
+    }
+  }, [isPaid, order]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">

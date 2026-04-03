@@ -36,7 +36,7 @@ export function HomeFooter() {
               </a>
 
               <a
-                href="https://www.facebook.com/profile.php?id=61586772028189"
+                href="https://www.facebook.com/profile.php?id=61587881157057"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
@@ -92,16 +92,16 @@ export function HomeFooter() {
             </p>
             <div className="flex gap-6">
               <Link
+                href="/terms"
+                className="text-gray-600 hover:text-emerald-600 transition-colors text-sm font-medium"
+              >
+                Үйлчилгээний нөхцөл
+              </Link>
+              <Link
                 href="/privacy"
                 className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium"
               >
                 Нууцлалын бодлого
-              </Link>
-              <Link
-                href="/terms"
-                className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium"
-              >
-                Үйлчилгээний нөхцөл
               </Link>
             </div>
           </div>

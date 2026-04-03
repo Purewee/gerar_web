@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { useInfiniteProducts, useCategory, type ProductsQueryParams } from '@/lib/api';
+import { useInfiniteProducts, useCategory, useFeature, type ProductsQueryParams } from '@/lib/api';
 import { ProductCard } from '@/components/product-card';
 import { ProductGridSkeleton } from '@/components/skeleton';
 import { FilterSidebar } from '@/components/filter-sidebar';
@@ -23,7 +23,7 @@ function ObserverDiv({ onIntersect, disabled }: { onIntersect: () => void; disab
           onIntersect();
         }
       },
-      { rootMargin: '200px' }
+      { rootMargin: '200px' },
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -34,6 +34,19 @@ function ObserverDiv({ onIntersect, disabled }: { onIntersect: () => void; disab
 
 function ProductsContent() {
   const searchParams = useSearchParams();
+  // ViewContent event for Facebook Pixel
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const categoryId = searchParams.get('categoryId');
+      const featureId = searchParams.get('featureId');
+      // Аль нэг нь байгаа үед track
+      if (categoryId || featureId) {
+        if (typeof (window as any).fbq === 'function') {
+          (window as any).fbq('track', 'ViewContent');
+        }
+      }
+    }
+  }, [searchParams]);
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
@@ -153,31 +166,21 @@ function ProductsContent() {
   } = useInfiniteProducts(queryParams);
 
   const categoryId = searchParams.get('categoryId');
+  const featureId = searchParams.get('featureId');
+  // Fetch category name only from category API
   const { data: categoryResponse } = useCategory(categoryId ? parseInt(categoryId) : 0);
   const category = categoryResponse?.data;
+  // Fetch feature name only from feature API
+  const { data: featureResponse } = useFeature(featureId ? parseInt(featureId) : 0);
+  const feature = featureResponse?.data;
 
   const pages = productsResponse?.pages || [];
-  let products = pages
-    .flatMap(page => page.data || [])
-    .filter(p => p.isHidden !== true);
+  let products = pages.flatMap(page => page.data || []).filter(p => p.isHidden !== true);
 
-  // Shuffle products if no filter/search/category is applied (show all products randomly)
-  const noFilter =
-    !searchParams.get('categoryId') &&
-    !searchParams.get('categoryIds') &&
-    !searchParams.get('featureId') &&
-    !searchParams.get('featureIds') &&
-    !searchParams.get('search') &&
-    !searchParams.get('onSale') &&
-    !searchParams.get('minPrice') &&
-    !searchParams.get('maxPrice') &&
-    !searchParams.get('minStock') &&
-    !searchParams.get('maxStock') &&
-    !searchParams.get('createdAfter') &&
-    !searchParams.get('createdBefore');
-
-  if (noFilter && products.length > 1) {
-    // Fisher-Yates shuffle
+  // featureId-г FilterSidebarMobile-д ашиглахын тулд дахин тодорхойлно
+  // const featureId = searchParams.get('featureId');
+  // Shuffle products randomly ONLY if categoryId is NOT present
+  if (!categoryId && products.length > 1) {
     products = [...products];
     for (let i = products.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -217,7 +220,7 @@ function ProductsContent() {
   return (
     <div className="bg-linear-to-b from-gray-50 via-white to-gray-50 relative">
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8 h-full">
-        {/* Header */}
+        {/* Header (Desktop) */}
         <div className="flex hidden sm:block flex-col gap-4 mb-8">
           {/* Top Row: Back Button and Title */}
           <div className="flex items-center gap-3 sm:gap-4">
@@ -244,6 +247,8 @@ function ProductsContent() {
                   </>
                 ) : mounted && searchParams.get('onSale') === 'true' ? (
                   'Хямдралтай бараа'
+                ) : feature ? (
+                  feature.name
                 ) : category ? (
                   category.name
                 ) : (
@@ -252,6 +257,40 @@ function ProductsContent() {
               </h1>
             </div>
           </div>
+        </div>
+
+        {/* Header (Mobile) */}
+        <div className="flex sm:hidden items-center gap-3 mb-4">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="flex items-center gap-2 px-3 py-2 border-2 border-gray-200 hover:border-primary hover:bg-primary/5 hover:text-primary transition-all duration-200 rounded-lg shadow-sm hover:shadow-md group"
+            aria-label="Өмнөх хуудас руу буцах"
+          >
+            <ArrowLeft
+              className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform"
+              aria-hidden="true"
+            />
+            <span className="font-medium">Буцах</span>
+          </Button>
+          <h1 className="text-lg font-bold text-gray-900 truncate">
+            {mounted && searchQuery ? (
+              <>
+                Хайлтын үр дүн:{' '}
+                <span className="text-primary bg-primary/10 px-2 py-1 rounded-lg">
+                  {searchQuery}
+                </span>
+              </>
+            ) : mounted && searchParams.get('onSale') === 'true' ? (
+              'Хямдралтай бараа'
+            ) : feature ? (
+              feature.name
+            ) : category ? (
+              category.name
+            ) : (
+              'Бүх бүтээгдэхүүн'
+            )}
+          </h1>
         </div>
 
         {/* Main Content with Sidebar */}
@@ -265,11 +304,14 @@ function ProductsContent() {
 
           {/* Products Section */}
           <main className="flex-1 min-w-0">
-            <FilterSidebarMobile
-              productsCount={totalProductsCount}
-              isLoading={loading}
-              className="sm:hidden"
-            />
+            {/* Hide FilterSidebarMobile if viewing a feature's products page */}
+            {!(featureId && products.length > 0) && (
+              <FilterSidebarMobile
+                productsCount={totalProductsCount}
+                isLoading={loading}
+                className="sm:hidden"
+              />
+            )}
             {!mounted || loading ? (
               <ProductGridSkeleton count={8} grid />
             ) : productsError ? (
@@ -312,23 +354,20 @@ function ProductsContent() {
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-4 sm:gap-5">
                   {products.map((product, index) => (
-                    <div
-                      key={product.id}
-                      className="animate-in fade-in slide-in-from-bottom-4"
-                    >
+                    <div key={product.id} className="animate-in fade-in slide-in-from-bottom-4">
                       <ProductCard product={product} inGrid={true} className="h-full" />
                     </div>
                   ))}
                 </div>
-                
+
                 {hasNextPage && (
                   <div className="mt-8 flex justify-center">
-                    <ObserverDiv 
+                    <ObserverDiv
                       onIntersect={() => {
                         if (!isFetchingNextPage) {
                           fetchNextPage();
                         }
-                      }} 
+                      }}
                       disabled={isFetchingNextPage}
                     />
                     {isFetchingNextPage && (

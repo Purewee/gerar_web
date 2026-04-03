@@ -35,39 +35,19 @@ import {
   LucideIcon,
   BrushCleaning,
   CookingPot,
-  Mars,
-  Venus,
   Baby,
-  PawPrint,
-  Cable,
-  Car,
-  Hammer,
-  EllipsisVertical,
   SoapDispenserDroplet,
-  SprayCan,
   Workflow,
   LayoutList,
   Star,
   MoveRight,
-  ListCollapse,
   Shrink,
   GripVertical,
+  LayoutGrid,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
-const categoryIcons: LucideIcon[] = [
-  BrushCleaning,
-  CookingPot,
-  SoapDispenserDroplet,
-  SprayCan,
-  Mars,
-  Venus,
-  Baby,
-  PawPrint,
-  Cable,
-  Car,
-  Hammer,
-];
+const categoryIcons: LucideIcon[] = [BrushCleaning, CookingPot, SoapDispenserDroplet, Baby];
 
 export function Navigation() {
   const [mobileProfileMenuOpen, setMobileProfileMenuOpen] = useState(false);
@@ -111,11 +91,11 @@ export function Navigation() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  // Hide categories on payment, cart, and order create pages
+  // Hide categories on payment, order create, and order detail pages (NOT on cart)
   const hideCategories =
     pathname?.includes('/payment') ||
-    pathname === '/cart' ||
     pathname === '/orders/create' ||
+    (pathname?.startsWith('/orders/') && pathname !== '/orders') ||
     false;
 
   // Validate session on mount — clears stale auth if token is expired
@@ -513,7 +493,7 @@ export function Navigation() {
                 <Input
                   type="text"
                   placeholder="Цэвэрлэгээ, гал тогоо, гэрийн хэрэгсэл хайх...."
-                  className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  className="pr-10 border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-gray-400"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value.replace(/[^\p{L}\p{N}\s]/gu, ''))}
                   onFocus={() => setSearchFocused(true)}
@@ -712,6 +692,7 @@ export function Navigation() {
                             aria-label="Ангилал нээх"
                             onMouseEnter={() => setCategoryMenuHover(true)}
                             onMouseLeave={() => setCategoryMenuHover(false)}
+                            onClick={() => router.push('/products')}
                           >
                             <div
                               className={`flex transition-all duration-300 text-gray-800 gap-1 p-1.5 rounded ${categoryMenuHover ? 'bg-neutral-100' : 'border-gray-800'}`}
@@ -733,57 +714,66 @@ export function Navigation() {
                           side="bottom"
                           align="start"
                           sideOffset={0}
-                          className="bg-white text-primary w-[800px] p-4 rounded-md shadow-lg border-gray-200"
+                          className="bg-white text-primary w-[850px] p-4 rounded-md shadow-lg border-gray-200"
                           onMouseEnter={() => setCategoryMenuHover(true)}
                           onMouseLeave={() => setCategoryMenuHover(false)}
                         >
                           <div className="flex gap-6">
-                            <div className="w-1/3 space-y-0.5 border-r border-gray-200 pr-4">
-                              {categories.map((cat, index) => {
-                                const Icon = categoryIcons[index] ?? EllipsisVertical;
-                                return (
-                                  <div
-                                    key={cat.id}
-                                    onMouseEnter={() => setDesktopActiveCategory(cat)}
-                                    className={`group flex justify-between w-full items-center p-2 rounded cursor-pointer text-sm hover:text-primary ${
-                                      desktopActiveCategory?.id === cat.id
-                                        ? 'bg-neutral-100'
-                                        : 'hover:bg-neutral-50'
-                                    }`}
-                                  >
-                                    <button
-                                      onClick={e => e.preventDefault()}
-                                      className="flex items-center gap-2 w-full text-gray-800 group-hover:text-primary font-medium cursor-pointer"
+                            <div
+                              className="w-1/3 flex flex-col h-full border-r border-gray-200 pr-4 relative"
+                              style={{ minHeight: '300px' }}
+                            >
+                              <div className="flex-1 space-y-0.5">
+                                {categories.map((cat, index) => {
+                                  const Icon = categoryIcons[index] ?? GripVertical;
+                                  return (
+                                    <div
+                                      key={cat.id}
+                                      onMouseEnter={() => setDesktopActiveCategory(cat)}
+                                      className={`group flex justify-between w-full items-center p-2 rounded cursor-pointer text-sm hover:text-primary ${
+                                        desktopActiveCategory?.id === cat.id
+                                          ? 'bg-neutral-100'
+                                          : 'hover:bg-neutral-50'
+                                      }`}
                                     >
-                                      <Icon
-                                        className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
-                                        aria-hidden="true"
-                                      />
-                                      <span className="group-hover:text-primary">{cat.name}</span>
-                                    </button>
-
-                                    {cat.children && cat.children.length > 0 && (
-                                      <ChevronRight
-                                        className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
-                                        aria-hidden="true"
-                                      />
-                                    )}
-                                  </div>
-                                );
-                              })}
-                              <Link
-                                href={`/products`}
-                                className={`flex cursor-pointer hover:underline select-none items-center rounded-sm px-2 mt-4 text-primary bg-primary/5 py-2 text-sm font-medium outline-none hover:bg-primary/10`}
-                                aria-label={`Бүх бараа харах`}
+                                      <button
+                                        onClick={e => e.preventDefault()}
+                                        className="flex items-center gap-2 w-full text-gray-800 group-hover:text-primary font-medium cursor-pointer"
+                                      >
+                                        <Icon
+                                          className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
+                                          aria-hidden="true"
+                                        />
+                                        <span className="group-hover:text-primary">{cat.name}</span>
+                                      </button>
+                                      {cat.children && cat.children.length > 0 && (
+                                        <ChevronRight
+                                          className="h-4 w-4 text-neutral-500 shrink-0 group-hover:text-primary"
+                                          aria-hidden="true"
+                                        />
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div
+                                className="mt-4 pt-2 pb-2"
+                                style={{ position: 'sticky', bottom: 0, background: 'white' }}
                               >
-                                <div className="flex justify-between w-full ">
-                                  <div className="flex gap-1 text-xs font-semibold">
-                                    {/* <ListCollapse className="w-4 h-4 mr-1" /> */}
-                                    <span> Бүх барааг харах </span>
+                                <Link
+                                  href={`/products`}
+                                  className={`flex cursor-pointer hover:underline select-none items-center rounded-sm px-2 text-primary bg-primary/5 py-2 text-sm font-medium outline-none hover:bg-primary/10 w-full`}
+                                  aria-label={`Бүх бараа харах`}
+                                >
+                                  <div className="flex justify-between w-full ">
+                                    <div className="flex gap-1 text-sm font-semibold">
+                                      {/* <ListCollapse className="w-4 h-4 mr-1" /> */}
+                                      <span> Бүх барааг харах </span>
+                                    </div>
+                                    <MoveRight className="right-0 w-4 h-4" />
                                   </div>
-                                  <MoveRight className="right-0 w-4 h-4" />
-                                </div>
-                              </Link>
+                                </Link>
+                              </div>
                             </div>
                             <div className="w-2/3">
                               {desktopActiveCategory?.children &&
@@ -797,7 +787,7 @@ export function Navigation() {
                                           <Link
                                             href={`/products?categoryId=${child.id}`}
                                             onClick={() => setSelectedChildCategoryId(child.id)}
-                                            className={`group flex items-center gap-2 w-full p-2 mb-1 text-sm font-medium border rounded transition ${
+                                            className={`group flex items-center gap-2 w-full p-2 mb-1 w-full text-sm font-medium border rounded transition ${
                                               isChildActive
                                                 ? 'text-primary border-primary/70 bg-primary/5 scale-101'
                                                 : 'text-gray-800 border-gray-100  hover:border-primary/70 hover:text-primary/70'
@@ -817,7 +807,7 @@ export function Navigation() {
                                               className={`${
                                                 isChildActive
                                                   ? 'text-primary/80'
-                                                  : 'text-gray-600 group-hover:text-primary/80'
+                                                  : 'text-gray-600 group-hover:text-primary/80 w-full'
                                               }`}
                                             >
                                               {child.name}
@@ -841,7 +831,7 @@ export function Navigation() {
                         const hasActiveChild =
                           activeCategoryInfo?.isChild &&
                           activeCategoryInfo?.parent?.id === category.id;
-                        const Icon = categoryIcons[index] ?? EllipsisVertical;
+                        const Icon = categoryIcons[index] ?? GripVertical;
 
                         if (hasChildren) {
                           return (
@@ -928,7 +918,7 @@ export function Navigation() {
                     </div>
                     {featuredCategories.length > 0 && (
                       <div className="flex items-center gap-1 px-2 shrink-0 h-full">
-                        {featuredCategories.map(category => {
+                        {featuredCategories.slice(0, 2).map(category => {
                           const isCategoryActive =
                             activeFeatureId !== null && activeFeatureId === category.id;
                           return (
@@ -997,6 +987,39 @@ export function Navigation() {
                   </div>
                 ) : categories.length > 0 ? (
                   <>
+                    {/* Бүх бараа button */}
+                    {(() => {
+                      // Do not highlight as active if viewing a feature's products page
+                      const isFeaturePage =
+                        pathname === '/products' && !!searchParams?.get('featureId');
+                      const isAllActive =
+                        pathname === '/products' && !finalActiveCategoryId && !isFeaturePage;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setExpandedCategoryId(null);
+                            setSelectedChildCategoryId(null);
+                            router.push('/products');
+                          }}
+                          className={`text-xs font-semibold whitespace-nowrap py-2.5 shrink-0 flex items-center rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
+                            isAllActive
+                              ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
+                              : 'text-gray-800 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
+                          }`}
+                          aria-label="Бүх бараа харах"
+                        >
+                          <LayoutGrid className="w-4 h-4 mx-2" />
+                          <div className="flex mr-3.5 gap-1">
+                            {/* <GripVertical className="w-4 h-4" /> */}
+                            <span className="relative z-10">Бүх бараа</span>
+                          </div>
+                          {!isAllActive && (
+                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
+                          )}
+                        </button>
+                      );
+                    })()}
                     {categories.map((category, index) => {
                       const hasChildren = category.children && category.children.length > 0;
                       const isExpanded = expandedCategoryId === category.id;
@@ -1007,7 +1030,7 @@ export function Navigation() {
                       // Parent is active if it's expanded, itself active, OR one of its children is active
                       const isParentActive = isExpanded || isActive || hasActiveChild;
 
-                      const Icon = categoryIcons[index] ?? EllipsisVertical;
+                      const Icon = categoryIcons[index] ?? GripVertical;
 
                       return (
                         <button
@@ -1071,35 +1094,6 @@ export function Navigation() {
                         </button>
                       );
                     })}
-                    {/* Бүх бараа button */}
-                    {(() => {
-                      const isAllActive = pathname === '/products' && !finalActiveCategoryId;
-                      return (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedCategoryId(null);
-                            setSelectedChildCategoryId(null);
-                            router.push('/products');
-                          }}
-                          className={`text-xs font-semibold whitespace-nowrap py-2.5 gap-3.5 shrink-0 flex items-center rounded-lg transition-all duration-300 relative group outline-none focus:outline-none focus-visible:outline-none bg-white ${
-                            isAllActive
-                              ? 'text-primary bg-linear-to-r from-primary/15 to-primary/10 shadow-sm'
-                              : 'text-gray-800 hover:text-primary hover:bg-linear-to-r hover:from-primary/10 hover:to-primary/5'
-                          }`}
-                          aria-label="Бүх бараа харах"
-                        >
-                          <div className="flex ml-3.5 gap-1">
-                            <GripVertical className="w-4 h-4" />
-                            <span className="relative z-10">Бүх бараа</span>
-                          </div>
-                          {!isAllActive && (
-                            <span className="absolute inset-0 bg-linear-to-r from-primary/5 to-primary/5 duration-300 rounded-lg" />
-                          )}
-                          <MoveRight className="w-4 h-4 mr-2" />
-                        </button>
-                      );
-                    })()}
                   </>
                 ) : (
                   <span className="text-xs text-gray-500">Ангилал олдсонгүй</span>

@@ -27,8 +27,6 @@ export function ProductSkeleton() {
   );
 }
 
-
-
 export function ProductGridSkeleton({
   count = 8,
   grid = false,
@@ -43,7 +41,7 @@ export function ProductGridSkeleton({
       className={clsx(
         'grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3',
         grid ? 'grid-cols-2' : 'grid-cols-1',
-        className
+        className,
       )}
     >
       {Array.from({ length: count }).map((_, i) => (
@@ -52,7 +50,6 @@ export function ProductGridSkeleton({
     </div>
   );
 }
-
 
 export function ProductSliderSkeleton({ count = 6 }: { count?: number }) {
   return (
@@ -141,10 +138,10 @@ export function Spinner({
     md: 'h-8 w-8 border-2',
     lg: 'h-12 w-12 border-4',
   };
-
-  return (
-    <div
-      className={`animate-spin rounded-full border-primary/20 border-t-primary ${sizeClasses[size]} ${className}`}
-    />
-  );
+  // Allow color override via className, fallback to default
+  const base = 'animate-spin rounded-full';
+  const color = className.includes('border-white')
+    ? 'border-white/30 border-t-white'
+    : 'border-primary/20 border-t-primary';
+  return <div className={`${base} ${color} ${sizeClasses[size]} ${className}`} />;
 }

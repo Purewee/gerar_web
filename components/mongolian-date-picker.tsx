@@ -68,6 +68,20 @@ export function MongolianDatePicker({
     }
   }, [isOpen]);
 
+  // Set current month to next month if last day of month and after 18:00
+  useEffect(() => {
+    const now = new Date();
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    if (
+      now.getFullYear() === lastDayOfMonth.getFullYear() &&
+      now.getMonth() === lastDayOfMonth.getMonth() &&
+      now.getDate() === lastDayOfMonth.getDate() &&
+      now.getHours() >= 18
+    ) {
+      setCurrentMonth(new Date(now.getFullYear(), now.getMonth() + 1, 1));
+    }
+  }, []);
+
   // Set current month to selected date or today when value changes
   useEffect(() => {
     if (selectedDate) {
@@ -87,7 +101,7 @@ export function MongolianDatePicker({
     const adjustedStartingDay = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
 
     const days = [];
-    
+
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < adjustedStartingDay; i++) {
       days.push(null);
@@ -107,7 +121,7 @@ export function MongolianDatePicker({
     const selected = new Date(year, month, day);
     selected.setHours(0, 0, 0, 0);
     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    
+
     // Check if date is before minDate or after maxDate
     if (selected < minDateObj || selected > maxDateObj) {
       return;
@@ -159,7 +173,7 @@ export function MongolianDatePicker({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'w-full sm:w-auto max-w-xs justify-start text-left font-normal',
-          !value && 'text-gray-500'
+          !value && 'text-gray-500',
         )}
       >
         <Calendar className="mr-2 h-4 w-4" />
@@ -176,13 +190,19 @@ export function MongolianDatePicker({
               size="icon"
               onClick={goToPreviousMonth}
               className="h-8 w-8"
-              disabled={
-                (() => {
-                  const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
-                  const lastDayOfNewMonth = new Date(newMonth.getFullYear(), newMonth.getMonth() + 1, 0);
-                  return lastDayOfNewMonth < minDateObj;
-                })()
-              }
+              disabled={(() => {
+                const newMonth = new Date(
+                  currentMonth.getFullYear(),
+                  currentMonth.getMonth() - 1,
+                  1,
+                );
+                const lastDayOfNewMonth = new Date(
+                  newMonth.getFullYear(),
+                  newMonth.getMonth() + 1,
+                  0,
+                );
+                return lastDayOfNewMonth < minDateObj;
+              })()}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -195,12 +215,14 @@ export function MongolianDatePicker({
               size="icon"
               onClick={goToNextMonth}
               className="h-8 w-8"
-              disabled={
-                (() => {
-                  const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
-                  return newMonth > maxDateObj;
-                })()
-              }
+              disabled={(() => {
+                const newMonth = new Date(
+                  currentMonth.getFullYear(),
+                  currentMonth.getMonth() + 1,
+                  1,
+                );
+                return newMonth > maxDateObj;
+              })()}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -254,7 +276,7 @@ export function MongolianDatePicker({
                     !isDisabled && 'hover:bg-gray-100',
                     isSelected && 'bg-primary text-white hover:bg-primary/90',
                     !isSelected && !isDisabled && isToday && 'bg-primary/10 font-semibold',
-                    !isSelected && !isDisabled && !isToday && 'text-gray-700'
+                    !isSelected && !isDisabled && !isToday && 'text-gray-700',
                   )}
                 >
                   {day}

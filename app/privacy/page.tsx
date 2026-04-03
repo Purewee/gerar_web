@@ -1,5 +1,20 @@
-import { ShieldCheck, Database, Target, Lock, Share2, MousePointer2, UserCheck, HardDrive, Mail, Phone } from 'lucide-react';
+import {
+  ShieldCheck,
+  Database,
+  Target,
+  Lock,
+  Share2,
+  MousePointer2,
+  UserCheck,
+  HardDrive,
+  Mail,
+  Phone,
+  ArrowLeft,
+} from 'lucide-react';
 import { Metadata } from 'next';
+
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'Нууцлалын бодлого',
@@ -9,6 +24,15 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-gray-50 md:py-12">
+      <div className="max-w-4xl mx-auto px-0 md:px-6 sm:pt-0 pt-6">
+        <Link href="/" className="inline-block mb-4">
+          <Button variant="ghost" className="flex items-center gap-2" asChild>
+            <span>
+              <ArrowLeft className="w-4 h-4" /> Буцах
+            </span>
+          </Button>
+        </Link>
+      </div>
       <div className="max-w-4xl mx-auto px-0 md:px-6">
         <div className="bg-white md:rounded-3xl shadow-lg md:border border-gray-100 overflow-hidden">
           {/* Header */}
@@ -16,9 +40,12 @@ export default function PrivacyPage() {
             <div className="inline-flex items-center justify-center p-2.5 md:p-3 bg-white/20 rounded-2xl mb-4 md:mb-6 backdrop-blur-sm">
               <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-white" />
             </div>
-            <h1 className="text-2xl md:text-5xl font-bold mb-3 tracking-tight">Нууцлалын бодлого</h1>
+            <h1 className="text-2xl md:text-5xl font-bold mb-3 tracking-tight">
+              Нууцлалын бодлого
+            </h1>
             <p className="text-emerald-50 opacity-90 text-sm md:text-lg max-w-2xl mx-auto">
-              Бид таны хувийн мэдээллийн аюулгүй байдлыг Монгол Улсын холбогдох хууль тогтоомжийн дагуу чандлан хамгаална.
+              Бид таны хувийн мэдээллийн аюулгүй байдлыг Монгол Улсын холбогдох хууль тогтоомжийн
+              дагуу чандлан хамгаална.
             </p>
           </div>
 
@@ -31,7 +58,8 @@ export default function PrivacyPage() {
                 <h2 className="text-2xl font-bold">1. Ерөнхий</h2>
               </div>
               <p className="text-gray-600 leading-relaxed text-lg">
-                “Герар хаус холд” ХХК нь хэрэглэгчийн хувийн мэдээллийг Монгол Улсын холбогдох хууль тогтоомжийн дагуу цуглуулах, ашиглах, хамгаалах үүрэгтэй.
+                “Герар хаус холд” ХХК нь хэрэглэгчийн хувийн мэдээллийг Монгол Улсын холбогдох хууль
+                тогтоомжийн дагуу цуглуулах, ашиглах, хамгаалах үүрэгтэй.
               </p>
             </section>
 
@@ -47,7 +75,7 @@ export default function PrivacyPage() {
                     <UserCheck className="w-5 h-5" /> Холбоо барих мэдээлэл:
                   </h3>
                   <ul className="space-y-1.5 md:space-y-2 text-emerald-800 text-sm md:text-base">
-                    {['Нэр', 'Утасны дугаар', 'И-мэйл хаяг'].map((item) => (
+                    {['Нэр', 'Утасны дугаар', 'И-мэйл хаяг'].map(item => (
                       <li key={item} className="flex items-center gap-2">
                         <span className="w-1 h-1 bg-emerald-400 rounded-full"></span>
                         {item}
@@ -60,7 +88,12 @@ export default function PrivacyPage() {
                     <Share2 className="w-5 h-5" /> Хүргэлтийн мэдээлэл:
                   </h3>
                   <ul className="space-y-1.5 md:space-y-2 text-teal-800 text-sm md:text-base">
-                    {['Хаягийн гарчиг', 'Дүүрэг, хороо', 'Байр, орц, тоот', 'Хүргэлтийн өдөр/цаг'].map((item) => (
+                    {[
+                      'Хаягийн гарчиг',
+                      'Дүүрэг, хороо',
+                      'Байр, орц, тоот',
+                      'Хүргэлтийн өдөр/цаг',
+                    ].map(item => (
                       <li key={item} className="flex items-center gap-2">
                         <span className="w-1 h-1 bg-teal-400 rounded-full"></span>
                         {item}
@@ -79,8 +112,16 @@ export default function PrivacyPage() {
                   <h2 className="text-2xl font-bold">3. Зорилго</h2>
                 </div>
                 <div className="space-y-3 md:space-y-4">
-                  {['Захиалга боловсруулах', 'Хүргэлт гүйцэтгэх', 'Хэрэглэгчтэй холбогдох', 'Үйлчилгээг сайжруулах'].map((item) => (
-                    <div key={item} className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:border-emerald-200 hover:shadow-sm transition-all text-sm md:text-base">
+                  {[
+                    'Захиалга боловсруулах',
+                    'Хүргэлт гүйцэтгэх',
+                    'Хэрэглэгчтэй холбогдох',
+                    'Үйлчилгээг сайжруулах',
+                  ].map(item => (
+                    <div
+                      key={item}
+                      className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:border-emerald-200 hover:shadow-sm transition-all text-sm md:text-base"
+                    >
                       <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                       <span className="text-gray-700 font-medium">{item}</span>
                     </div>
@@ -94,7 +135,8 @@ export default function PrivacyPage() {
                   <h2 className="text-2xl font-bold">4. Хамгаалалт</h2>
                 </div>
                 <p className="text-gray-600 leading-relaxed bg-emerald-50 p-6 rounded-2xl border border-emerald-100 italic">
-                  Компани нь хэрэглэгчийн мэдээллийн нууцлал, аюулгүй байдлыг хангах зорилгоор зохих техник, зохион байгуулалтын арга хэмжээг хэрэгжүүлнэ.
+                  Компани нь хэрэглэгчийн мэдээллийн нууцлал, аюулгүй байдлыг хангах зорилгоор зохих
+                  техник, зохион байгуулалтын арга хэмжээг хэрэгжүүлнэ.
                 </p>
               </section>
             </div>
@@ -107,7 +149,9 @@ export default function PrivacyPage() {
                   <h2 className="text-xl font-bold">5. Гуравдагч этгээдэд дамжуулах</h2>
                 </div>
                 <p className="text-gray-600 leading-relaxed ml-9">
-                  Хэрэглэгчийн мэдээллийг зөвхөн шаардлагатай хэмжээнд (Төлбөрийн үйлчилгээ үзүүлэгч QPay/банк болон Хүргэлтийн үйлчилгээ үзүүлэгч) дамжуулна. Бусад тохиолдолд дамжуулахгүй.
+                  Хэрэглэгчийн мэдээллийг зөвхөн шаардлагатай хэмжээнд (Төлбөрийн үйлчилгээ үзүүлэгч
+                  QPay/банк болон Хүргэлтийн үйлчилгээ үзүүлэгч) дамжуулна. Бусад тохиолдолд
+                  дамжуулахгүй.
                 </p>
               </section>
 
@@ -117,7 +161,8 @@ export default function PrivacyPage() {
                   <h2 className="text-xl font-bold">6. Cookies ашиглалт</h2>
                 </div>
                 <p className="text-gray-600 leading-relaxed ml-9">
-                  Сайт нь хэрэглэгчийн туршлагыг сайжруулах зорилгоор cookies болон ижил төрлийн технологи ашиглаж болно.
+                  Сайт нь хэрэглэгчийн туршлагыг сайжруулах зорилгоор cookies болон ижил төрлийн
+                  технологи ашиглаж болно.
                 </p>
               </section>
 
@@ -127,30 +172,45 @@ export default function PrivacyPage() {
                   <h2 className="text-xl font-bold">8. Мэдээлэл хадгалах хугацаа</h2>
                 </div>
                 <p className="text-gray-600 leading-relaxed ml-9">
-                  Хэрэглэгчийн мэдээллийг үйлчилгээ үзүүлэхэд шаардлагатай хугацаанд хадгалж, дараа нь хуульд заасан журмын дагуу устгана.
+                  Хэрэглэгчийн мэдээллийг үйлчилгээ үзүүлэхэд шаардлагатай хугацаанд хадгалж, дараа
+                  нь хуульд заасан журмын дагуу устгана.
                 </p>
               </section>
             </div>
 
             {/* Footer / Contact */}
             <div className="bg-gray-50 rounded-3xl p-6 md:p-12 border border-gray-100 mt-12">
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 md:mb-8 text-center italic">9. Холбоо барих</h2>
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-6 md:mb-8 text-center italic">
+                9. Холбоо барих
+              </h2>
               <div className="grid md:grid-cols-2 gap-4 md:gap-6">
-                <a href="mailto:gerarhousehold@gmail.com" className="flex items-center gap-3 md:gap-4 p-4 md:p-6 bg-white rounded-2xl border border-gray-100 hover:border-emerald-500 hover:shadow-md transition-all group">
+                <a
+                  href="mailto:gerarhousehold@gmail.com"
+                  className="flex items-center gap-3 md:gap-4 p-4 md:p-6 bg-white rounded-2xl border border-gray-100 hover:border-emerald-500 hover:shadow-md transition-all group"
+                >
                   <div className="p-2.5 md:p-3 bg-emerald-100 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                     <Mail className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] md:text-sm text-gray-500 font-medium uppercase md:normal-case">Имэйл хаяг</p>
-                    <p className="text-gray-900 font-bold text-sm md:text-base">gerarhousehold@gmail.com</p>
+                    <p className="text-[10px] md:text-sm text-gray-500 font-medium uppercase md:normal-case">
+                      Имэйл хаяг
+                    </p>
+                    <p className="text-gray-900 font-bold text-sm md:text-base">
+                      gerarhousehold@gmail.com
+                    </p>
                   </div>
                 </a>
-                <a href="tel:+97688860134" className="flex items-center gap-3 md:gap-4 p-4 md:p-6 bg-white rounded-2xl border border-gray-100 hover:border-emerald-500 hover:shadow-md transition-all group">
+                <a
+                  href="tel:+97688860134"
+                  className="flex items-center gap-3 md:gap-4 p-4 md:p-6 bg-white rounded-2xl border border-gray-100 hover:border-emerald-500 hover:shadow-md transition-all group"
+                >
                   <div className="p-2.5 md:p-3 bg-teal-100 rounded-xl group-hover:bg-teal-500 group-hover:text-white transition-colors">
                     <Phone className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                   <div>
-                    <p className="text-[10px] md:text-sm text-gray-500 font-medium uppercase md:normal-case">Утас</p>
+                    <p className="text-[10px] md:text-sm text-gray-500 font-medium uppercase md:normal-case">
+                      Утас
+                    </p>
                     <p className="text-gray-900 font-bold text-sm md:text-base">88860134</p>
                   </div>
                 </a>

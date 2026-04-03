@@ -685,7 +685,7 @@ export const useInfiniteProducts = (params?: ProductsQueryParams) => {
   return useInfiniteQuery({
     queryKey: [...queryKeys.products.list(params), 'infinite'],
     queryFn: ({ pageParam = 1 }) =>
-      productsApiFunctions.getAll({ ...params, page: pageParam, limit: 30 }),
+      productsApiFunctions.getAll({ ...params, page: pageParam, limit: 100 }),
     getNextPageParam: (lastPage, allPages) => {
       const lastPageData = lastPage.data || [];
       const pagination = lastPage.pagination;
@@ -694,7 +694,7 @@ export const useInfiniteProducts = (params?: ProductsQueryParams) => {
         return pagination.page + 1;
       }
 
-      if (lastPageData.length < 30) {
+      if (lastPageData.length < 100) {
         return undefined;
       }
       return allPages.length + 1;
@@ -749,6 +749,11 @@ const categoriesApiFunctions = {
   getFeaturedCategories: async (): Promise<ApiResponse<Category[]>> => {
     return apiFetch<Category[]>('/features');
   },
+
+  // Fetch a single feature by ID from the features API
+  getFeatureById: async (id: number): Promise<ApiResponse<Category>> => {
+    return apiFetch<Category>(`/features/${id}`);
+  },
 };
 
 // Categories hooks
@@ -767,6 +772,15 @@ export const useFeaturedCategories = (options?: { enabled?: boolean }) => {
     queryFn: () => categoriesApiFunctions.getFeaturedCategories(),
     staleTime: 1.5 * 60 * 60 * 1000, // 1.5 hours
     enabled: options?.enabled ?? true,
+  });
+};
+
+// Hook to fetch a single feature by ID from the features API
+export const useFeature = (id: number) => {
+  return useQuery({
+    queryKey: ['feature', id],
+    queryFn: () => categoriesApiFunctions.getFeatureById(id),
+    enabled: !!id,
   });
 };
 

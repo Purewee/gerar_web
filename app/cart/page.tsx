@@ -212,14 +212,17 @@ export default function CartPage() {
       return;
     }
     setIsProceeding(true);
+    if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'InitiateCheckout');
+    }
     router.push('/orders/create');
   };
 
   return (
     <div className="sm:min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6 pt-4 sm:py-8">
         {/* Breadcrumbs */}
-        <div className="mb-6 text-sm text-gray-600">
+        <div className="mb-2 text-sm text-gray-600">
           <div className="flex items-center gap-2">
             <Link href="/" className="hover:text-primary">
               Нүүр хуудас
@@ -392,13 +395,12 @@ export default function CartPage() {
                       className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden"
                     >
                       <CardContent className="p-4">
-                        <div className="flex gap-4">
+                        <div className="flex sm:flex-row flex-col gap-4">
                           <Link
                             href={`/product/${item.productId}`}
-                            className="flex flex-1 min-w-0 gap-4 cursor-pointer hover:opacity-90 transition-opacity"
+                            className="flex flex-1 items-center min-w-0 gap-4 cursor-pointer hover:opacity-90 transition-opacity"
                           >
-                            {/* Product image */}
-                            <div className="shrink-0 w-20 h-20 rounded-lg bg-gray-100 overflow-hidden">
+                            <div className="shrink-0 sm:w-26 w-20 sm:h-26 h-20 rounded-lg bg-gray-100 overflow-hidden">
                               {item.product?.firstImage || item.product?.images?.[0] ? (
                                 <Image
                                   src={item.product.firstImage || item.product.images[0]}
@@ -414,11 +416,10 @@ export default function CartPage() {
                               )}
                             </div>
 
-                            {/* Product details */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
+                              {/* <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">
                                 {item.product?.categories?.[0]?.name || 'Бүтээгдэхүүн'}
-                              </p>
+                              </p> */}
                               <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">
                                 {item.product?.name || 'Бүтээгдэхүүн'}
                               </h3>
@@ -429,8 +430,8 @@ export default function CartPage() {
                           </Link>
 
                           {/* Price, quantity, actions */}
-                          <div className="flex flex-col items-end justify-between gap-2 shrink-0">
-                            <div className="flex items-center gap-2">
+                          <div className="flex sm:flex-col items-center items-end gap-6 sm:gap-2 justify-center shrink-0">
+                            <div className="hidden sm:block flex items-center gap-2">
                               {hasDiscount && (
                                 <span className="text-sm text-gray-400 line-through">
                                   {originalPrice.toLocaleString()}₮
@@ -443,6 +444,13 @@ export default function CartPage() {
                               >
                                 {price.toLocaleString()}₮
                               </span>
+                            </div>
+                            <div className="sm:hidden">
+                              <CartItemFavoriteRemove
+                                productId={item.productId}
+                                onRemove={() => handleRemoveItem(item.productId)}
+                                removePending={removeCartMutation.isPending}
+                              />
                             </div>
                             <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 border border-gray-200">
                               <Button
@@ -497,17 +505,19 @@ export default function CartPage() {
                                 <Plus className="w-3.5 h-3.5" />
                               </Button>
                             </div>
-                            <p className="text-sm text-gray-900">
+                            <div className="sm:block hidden">
+                              <CartItemFavoriteRemove
+                                productId={item.productId}
+                                onRemove={() => handleRemoveItem(item.productId)}
+                                removePending={removeCartMutation.isPending}
+                              />
+                            </div>
+                            <div className="text-sm text-center text-gray-900 sm:flex-row sm:gap-1 flex flex-col">
                               Нийт дүн:{' '}
                               <span className="font-bold">
                                 {(price * item.quantity).toLocaleString()}₮
                               </span>
-                            </p>
-                            <CartItemFavoriteRemove
-                              productId={item.productId}
-                              onRemove={() => handleRemoveItem(item.productId)}
-                              removePending={removeCartMutation.isPending}
-                            />
+                            </div>
                           </div>
                         </div>
                       </CardContent>

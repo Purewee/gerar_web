@@ -58,6 +58,9 @@ export function ProductCard({
       });
       toast.success('Сагсанд нэмэгдсэн');
       window.dispatchEvent(new Event('cartUpdated'));
+      if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
+        (window as any).fbq('track', 'AddToCart');
+      }
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
         description: error.message || 'Сагсанд нэмэхэд алдаа гарлаа',

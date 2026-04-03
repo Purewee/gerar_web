@@ -46,10 +46,20 @@ function FeatureProductSection({
 }) {
   const { data, isLoading } = useProducts({
     featureId,
-    limit: 20,
+    limit: 100,
   });
   const raw = data?.data;
-  const products = Array.isArray(raw) ? raw.filter(p => p && p.isHidden !== true) : [];
+  const productsRaw = Array.isArray(raw) ? raw.filter(p => p && p.isHidden !== true) : [];
+  // Shuffle products for random order
+  function shuffleArray<T>(array: T[]): T[] {
+    const arr = array.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+  const products = shuffleArray(productsRaw);
 
   return (
     <ProductListSection
@@ -59,6 +69,7 @@ function FeatureProductSection({
       linkLabel={`${featureName} бүх бараа харах`}
       products={products}
       isLoading={isLoading}
+      description={undefined}
     />
   );
 }
@@ -81,6 +92,21 @@ export function ProductListSection({
   products: Product[];
   isLoading: boolean;
 }) {
+  const [limit, setLimit] = useState(10);
+
+  useEffect(() => {
+    const updateLimit = () => {
+      if (window.innerWidth >= 1024) {
+        setLimit(15); // desktop
+      } else {
+        setLimit(10); // mobile
+      }
+    };
+
+    updateLimit();
+    window.addEventListener('resize', updateLimit);
+    return () => window.removeEventListener('resize', updateLimit);
+  }, []);
   if (isLoading) {
     return (
       <section className="py-6 sm:py-10 bg-white">
@@ -99,7 +125,7 @@ export function ProductListSection({
   }
 
   return (
-    <section className="py-6 sm:py-10 bg-white">
+    <section className="sm:pt-4 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 gap-2 sm:gap-4">
           <div>
@@ -133,21 +159,22 @@ export function ProductListSection({
             <ChevronRight className="w-5 h-5 text-gray-700" aria-hidden="true" />
           </button>
           <Swiper
-            modules={[Navigation]}
+            modules={[Navigation, Pagination]}
             navigation={{
               prevEl: `.${sectionId}-swiper-prev`,
               nextEl: `.${sectionId}-swiper-next`,
             }}
-            slidesPerView={2}
+            slidesPerView={2.2}
+            pagination={{ clickable: true }}
             spaceBetween={16}
             breakpoints={{
               640: { slidesPerView: 3, spaceBetween: 16 },
               768: { slidesPerView: 4, spaceBetween: 16 },
               1024: { slidesPerView: 5, spaceBetween: 16 },
             }}
-            className={`product-list-swiper -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex [&_.swiper-slide]:flex-col [&_.swiper-slide>*]:flex-1 [&_.swiper-slide>*]:min-h-0 [&_.swiper-slide>*]:flex [&_.swiper-slide>*]:flex-col`}
+            className={`product-list-swiper overflow-visible [&_.swiper-pagination]:!relative [&_.swiper-pagination]:!mt-4 [&_.swiper-pagination-bullet]:!w-2.5 [&_.swiper-pagination-bullet]:!h-2.5 [&_.swiper-pagination-bullet]:!bg-gray-500 [&_.swiper-pagination-bullet-active]:!bg-primary mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex [&_.swiper-slide]:flex-col [&_.swiper-slide>*]:flex-1 [&_.swiper-slide>*]:min-h-0 [&_.swiper-slide>*]:flex [&_.swiper-slide>*]:flex-col`}
           >
-            {products.slice(0, 12).map(product => (
+            {products.slice(0, limit).map(product => (
               <SwiperSlide key={product.id} className="h-auto!">
                 <ProductCard inGrid product={product} />
               </SwiperSlide>
@@ -163,7 +190,6 @@ import { MobileHomeFooter } from '@/components/mobile-footer';
 
 export default function HomeClient() {
   const router = useRouter();
-
   const featuredCategories = useCategoriesStore(state => state.featuredCategories);
 
   // Fetch banners for hero carousel
@@ -410,14 +436,49 @@ export default function HomeClient() {
           </div>
         </section>
 
-        {featuredCategories.length > 0 &&
-          featuredCategories.map(feature => (
-            <FeatureProductSection
-              key={feature.id}
-              featureId={feature.id}
-              featureName={feature.name}
-            />
-          ))}
+        <div className="pt-6 sm:pt-10 bg-white">
+          {featuredCategories.length > 0
+            ? featuredCategories.map(feature => (
+                <FeatureProductSection
+                  key={feature.id}
+                  featureId={feature.id}
+                  featureName={feature.name}
+                />
+              ))
+            : // Loading state: show 2-3 skeleton sections while categories are loading
+              [1, 2, 3].map(i => (
+                <section
+                  key={i}
+                  className="py-6 sm:py-10 bg-white animate-pulse opacity-80"
+                >
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="h-8 w-48 bg-gray-200 rounded" />
+                    </div>
+                    <div className="flex gap-4 lg:gap-6 pb-4 overflow-hidden">
+                      {[...Array(6)].map((_, j) => (
+                        <div key={j} className="shrink-0 w-44 sm:w-48 md:w-56 lg:w-64">
+                          <div className="border border-gray-200 rounded-lg overflow-hidden h-full bg-white">
+                            <div className="relative bg-gray-200 w-full" style={{ aspectRatio: '4/3' }}>
+                              <div className="w-full h-full bg-gray-200 animate-pulse" />
+                            </div>
+                            <div className="p-4 space-y-3">
+                              <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                              <div className="h-4 w-1/2 bg-gray-200 rounded" />
+                              <div className="flex gap-2">
+                                <div className="h-6 w-20 bg-gray-200 rounded" />
+                                <div className="h-6 w-16 bg-gray-200 rounded" />
+                              </div>
+                              <div className="h-9 w-full bg-gray-200 rounded" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              ))}
+        </div>
 
         <div className="gap-4 pt-12 pb-8 md:flex mx-auto items-center flex-row justify-center max-w-7xl mt-4 border-t border-gray-200 px-8">
           <div className="flex flex-col items-center mb-12 mt-4 gap-2">
