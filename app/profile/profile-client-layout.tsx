@@ -67,11 +67,11 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
   };
 
   return (
-    <div className=" bg-linear-to-br from-gray-50 via-white to-gray-50 lg:pb-0">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-100/50 pb-20 lg:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-12">
-        {/* Mobile: horizontal card grid (menus) */}
-        <div className="lg:hidden mb-6">
-          <nav className="grid grid-cols-4 gap-3">
+        {/* Mobile: horizontal cohesive tab bar */}
+        <div className="lg:hidden mb-10 sticky top-4 z-40">
+          <nav className="flex items-center justify-between bg-white/80 backdrop-blur-xl p-1.5 rounded-2xl border border-white/50 shadow-2xl shadow-black/5 ring-1 ring-black/5">
             {menuItems.map(item => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -79,17 +79,17 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 shadow-sm transition-all duration-200 min-h-[88px] ${
+                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl transition-all duration-300 ${
                     active
-                      ? 'bg-primary/10 border-primary text-primary shadow-md'
-                      : 'bg-white border-transparent text-gray-700 hover:bg-gray-50 hover:border-gray-200 hover:shadow-md active:scale-[0.98]'
+                      ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-100'
+                      : 'text-gray-500 hover:text-gray-900 active:scale-95'
                   }`}
                 >
                   <Icon
-                    className={`w-6 h-6 shrink-0 ${active ? 'text-primary' : 'text-gray-600'}`}
+                    className={`w-5 h-5 shrink-0 ${active ? 'text-white' : 'text-gray-500'}`}
                   />
-                  <span className="text-xs font-medium text-center leading-tight">
-                    {item.label}
+                  <span className={`text-[10px] font-black uppercase tracking-tighter text-center leading-tight ${active ? 'text-white' : 'text-gray-400'}`}>
+                    {item.label.split(' ').length > 1 ? item.label.split(' ')[1] : item.label}
                   </span>
                 </Link>
               );
@@ -97,12 +97,12 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
           </nav>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
-          {/* Desktop: vertical sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12">
+          {/* Desktop: vertical premium sidebar */}
           <aside className="hidden lg:block lg:col-span-1">
-            <Card className="sticky top-8 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-              <CardContent className="p-4 lg:p-6">
-                <nav className="space-y-2">
+            <div className="sticky top-12 space-y-6">
+              <div className="bg-white/70 backdrop-blur-md rounded-3xl border border-white/50 shadow-2xl shadow-black/5 ring-1 ring-black/5 overflow-hidden">
+                <div className="p-2 space-y-1">
                   {menuItems.map(item => {
                     const Icon = item.icon;
                     const active = isActive(item.href);
@@ -110,45 +110,73 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
                       <Link
                         key={item.id}
                         href={item.href}
-                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 border-2 ${
+                        className={`group w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-all duration-300 relative ${
                           active
-                            ? 'bg-primary/10 border-primary text-primary shadow-sm'
-                            : 'border-transparent hover:bg-gray-100/80 text-gray-700 hover:border-gray-200 hover:scale-[1.01] hover:shadow-sm'
+                            ? 'bg-primary text-white shadow-xl shadow-primary/20'
+                            : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
                         }`}
                       >
-                        <Icon className={`w-5 h-5 ${active ? 'text-primary' : ''}`} />
-                        <span className="font-medium">{item.label}</span>
+                        <div className={`p-2 rounded-xl transition-colors duration-300 ${
+                          active ? 'bg-white/20' : 'bg-gray-100 group-hover:bg-white border border-gray-100 group-hover:border-gray-200'
+                        }`}>
+                          <Icon className={`w-5 h-5 ${active ? 'text-white' : ''}`} />
+                        </div>
+                        <span className="font-bold tracking-tight">{item.label}</span>
+                        {active && (
+                          <div className="absolute right-4 w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        )}
                       </Link>
                     );
                   })}
-                  <div className="pt-2 mt-2 border-t border-gray-200">
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-all duration-200 hover:bg-red-50/80 text-red-600 hover:scale-[1.01] hover:shadow-sm cursor-pointer"
-                    >
+                </div>
+                
+                <div className="p-2 mt-2 border-t border-gray-100/50">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-all duration-300 text-red-500 hover:bg-red-50 hover:text-red-600 group cursor-pointer"
+                  >
+                    <div className="p-2 rounded-xl bg-red-50 group-hover:bg-white border border-red-50 group-hover:border-red-100">
                       <LogOut className="w-5 h-5" />
-                      <span className="font-medium">Гарах</span>
-                    </button>
+                    </div>
+                    <span className="font-bold tracking-tight">Гарах</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Support or Info Card in Sidebar */}
+              <div className="bg-linear-to-br from-primary to-primary-light p-6 rounded-3xl shadow-xl shadow-primary/20 text-white relative overflow-hidden group">
+                <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                <div className="relative z-10 space-y-4">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <Heart className="w-6 h-6 fill-white" />
                   </div>
-                </nav>
-              </CardContent>
-            </Card>
+                  <div>
+                    <h4 className="font-black text-lg">Тусламж хэрэгтэй юу?</h4>
+                    <p className="text-white/70 text-xs font-medium mt-1 leading-relaxed">Бид танд 24/7 туслахад бэлэн байна. Лавлах утсаар холбогдоно уу.</p>
+                  </div>
+                  <button className="w-full py-2.5 bg-white text-primary font-black text-sm rounded-xl hover:bg-gray-50 transition-colors">
+                    7722-XXXX
+                  </button>
+                </div>
+              </div>
+            </div>
           </aside>
+
           <main className="lg:col-span-3">
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">{children}</div>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">{children}</div>
           </main>
         </div>
 
-        {/* Mobile: Гарах at bottom of page (after tab content) */}
-        <div className="lg:hidden mt-6">
+        {/* Mobile: logout button style - float or fixed? For now just simplified */}
+        <div className="lg:hidden mt-12 mb-6">
           <button
             type="button"
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-red-600 bg-red-100 hover:bg-red-50/80 transition-all duration-200 text-sm font-medium cursor-pointer"
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition-all duration-300 text-sm font-black uppercase tracking-widest cursor-pointer"
           >
-            <LogOut className="w-4 h-4" />
-            Гарах
+            <LogOut className="w-5 h-5" />
+            Системээс гарах
           </button>
         </div>
       </div>
