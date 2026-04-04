@@ -4,12 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useOTPSend, useOTPVerify, type OTPPurpose } from '@/lib/api';
 import { X } from 'lucide-react';
 import { FieldError } from './field-error';
@@ -232,10 +227,10 @@ export function OTPModal({
                 {purpose === 'PASSWORD_RESET'
                   ? 'Нууц үг солих'
                   : purpose === 'REGISTRATION'
-                  ? 'Бүртгэл баталгаажуулах'
-                  : purpose === 'LOGIN'
-                  ? 'Нэвтрэх'
-                  : 'OTP баталгаажуулах'}
+                    ? 'Бүртгэл баталгаажуулах'
+                    : purpose === 'LOGIN'
+                      ? 'Нэвтрэх'
+                      : 'OTP баталгаажуулах'}
               </DialogTitle>
             </DialogHeader>
           </div>
@@ -310,7 +305,7 @@ export function OTPModal({
                   handleClose();
                   onSwitchToLogin?.();
                 }}
-                className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-xl transition-all duration-200"
+                className="w-full h-12 border-2 border-primary/20 text-primary hover:text-primary hover:bg-primary/5 font-semibold rounded-xl transition-all duration-200"
               >
                 Аль хэдийн бүртгэлтэй юу? Нэвтрэх
               </Button>
@@ -418,7 +413,7 @@ export function OTPModal({
                     handleClose();
                     onSwitchToLogin?.();
                   }}
-                  className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-xl transition-all duration-200"
+                  className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-semibold rounded-xl transition-all duration-200"
                 >
                   Аль хэдийн бүртгэлтэй юу? Нэвтрэх
                 </Button>

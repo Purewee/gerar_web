@@ -8,6 +8,7 @@ import { usePointProducts, useCurrentUser } from '@/lib/api';
 import { PointProductCard } from '@/components/point-product-card';
 import { ProductGridSkeleton } from '@/components/skeleton';
 import { ArrowLeft, Loader2, Coins, ArrowRight } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 
 function LoyaltyStoreContent() {
   const router = useRouter();
@@ -27,14 +28,7 @@ function LoyaltyStoreContent() {
 
   return (
     <div className=" min-h-screen max-w-7xl mx-auto pt-4">
-      <Button
-        variant="outline"
-        onClick={() => router.back()}
-        className="flex items-center gap-2 px-2 ml-6 border-2 border-gray-200 hover:border-yellow-500 hover:bg-yellow-50 hover:text-yellow-600 transition-all duration-200 rounded-lg shadow-sm group"
-      >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-        <span className="font-medium">Буцах</span>
-      </Button>
+      <BackButton className="ml-4 md:ml-6 border-2 border-gray-200  transition-all duration-200 rounded-lg shadow-sm" />
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8">
         {/* 
         <div className="flex flex-col md:flex-row  md:items-center justify-between gap-6 mb-8 p-6 rounded-2xl bg-white-200 shadow-sm border border-yellow-200">
@@ -90,7 +84,7 @@ function LoyaltyStoreContent() {
                 <div className="text-center md:text-right">
                   <div className="flex items-baseline gap-2 justify-center md:justify-end">
                     <span className="text-3xl font-black text-yellow-400 tracking-tighter">
-                      {user?.points.toLocaleString()}
+                      {user ? user.points.toLocaleString() : '0'}
                     </span>
                     <span className="text-xs font-bold text-yellow-600 uppercase tracking-widest">
                       оноо

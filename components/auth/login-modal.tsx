@@ -105,7 +105,7 @@ export function LoginModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md bg-white border-0 shadow-2xl rounded-3xl p-0 overflow-hidden z-[110]">
         <DialogTitle className="sr-only">Нэвтрэх</DialogTitle>
         <div className="relative bg-linear-to-br from-primary via-primary/95 to-primary/90 p-6 flex items-center justify-between">
           <Image
@@ -235,7 +235,7 @@ export function LoginModal({
                 handleClose();
                 onSwitchToRegister?.();
               }}
-              className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-md transition-all duration-200"
+              className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-semibold rounded-md transition-all duration-200"
             >
               Бүртгэл үүсгэх
             </Button>

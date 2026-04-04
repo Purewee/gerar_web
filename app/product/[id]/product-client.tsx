@@ -241,7 +241,8 @@ export default function ProductClient({ productId }: { productId: number }) {
             <div className="flex items-center gap-2 mb-6 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg border border-blue-100 w-fit">
               <Coins className="w-5 h-5 text-blue-600" />
               <span className="text-sm font-semibold">
-                Энэхүү худалдан авалтаас {Math.floor(parseFloat(product.price) / 150).toLocaleString()} оноо цуглуулна
+                Энэхүү худалдан авалтаас{' '}
+                {Math.floor(parseFloat(product.price) / 150).toLocaleString()} оноо цуглуулна
               </span>
             </div>
 
