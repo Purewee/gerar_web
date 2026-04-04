@@ -293,7 +293,7 @@ export function RegisterVerifyModal({
                 handleClose();
                 onSwitchToLogin?.();
               }}
-              className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 font-semibold rounded-md transition-all duration-200"
+              className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-semibold rounded-md transition-all duration-200"
             >
               Аль хэдийн бүртгэлтэй юу? Нэвтрэх
             </Button>

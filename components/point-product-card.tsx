@@ -85,7 +85,7 @@ export function PointProductCard({
     e.stopPropagation();
 
     if (!getAuthToken()) {
-      toast.info('Та нэвтэрч орж хадгална уу');
+      toast.info('Та нэвтрээгүй байна. Нэвтэрч орно уу!');
       window.dispatchEvent(new CustomEvent('openLoginModal'));
       return;
     }
@@ -221,7 +221,7 @@ export function PointProductCard({
                     onClick={handleAddToCart}
                     loading={isProcessingCart}
                     disabled={isProcessingCart}
-                    className={`flex-1 font-medium bg-yellow-50 hover:bg-yellow-80 text-yellow-500 border border-2 border-yellow-500  transition-all duration-200 rounded-lg shadow-sm ${
+                    className={`flex-1 font-medium bg-yellow-500 hover:bg-yellow-600 text-white border border-1 gap-1 border-yellow-600 transition-all duration-200 rounded-lg shadow-sm ${
                       compact ? 'h-7 text-[10px] px-1.5' : 'h-8 text-xs sm:text-sm'
                     }`}
                     size="sm"
@@ -230,7 +230,7 @@ export function PointProductCard({
                       className={`mr-1 shrink-0 ${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}`}
                       aria-hidden="true"
                     /> */}
-                    <div className="bg-yellow-500 p-1 rounded-full shadow-md">
+                    <div className="bg-yellow-400 p-1 rounded-full shadow-md">
                       <Coins className="w-3 h-3 text-white" />
                     </div>
                     <span className={compact ? 'truncate' : ''}>

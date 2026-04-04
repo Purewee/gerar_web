@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import { SpecialGiftButton } from '@/components/special-gift-button';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -187,12 +188,16 @@ export function Navigation() {
       setUserEmail('');
       setMobileProfileMenuOpen(false);
       localStorage.clear();
+      // Invalidate user query so points update everywhere
+      queryClient.removeQueries({ queryKey: ['auth', 'me'] });
+      window.dispatchEvent(new CustomEvent('authStateChanged'));
     } catch (error) {
       console.error('Logout error:', error);
       localStorage.clear();
       setIsAuthenticated(false);
       setUserName('');
       setMobileProfileMenuOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       window.dispatchEvent(new CustomEvent('authStateChanged'));
     }
   };
@@ -577,7 +582,28 @@ export function Navigation() {
             </div>
 
             {/* Right Icons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center sm:gap-3 gap-0">
+              {/* Gift button left of point button (mobile) */}
+              <div className="sm:hidden flex items-center">
+                <SpecialGiftButton />
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/loyalty-store')}
+                className="sm:hidden items-center gap-1 text-sm sm:text-base whitespace-nowrap rounded-sm px-2 py-1.5 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2 px-2 py-1 bg-yellow-400/10 rounded-lg border border-yellow-400/20 group">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-20 animate-pulse" />
+                    <div className="relative w-5 h-5 bg-linear-to-br from-yellow-300 to-yellow-500 rounded-md flex items-center justify-center shadow-lg transform rotate-3 group-hover:rotate-6 transition-transform duration-500">
+                      <Coins className="w-3 h-3 text-white drop-shadow-md" />
+                    </div>
+                  </div>
+                  <span className="text-md font-bold text-yellow-500">
+                    {mounted && user ? user.points.toLocaleString() : 0}
+                  </span>
+                </div>
+              </Button>
               {/* Search icon - left of sidebar button; mobile only */}
               <button
                 onClick={() => {
@@ -598,6 +624,27 @@ export function Navigation() {
               >
                 <Menu className="w-6 h-6 text-gray-600" aria-hidden="true" />
               </button>
+              {/* Gift button left of point button (desktop) */}
+              <div className="hidden sm:flex items-center">
+                <SpecialGiftButton />
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/loyalty-store')}
+                className="hidden sm:flex items-center gap-1 text-sm hover:bg-transparent/100 hover:scale-105 sm:text-base whitespace-nowrap rounded-sm px-2 py-1.5 transition-all duration-200"
+              >
+                <div className="flex items-center gap-2 mr-1 px-2 py-1 bg-yellow-400/10 rounded-lg border border-yellow-400/20 group">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-20 animate-pulse" />
+                    <div className="relative w-6 h-6 bg-linear-to-br from-yellow-300 to-yellow-500 rounded-md flex items-center justify-center shadow-lg transform rotate-3 group-hover:rotate-6 transition-transform duration-500">
+                      <Coins className="w-4 h-4 text-white drop-shadow-md" />
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold text-yellow-500">
+                    {mounted && user ? user.points.toLocaleString() : 0}
+                  </span>
+                </div>
+              </Button>
               {mounted && isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -605,14 +652,13 @@ export function Navigation() {
                       variant="ghost"
                       className="hidden sm:flex items-center gap-1 text-sm sm:text-base whitespace-nowrap hover:bg-gray-100 rounded-lg px-2 py-1.5 transition-all duration-200"
                     >
-                      {mounted && user && (
-                        <div className="flex items-center gap-1 mr-1 px-2 py-1 bg-yellow-400/10 rounded-full border border-yellow-400/20 group">
-                          <Coins className="w-4 h-4 text-yellow-500 group-hover:scale-110 transition-transform" />
-                          <span className="text-[11px] font-bold text-yellow-700">
-                            {user.points.toLocaleString()} оноо
-                          </span>
-                        </div>
-                      )}
+                      {/* <div className="flex items-center gap-1 mr-1 px-2 py-1 bg-yellow-400/10 rounded-full border border-yellow-400/20 group">
+                        <Coins className="w-4 h-4 text-yellow-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-[11px] font-bold text-yellow-700">
+                          {mounted && user ? user.points.toLocaleString() : 0} оноо
+                        </span>
+                      </div> */}
+
                       <div className="w-8 h-8 rounded-full bg-linear-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-xs shadow-sm shadow-primary/20">
                         {userName ? getUserInitials(userName) : <User className="w-4 h-4" />}
                       </div>
@@ -683,7 +729,7 @@ export function Navigation() {
                 <Button
                   variant="ghost"
                   onClick={() => setLoginModalOpen(true)}
-                  className="hidden sm:flex hover:bg-gray-100 rounded-lg transition-all duration-200 text-sm text-primary border border-primary sm:text-base whitespace-nowrap font-medium"
+                  className="hidden sm:flex hover:bg-gray-100 rounded-lg transition-all hover:text-primary duration-200 text-sm text-primary border border-primary sm:text-base whitespace-nowrap font-medium"
                 >
                   Нэвтрэх
                 </Button>

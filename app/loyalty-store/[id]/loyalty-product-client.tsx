@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingCart, ArrowLeft, Plus, Minus, Heart, Loader2, Coins } from 'lucide-react';
+import { BackButton } from '@/components/back-button';
 import {
   usePointProduct,
   useCart,
@@ -34,7 +35,9 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
   const { data: cartResponse } = useCart();
   const cartItems = cartResponse?.data || [];
   // Important: check both productId AND isPointProduct: true
-  const cartItem = product ? cartItems.find(item => item.productId === product.id && item.isPointProduct) : null;
+  const cartItem = product
+    ? cartItems.find(item => item.productId === product.id && item.isPointProduct)
+    : null;
   const isInCart = !!cartItem;
   const cartQuantity = cartItem?.quantity ?? 0;
 
@@ -87,7 +90,11 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
     if (!product) return;
 
     try {
-      await addToCartMutation.mutateAsync({ productId: product.id, quantity, isPointProduct: true });
+      await addToCartMutation.mutateAsync({
+        productId: product.id,
+        quantity,
+        isPointProduct: true,
+      });
       window.dispatchEvent(new Event('cartUpdated'));
       toast.success('Сагсанд нэмэгдсэн');
     } catch (error: any) {
@@ -102,7 +109,11 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
 
     setIsBuyNowLoading(true);
     try {
-      await addToCartMutation.mutateAsync({ productId: product.id, quantity, isPointProduct: true });
+      await addToCartMutation.mutateAsync({
+        productId: product.id,
+        quantity,
+        isPointProduct: true,
+      });
       window.dispatchEvent(new Event('cartUpdated'));
       router.push('/cart'); // Lead to cart to see point total
     } catch (error: any) {
@@ -139,14 +150,7 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
   return (
     <div className="h-full bg-white pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-        <Button
-          onClick={() => router.back()}
-          variant="ghost"
-          className="mb-2 md:mb-6 rounded-lg hover:bg-yellow-50 hover:text-yellow-600 border border-transparent hover:border-yellow-200 transition-all font-medium"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          <span>Буцах</span>
-        </Button>
+        <BackButton className="mb-2 md:mb-6 rounded-lg hover:bg-yellow-50 hover:text-yellow-600 border border-transparent hover:border-yellow-200 transition-all font-medium" />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <div className="flex flex-col gap-4">
@@ -187,7 +191,7 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
                     variant={selectedImage === idx ? 'default' : 'outline'}
                     size="icon"
                     className={`h-16 sm:h-20 w-16 sm:w-20 shrink-0 border-2 ${
-                        selectedImage === idx ? 'border-yellow-500' : 'border-transparent'
+                      selectedImage === idx ? 'border-yellow-500' : 'border-transparent'
                     }`}
                   >
                     {img.startsWith('http') || img.startsWith('/') ? (
@@ -209,13 +213,13 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
 
           <div className="flex flex-col">
             <div className="mb-6">
-                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-700 text-xs font-bold uppercase tracking-wider border border-yellow-500/20 mb-4">
-                    <Coins className="w-3.5 h-3.5" />
-                    Онооны бэлэг
-                </span>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 leading-tight">
-                    {product.name}
-                </h1>
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 text-yellow-700 text-xs font-bold uppercase tracking-wider border border-yellow-500/20 mb-4">
+                <Coins className="w-3.5 h-3.5" />
+                Онооны бэлэг
+              </span>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 leading-tight">
+                {product.name}
+              </h1>
             </div>
 
             <div className="flex items-center gap-4 mb-8">
@@ -235,13 +239,17 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
             )}
 
             <div className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-3">Бүтээгдэхүүний тайлбар</h2>
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-3">
+                Бүтээгдэхүүний тайлбар
+              </h2>
               <p className="text-gray-600 leading-relaxed">{product.description}</p>
             </div>
 
             <div className="mb-8 flex items-end gap-6 sm:gap-12">
               <div className="flex-1 max-w-[200px]">
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Тоо ширхэг</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                  Тоо ширхэг
+                </label>
                 <div className="flex items-center justify-between bg-gray-100 p-1 rounded-xl border border-gray-200">
                   <Button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -287,7 +295,11 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
                 disabled={addToCartMutation.isPending || product.stock === 0}
               >
                 <ShoppingCart className="w-5 h-5 mr-3" />
-                {addToCartMutation.isPending ? 'Нэмж байна...' : isInCart ? `Сагсалсан (${cartQuantity})` : 'Сагсанд нэмэх'}
+                {addToCartMutation.isPending
+                  ? 'Нэмж байна...'
+                  : isInCart
+                    ? `Сагсалсан (${cartQuantity})`
+                    : 'Сагсанд нэмэх'}
               </Button>
               <Button
                 onClick={handleBuyNow}
@@ -295,11 +307,7 @@ export default function LoyaltyProductClient({ productId }: { productId: number 
                 className="flex-1 h-14 rounded-2xl bg-yellow-500 hover:bg-yellow-600 text-white font-bold shadow-lg shadow-yellow-500/20 transition-all text-lg"
                 disabled={product.stock === 0 || addToCartMutation.isPending || isBuyNowLoading}
               >
-                {isBuyNowLoading ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  'Оноогоор авах'
-                )}
+                {isBuyNowLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Оноогоор авах'}
               </Button>
             </div>
           </div>
