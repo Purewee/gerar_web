@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/bottom-nav';
 import { FontLoader } from '@/components/font-loader';
 import dynamic from 'next/dynamic';
 import { Toaster } from '@/components/ui/sonner';
+import { SpecialGiftButton } from '@/components/special-gift-button';
 
 // Defer non-critical components to reduce initial bundle size
 const Footer = dynamic(() => import('@/components/footer').then(mod => mod.HomeFooter), {
@@ -87,6 +88,8 @@ fbq('track', 'PageView');`,
             <Suspense fallback={<div className="h-16 bg-white border-b border-gray-200" />}>
               <Navigation />
             </Suspense>
+            {/* Төлбөрийн QR товч - зөвхөн desktop дээр, төлбөрийн хуудсаас бусад */}
+            <SpecialGiftButton />
             <div className="pb-14 md:pb-0">
               {children}
               {/* Desktop: бүх хуудсанд */}

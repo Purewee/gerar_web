@@ -608,7 +608,9 @@ export function Navigation() {
                       {mounted && user && (
                         <div className="flex items-center gap-1 mr-1 px-2 py-1 bg-yellow-400/10 rounded-full border border-yellow-400/20 group">
                           <Coins className="w-4 h-4 text-yellow-500 group-hover:scale-110 transition-transform" />
-                          <span className="text-[11px] font-bold text-yellow-700">{user.points.toLocaleString()} оноо</span>
+                          <span className="text-[11px] font-bold text-yellow-700">
+                            {user.points.toLocaleString()} оноо
+                          </span>
                         </div>
                       )}
                       <div className="w-8 h-8 rounded-full bg-linear-to-br from-primary to-primary/70 flex items-center justify-center text-white font-semibold text-xs shadow-sm shadow-primary/20">
@@ -620,10 +622,28 @@ export function Navigation() {
                     align="end"
                     className="bg-white border border-gray-200 shadow-xl rounded-lg mt-2 w-48"
                   >
-                    <DropdownMenuItem asChild className="cursor-pointer bg-yellow-400/5 focus:bg-yellow-400/10">
-                      <Link href="/loyalty-store" className="flex items-center gap-2 w-full text-yellow-700 font-bold">
+                    <DropdownMenuItem
+                      asChild
+                      className="cursor-pointer bg-yellow-400/5 focus:bg-yellow-400/10"
+                    >
+                      <Link
+                        href="/loyalty-store"
+                        className="flex items-center gap-2 w-full text-yellow-700 font-bold"
+                      >
                         <Coins className="w-4 h-4" />
                         Онооны дэлгүүр
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="cursor-pointer bg-yellow-400/5 focus:bg-yellow-400/10"
+                    >
+                      <Link
+                        href="/gift-store"
+                        className="flex items-center gap-2 w-full text-yellow-700 font-bold"
+                      >
+                        <Coins className="w-4 h-4" />
+                        Бэлэг дэлгүүр
                       </Link>
                     </DropdownMenuItem>
                     <div className="h-px bg-gray-100 my-1" />

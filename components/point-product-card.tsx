@@ -2,10 +2,16 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useCartAdd, useFavoriteAdd, useFavoriteRemove, useFavoriteStatus, getAuthToken } from '@/lib/api';
+import {
+  useCartAdd,
+  useFavoriteAdd,
+  useFavoriteRemove,
+  useFavoriteStatus,
+  getAuthToken,
+} from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, Heart } from 'lucide-react';
+import { ShoppingCart, Heart, Coins } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { PointProduct } from '@/lib/api';
@@ -28,7 +34,7 @@ export function PointProductCard({
   const addToCartMutation = useCartAdd();
   const addFavoriteMutation = useFavoriteAdd();
   const removeFavoriteMutation = useFavoriteRemove();
-  
+
   // Use hook for status if authenticated
   const { data: statusResponse } = useFavoriteStatus(product.id, true);
   const [isFavorited, setIsFavorited] = useState(false);
@@ -79,9 +85,9 @@ export function PointProductCard({
     e.stopPropagation();
 
     if (!getAuthToken()) {
-        toast.info("Та нэвтэрч орж хадгална уу");
-        window.dispatchEvent(new CustomEvent('openLoginModal'));
-        return;
+      toast.info('Та нэвтэрч орж хадгална уу');
+      window.dispatchEvent(new CustomEvent('openLoginModal'));
+      return;
     }
 
     if (isProcessingFavorite) return;
@@ -156,12 +162,17 @@ export function PointProductCard({
               )}
 
               {/* Point Badge */}
-              <div className="absolute top-2 left-2 z-10 bg-yellow-400 text-yellow-900 font-bold px-2 py-1 rounded-md text-xs shadow-sm flex items-center gap-1">
-                <span className="text-base">🪙</span> {product?.pointsPrice} оноо
-              </div>
+              {/* <div className="absolute top-2 left-2 z-10 bg-white font-bold px-2 py-1 rounded-md text-xs shadow-lg border border-gray-100 flex items-center gap-1">
+                <div className="bg-yellow-500 p-1 rounded-full shadow-md">
+                  <Coins className="w-3 h-3 text-white" />
+                </div>
+                <span className={`font-bold text-yellow-600 ${compact ? 'text-xs' : 'text-sm '}`}>
+                  {product?.pointsPrice.toLocaleString()} оноо
+                </span>
+              </div> */}
 
               {/* Favorite Button - Top Right */}
-              <button
+              {/* <button
                 onClick={handleToggleFavorite}
                 disabled={isProcessingFavorite}
                 className={`absolute cursor-pointer z-10 rounded-full bg-white/90 border border-gray-200 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50 ${
@@ -174,7 +185,7 @@ export function PointProductCard({
                     isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-600 hover:text-red-500'
                   }`}
                 />
-              </button>
+              </button> */}
             </div>
 
             {/* Content Section */}
@@ -189,8 +200,11 @@ export function PointProductCard({
 
               <div>
                 {/* Price Section */}
-                <div className={`flex flex-col gap-0.5 ${compact ? 'mb-1' : 'mb-2'}`}>
-                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                {/* <div className={`flex flex-col gap-0.5 ${compact ? 'mb-1' : 'mb-2'}`}>
+                  <div className="flex items-baseline gap-1.5 flex-wrap items-center">
+                    <div className="bg-yellow-500 p-1 rounded-full shadow-md">
+                      <Coins className="w-3 h-3 text-white" />
+                    </div>
                     <span
                       className={`font-bold text-yellow-600 ${
                         compact ? 'text-xs' : 'text-sm sm:text-base'
@@ -199,7 +213,7 @@ export function PointProductCard({
                       {product?.pointsPrice.toLocaleString()} оноо
                     </span>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Action Buttons */}
                 <div className={`flex gap-1.5 mt-auto ${compact ? 'gap-1' : ''}`}>
@@ -207,16 +221,21 @@ export function PointProductCard({
                     onClick={handleAddToCart}
                     loading={isProcessingCart}
                     disabled={isProcessingCart}
-                    className={`flex-1 font-medium bg-yellow-500 hover:bg-yellow-600 text-white ${
+                    className={`flex-1 font-medium bg-yellow-50 hover:bg-yellow-80 text-yellow-500 border border-2 border-yellow-500  transition-all duration-200 rounded-lg shadow-sm ${
                       compact ? 'h-7 text-[10px] px-1.5' : 'h-8 text-xs sm:text-sm'
                     }`}
                     size="sm"
                   >
-                    <ShoppingCart
+                    {/* <ShoppingCart
                       className={`mr-1 shrink-0 ${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}`}
                       aria-hidden="true"
-                    />
-                    <span className={compact ? 'truncate' : ''}>Оноогоор авах</span>
+                    /> */}
+                    <div className="bg-yellow-500 p-1 rounded-full shadow-md">
+                      <Coins className="w-3 h-3 text-white" />
+                    </div>
+                    <span className={compact ? 'truncate' : ''}>
+                      {product?.pointsPrice.toLocaleString()}
+                    </span>
                   </Button>
                 </div>
               </div>
