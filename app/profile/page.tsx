@@ -108,13 +108,15 @@ export default function ProfilePage() {
           {/* Subtle background decoration */}
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-0 -mb-8 -ml-8 w-32 h-32 bg-secondary/10 rounded-full blur-2xl" />
-          
+
           <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle className="text-xl sm:text-2xl font-black tracking-tight bg-linear-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                 Миний профайл
               </CardTitle>
-              <CardDescription className="text-gray-500 text-xs font-medium mt-0.5">Профайлын мэдээллээ эндээс хянах боломжтой</CardDescription>
+              <CardDescription className="text-gray-500 text-xs font-medium mt-0.5">
+                Профайлын мэдээллээ эндээс хянах боломжтой
+              </CardDescription>
             </div>
             {!editMode ? (
               <Button
@@ -142,53 +144,17 @@ export default function ProfilePage() {
                   className="bg-primary hover:bg-primary-light shadow-lg shadow-primary/20 transition-all duration-300 rounded-xl px-5"
                   disabled={updateProfile.isPending}
                 >
-                  {updateProfile.isPending ? <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> : null}
+                  {updateProfile.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                  ) : null}
                   Хадгалах
                 </Button>
               </div>
             )}
           </div>
         </CardHeader>
-        
-        <CardContent className="p-4 sm:p-6 space-y-6">
-          {/* Points Balance Card - Premium Version (Compact) */}
-          <div className="relative group overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-br from-yellow-400 via-yellow-500 to-amber-600 opacity-10 group-hover:opacity-15 transition-opacity duration-500 rounded-2xl" />
-            <div className="relative border border-yellow-200/50 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 bg-white/40 backdrop-blur-sm shadow-xl shadow-yellow-500/5">
-              <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-yellow-400 blur-xl opacity-20 animate-pulse" />
-                  <div className="relative w-14 h-14 bg-linear-to-br from-yellow-300 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 group-hover:rotate-6 transition-transform duration-500">
-                    <Coins className="w-8 h-8 text-white drop-shadow-md" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-yellow-900 leading-tight">Урамшууллын оноо</h3>
-                  <p className="text-yellow-800/60 font-medium text-xs max-w-[200px]">Оноогоо бэлгэнд солих эсвэл хөнгөлөлт болгон ашиглаарай</p>
-                </div>
-              </div>
-              
-              <div className="flex flex-col items-center md:items-end gap-2">
-                <div className="text-center md:text-right">
-                  <div className="flex items-baseline gap-1.5 justify-center md:justify-end">
-                    <span className="text-3xl font-black text-yellow-600 tracking-tighter">
-                      {user.points.toLocaleString()}
-                    </span>
-                    <span className="text-xs font-bold text-yellow-700/50 uppercase tracking-widest">оноо</span>
-                  </div>
-                </div>
-                <Button 
-                  onClick={() => window.location.href = '/loyalty-store'}
-                  size="sm"
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl px-4 py-2 shadow-md shadow-yellow-500/20 hover:shadow-lg hover:shadow-yellow-500/30 transition-all duration-300 h-auto group/btn text-xs"
-                >
-                  Дэлгүүр орох 
-                  <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover/btn:translate-x-1 transition-transform" />
-                </Button>
-              </div>
-            </div>
-          </div>
 
+        <CardContent className="p-4 sm:p-6 space-y-6">
           {/* User Info Section (Compact) */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Avatar Column */}
@@ -215,7 +181,6 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-black text-gray-900 tracking-tight leading-tight">
                   {formatName(name) || 'Хэрэглэгч'}
                 </h3>
-                <p className="text-gray-400 text-xs font-bold mt-0.5">#{user.id}</p>
               </div>
             </div>
 
@@ -223,7 +188,10 @@ export default function ProfilePage() {
             <div className="lg:col-span-3 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="sm:col-span-2 space-y-1.5">
-                  <Label htmlFor="mobile" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  <Label
+                    htmlFor="mobile"
+                    className="text-[10px] font-bold uppercase tracking-widest text-gray-400"
+                  >
                     Утасны дугаар
                   </Label>
                   <div className="relative group">
@@ -238,13 +206,18 @@ export default function ProfilePage() {
                       className="pl-14 h-11 bg-gray-50/50 border-gray-100 rounded-xl font-bold text-gray-600 focus:ring-0 cursor-not-allowed text-sm"
                     />
                     <div className="absolute inset-y-0 right-3.5 flex items-center">
-                      <span className="text-[8px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tighter border border-gray-200/50">Засах боломжгүй</span>
+                      <span className="text-[8px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tighter border border-gray-200/50">
+                        Засах боломжгүй
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  <Label
+                    htmlFor="name"
+                    className="text-[10px] font-bold uppercase tracking-widest text-gray-400"
+                  >
                     Бүтэн нэр
                   </Label>
                   <Input
@@ -255,15 +228,18 @@ export default function ProfilePage() {
                     disabled={!editMode}
                     placeholder="Жишээ: Бат-Эрдэнэ"
                     className={`h-11 rounded-xl transition-all duration-300 font-medium text-sm ${
-                      !editMode 
-                        ? 'bg-gray-50/50 border-gray-100 text-gray-700' 
+                      !editMode
+                        ? 'bg-gray-50/50 border-gray-100 text-gray-700'
                         : 'bg-white border-primary/20 shadow-inner ring-2 ring-primary/5 focus:border-primary'
                     }`}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  <Label
+                    htmlFor="email"
+                    className="text-[10px] font-bold uppercase tracking-widest text-gray-400"
+                  >
                     Имэйл хаяг
                   </Label>
                   <Input
@@ -274,8 +250,8 @@ export default function ProfilePage() {
                     disabled={!editMode}
                     placeholder="email@example.com"
                     className={`h-11 rounded-xl transition-all duration-300 font-medium text-sm ${
-                      !editMode 
-                        ? 'bg-gray-50/50 border-gray-100 text-gray-700' 
+                      !editMode
+                        ? 'bg-gray-50/50 border-gray-100 text-gray-700'
                         : 'bg-white border-primary/20 shadow-inner ring-2 ring-primary/5 focus:border-primary'
                     }`}
                   />
@@ -289,18 +265,43 @@ export default function ProfilePage() {
       {/* Quick Stats or Info Card (Compact) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
-          { label: 'Нийт захиалга', value: ordersResponse?.data?.length || '0', icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { label: 'Хадгалсан бараа', value: favoritesResponse?.data?.length || '0', icon: Heart, color: 'text-pink-500', bg: 'bg-pink-50' },
-          { label: 'Хадгалсан хаяг', value: addressesResponse?.data?.length || '0', icon: MapPin, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+          {
+            label: 'Нийт захиалга',
+            value: ordersResponse?.data?.length || '0',
+            icon: ShoppingBag,
+            color: 'text-blue-500',
+            bg: 'bg-blue-50',
+          },
+          {
+            label: 'Хадгалсан бараа',
+            value: favoritesResponse?.data?.length || '0',
+            icon: Heart,
+            color: 'text-pink-500',
+            bg: 'bg-pink-50',
+          },
+          {
+            label: 'Хадгалсан хаяг',
+            value: addressesResponse?.data?.length || '0',
+            icon: MapPin,
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-50',
+          },
         ].map((stat, i) => (
-          <Card key={i} className="border-0 shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden group hover:translate-y-[-2px] transition-all duration-300">
+          <Card
+            key={i}
+            className="border-0 shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden group hover:translate-y-[-2px] transition-all duration-300"
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color} transition-colors duration-300 ring-1 ring-inset ring-black/5`}>
+                <div
+                  className={`p-2.5 rounded-xl ${stat.bg} ${stat.color} transition-colors duration-300 ring-1 ring-inset ring-black/5`}
+                >
                   <stat.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{stat.label}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">
+                    {stat.label}
+                  </p>
                   <p className="text-xl font-black text-gray-900 leading-none">{stat.value}</p>
                 </div>
               </div>

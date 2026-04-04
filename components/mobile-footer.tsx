@@ -27,8 +27,8 @@ export function MobileHomeFooter() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3.5 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
               >
-                <div className="bg-linear-to-br from-purple-600 via-pink-600 to-orange-500 p-2 rounded-lg group-hover:opacity-90 transition-opacity shrink-0">
-                  <Instagram className="w-4 h-4 text-white" />
+                <div className="bg-linear-to-br from-purple-600 via-pink-600 to-orange-500 p-1 rounded-lg group-hover:opacity-90 transition-opacity shrink-0">
+                  <Instagram className="w-6 h-6 text-white" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs text-gray-500 font-medium">Instagram</div>
@@ -37,13 +37,13 @@ export function MobileHomeFooter() {
               </a>
 
               <a
-                href="https://www.facebook.com/profile.php?id=61586772028189"
+                href="https://www.facebook.com/profile.php?id=61587881157057"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 hover:shadow-sm group"
               >
-                <div className="bg-blue-600 p-2 rounded-lg group-hover:bg-blue-700 transition-colors shrink-0">
-                  <Facebook className="w-4 h-4 text-white" />
+                <div className="bg-blue-600 p-1 rounded-lg group-hover:bg-blue-700 transition-colors shrink-0">
+                  <Facebook className="w-6 h-6 text-white" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xs text-gray-500 font-medium">Facebook</div>

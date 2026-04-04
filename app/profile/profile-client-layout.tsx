@@ -70,7 +70,7 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
     <div className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-100/50 pb-20 lg:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-12">
         {/* Mobile: horizontal cohesive tab bar */}
-        <div className="lg:hidden mb-10 sticky top-18 z-30">
+        <div className="lg:hidden mb-10 sticky top-0 z-30">
           <nav className="flex items-center justify-between bg-white/80 backdrop-blur-xl p-1.5 rounded-2xl border border-white/50 shadow-2xl shadow-black/5 ring-1 ring-black/5">
             {menuItems.map(item => {
               const Icon = item.icon;
@@ -85,10 +85,10 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
                       : 'text-gray-500 hover:text-gray-900 active:scale-95'
                   }`}
                 >
-                  <Icon
-                    className={`w-5 h-5 shrink-0 ${active ? 'text-white' : 'text-gray-500'}`}
-                  />
-                  <span className={`text-[10px] font-black uppercase tracking-tighter text-center leading-tight ${active ? 'text-white' : 'text-gray-400'}`}>
+                  <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-white' : 'text-gray-500'}`} />
+                  <span
+                    className={`text-[10px] font-black uppercase tracking-tighter text-center leading-tight ${active ? 'text-white' : 'text-gray-400'}`}
+                  >
                     {item.label.split(' ').length > 1 ? item.label.split(' ')[1] : item.label}
                   </span>
                 </Link>
@@ -116,9 +116,13 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
                             : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
                         }`}
                       >
-                        <div className={`p-2 rounded-xl transition-colors duration-300 ${
-                          active ? 'bg-white/20' : 'bg-gray-100 group-hover:bg-white border border-gray-100 group-hover:border-gray-200'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-xl transition-colors duration-300 ${
+                            active
+                              ? 'bg-white/20'
+                              : 'bg-gray-100 group-hover:bg-white border border-gray-100 group-hover:border-gray-200'
+                          }`}
+                        >
                           <Icon className={`w-5 h-5 ${active ? 'text-white' : ''}`} />
                         </div>
                         <span className="font-bold tracking-tight">{item.label}</span>
@@ -129,7 +133,7 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
                     );
                   })}
                 </div>
-                
+
                 <div className="p-2 mt-2 border-t border-gray-100/50">
                   <button
                     type="button"
@@ -147,18 +151,16 @@ export default function ProfileClientLayout({ children }: { children: React.Reac
           </aside>
 
           <main className="lg:col-span-3">
-            <div className={`animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out ${pathname !== '/profile' ? 'sm:px-0' : ''}`}>
+            <div
+              className={`animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out ${pathname !== '/profile' ? 'sm:px-0' : ''}`}
+            >
               {/* Outer wrapper for sub-pages on mobile */}
               {pathname !== '/profile' ? (
                 <>
                   <div className="lg:hidden p-1.5 bg-white/30 backdrop-blur-md rounded-[2.5rem] border border-white/50 shadow-2xl shadow-black/5 ring-1 ring-black/5">
-                    <div className="overflow-hidden rounded-4xl">
-                      {children}
-                    </div>
+                    <div className="overflow-hidden rounded-4xl">{children}</div>
                   </div>
-                  <div className="hidden lg:block">
-                    {children}
-                  </div>
+                  <div className="hidden lg:block">{children}</div>
                 </>
               ) : (
                 children

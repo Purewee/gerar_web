@@ -172,7 +172,7 @@ export function ProductListSection({
               768: { slidesPerView: 4, spaceBetween: 16 },
               1024: { slidesPerView: 5, spaceBetween: 16 },
             }}
-            className={`product-list-swiper overflow-visible [&_.swiper-pagination]:!relative [&_.swiper-pagination]:!mt-4 [&_.swiper-pagination-bullet]:!w-2.5 [&_.swiper-pagination-bullet]:!h-2.5 [&_.swiper-pagination-bullet]:!bg-gray-500 [&_.swiper-pagination-bullet-active]:!bg-primary mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex [&_.swiper-slide]:flex-col [&_.swiper-slide>*]:flex-1 [&_.swiper-slide>*]:min-h-0 [&_.swiper-slide>*]:flex [&_.swiper-slide>*]:flex-col`}
+            className={`product-list-swiper overflow-visible [&_.swiper-pagination]:!relative [&_.swiper-pagination]:!mt-4 [&_.swiper-pagination-bullet]:!w-2 [&_.swiper-pagination-bullet]:!h-2 [&_.swiper-pagination-bullet]:!bg-gray-500 [&_.swiper-pagination-bullet-active]:!bg-primary mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pb-4 [&_.swiper-wrapper]:items-stretch [&_.swiper-slide]:h-auto [&_.swiper-slide]:flex [&_.swiper-slide]:flex-col [&_.swiper-slide>*]:flex-1 [&_.swiper-slide>*]:min-h-0 [&_.swiper-slide>*]:flex [&_.swiper-slide>*]:flex-col`}
           >
             {products.slice(0, limit).map(product => (
               <SwiperSlide key={product.id} className="h-auto!">
@@ -447,10 +447,7 @@ export default function HomeClient() {
               ))
             : // Loading state: show 2-3 skeleton sections while categories are loading
               [1, 2, 3].map(i => (
-                <section
-                  key={i}
-                  className="py-6 sm:py-10 bg-white animate-pulse opacity-80"
-                >
+                <section key={i} className="py-6 sm:py-10 bg-white animate-pulse opacity-80">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <div className="flex items-center gap-3 mb-8">
                       <div className="h-8 w-48 bg-gray-200 rounded" />
@@ -459,7 +456,10 @@ export default function HomeClient() {
                       {[...Array(6)].map((_, j) => (
                         <div key={j} className="shrink-0 w-44 sm:w-48 md:w-56 lg:w-64">
                           <div className="border border-gray-200 rounded-lg overflow-hidden h-full bg-white">
-                            <div className="relative bg-gray-200 w-full" style={{ aspectRatio: '4/3' }}>
+                            <div
+                              className="relative bg-gray-200 w-full"
+                              style={{ aspectRatio: '4/3' }}
+                            >
                               <div className="w-full h-full bg-gray-200 animate-pulse" />
                             </div>
                             <div className="p-4 space-y-3">
