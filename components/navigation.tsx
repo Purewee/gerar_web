@@ -1374,8 +1374,8 @@ export function Navigation() {
                     className="w-16 h-16 mb-2 bg-linear-to-br from-primary to-primary/70 rounded-full border border-gray-200 shadow-md"
                   />
                   <div className="pl-1">
-                    <h2 className="text-lg font-semibold text-gray-900">Таны нэр</h2>
-                    <p className="text-xs text-gray-500">Таны имэйл хаяг</p>
+                    <h2 className="text-lg font-semibold text-gray-600">Таны нэр</h2>
+                    <p className="text-xs text-gray-500">Таны и-мэйл хаяг</p>
                   </div>
                 </div>
               )}
@@ -1503,9 +1503,9 @@ export function Navigation() {
                     setMobileProfileMenuOpen(false);
                     setLoginModalOpen(true);
                   }}
-                  className="flex items-center gap-3 p-3 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 pl-5 w-full text-left"
+                  className="flex mt-8 items-center gap-3 py-2 px-4 border border-primary mx-auto text-primary font-semibold max-w-max hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
                 >
-                  <User className="w-5 h-5" />
+                  {/* <User className="w-5 h-5" /> */}
                   <span>Нэвтрэх</span>
                 </button>
               )}

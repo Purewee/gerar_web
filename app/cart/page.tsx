@@ -116,13 +116,16 @@ export default function CartPage() {
 
   // Filter out invalid items but be forgiving about missing product objects
   // Robust detection of point products and filtering
-  const cartItems = (cartResponse?.data || []).map(item => ({
-    ...item,
-    // Infer isPointProduct if not explicitly provided but pointProduct data exists
-    _computedIsPointProduct: item.isPointProduct || (item as any).is_point_product || !!(item.pointProduct || (item as any).point_product)
-  })).filter(
-    item => (item.product || item.pointProduct || (item as any).point_product) != null,
-  );
+  const cartItems = (cartResponse?.data || [])
+    .map(item => ({
+      ...item,
+      // Infer isPointProduct if not explicitly provided but pointProduct data exists
+      _computedIsPointProduct:
+        item.isPointProduct ||
+        (item as any).is_point_product ||
+        !!(item.pointProduct || (item as any).point_product),
+    }))
+    .filter(item => (item.product || item.pointProduct || (item as any).point_product) != null);
 
   const isAuthError =
     cartError &&
@@ -136,11 +139,17 @@ export default function CartPage() {
   const clearCartMutation = useCartClear();
   const createOrderMutation = useOrderCreate();
 
-  const handleQuantityChange = async (productId: number, isPointProduct: boolean, delta: number) => {
+  const handleQuantityChange = async (
+    productId: number,
+    isPointProduct: boolean,
+    delta: number,
+  ) => {
     // Be flexible with item lookup
-    const item = cartItems.find(item => 
-      item.productId === productId && 
-      ((item.isPointProduct === isPointProduct) || ((item as any).is_point_product === isPointProduct))
+    const item = cartItems.find(
+      item =>
+        item.productId === productId &&
+        (item.isPointProduct === isPointProduct ||
+          (item as any).is_point_product === isPointProduct),
     );
     if (!item) return;
 
@@ -179,11 +188,11 @@ export default function CartPage() {
       // Use normalized isPointProduct check
       const item = cartItems.find(i => i.productId === productId);
       const isPP = item?._computedIsPointProduct ?? false;
-      
-      await updateCartMutation.mutateAsync({ 
-        productId, 
-        quantity: newQuantity, 
-        isPointProduct: isPP 
+
+      await updateCartMutation.mutateAsync({
+        productId,
+        quantity: newQuantity,
+        isPointProduct: isPP,
       });
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error: any) {
@@ -222,7 +231,7 @@ export default function CartPage() {
   const cashSubtotal = cartItems.reduce((sum, item) => {
     if (item._computedIsPointProduct) return sum;
     const productData = item.product || (item as any).product;
-    return sum + (parseFloat(productData?.price || '0') * item.quantity);
+    return sum + parseFloat(productData?.price || '0') * item.quantity;
   }, 0);
 
   const pointsSubtotal = cartItems.reduce((sum, item) => {
@@ -413,11 +422,16 @@ export default function CartPage() {
               <div className="space-y-3">
                 {cartItems.map(item => {
                   const _isPointProduct = item._computedIsPointProduct;
-                  const productData = _isPointProduct ? (item.pointProduct || (item as any).point_product || item.product) : item.product;
-                  const price = _isPointProduct ? (productData as any)?.pointsPrice || 0 : parseFloat((productData as any)?.price || '0');
-                  const originalPrice = !_isPointProduct && (productData as any)?.originalPrice
-                    ? parseFloat((productData as any).originalPrice)
-                    : 0;
+                  const productData = _isPointProduct
+                    ? item.pointProduct || (item as any).point_product || item.product
+                    : item.product;
+                  const price = _isPointProduct
+                    ? (productData as any)?.pointsPrice || 0
+                    : parseFloat((productData as any)?.price || '0');
+                  const originalPrice =
+                    !_isPointProduct && (productData as any)?.originalPrice
+                      ? parseFloat((productData as any).originalPrice)
+                      : 0;
                   const hasDiscount = !_isPointProduct && originalPrice > price;
                   return (
                     <Card
@@ -427,7 +441,11 @@ export default function CartPage() {
                       <CardContent className="p-4">
                         <div className="flex sm:flex-row flex-col gap-4">
                           <Link
-                            href={_isPointProduct ? `/loyalty-store/${item.productId}` : `/product/${item.productId}`}
+                            href={
+                              _isPointProduct
+                                ? `/loyalty-store/${item.productId}`
+                                : `/product/${item.productId}`
+                            }
                             className="flex flex-1 items-center min-w-0 gap-4 cursor-pointer hover:opacity-90 transition-opacity"
                           >
                             <div className="shrink-0 sm:w-26 w-20 sm:h-26 h-20 rounded-lg bg-gray-100 overflow-hidden">
@@ -472,10 +490,15 @@ export default function CartPage() {
                               )}
                               <span
                                 className={`text-base font-bold ${
-                                  _isPointProduct ? 'text-yellow-600' : hasDiscount ? 'text-primary' : 'text-gray-900'
+                                  _isPointProduct
+                                    ? 'text-yellow-600'
+                                    : hasDiscount
+                                      ? 'text-primary'
+                                      : 'text-gray-900'
                                 }`}
                               >
-                                {price.toLocaleString()}{_isPointProduct ? ' оноо' : '₮'}
+                                {price.toLocaleString()}
+                                {_isPointProduct ? ' оноо' : '₮'}
                               </span>
                             </div>
                             <div className="sm:hidden">
@@ -491,7 +514,9 @@ export default function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-md hover:bg-white"
-                                onClick={() => handleQuantityChange(item.productId, !!_isPointProduct, -1)}
+                                onClick={() =>
+                                  handleQuantityChange(item.productId, !!_isPointProduct, -1)
+                                }
                                 disabled={updateCartMutation.isPending}
                               >
                                 <Minus className="w-3.5 h-3.5" />
@@ -533,7 +558,9 @@ export default function CartPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 rounded-md hover:bg-white"
-                                onClick={() => handleQuantityChange(item.productId, !!_isPointProduct, 1)}
+                                onClick={() =>
+                                  handleQuantityChange(item.productId, !!_isPointProduct, 1)
+                                }
                                 disabled={updateCartMutation.isPending}
                               >
                                 <Plus className="w-3.5 h-3.5" />
@@ -549,8 +576,11 @@ export default function CartPage() {
                             </div>
                             <div className="text-sm text-center text-gray-900 sm:flex-row sm:gap-1 flex flex-col">
                               Нийт дүн:{' '}
-                              <span className={`font-bold ${_isPointProduct ? 'text-yellow-600' : ''}`}>
-                                {(price * item.quantity).toLocaleString()}{_isPointProduct ? ' оноо' : '₮'}
+                              <span
+                                className={`font-bold ${_isPointProduct ? 'text-yellow-600' : ''}`}
+                              >
+                                {(price * item.quantity).toLocaleString()}
+                                {_isPointProduct ? ' оноо' : '₮'}
                               </span>
                             </div>
                           </div>
@@ -571,12 +601,16 @@ export default function CartPage() {
                 <CardContent className="p-4 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Бүтээгдэхүүний үнэ</span>
-                    <span className="font-medium text-gray-900">{cashSubtotal.toLocaleString()}₮</span>
+                    <span className="font-medium text-gray-900">
+                      {cashSubtotal.toLocaleString()}₮
+                    </span>
                   </div>
                   {pointsSubtotal > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-yellow-600 font-medium">Онооны дүн</span>
-                      <span className="font-bold text-yellow-600">{pointsSubtotal.toLocaleString()} оноо</span>
+                      <span className="font-bold text-yellow-600">
+                        {pointsSubtotal.toLocaleString()} оноо
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
@@ -586,13 +620,15 @@ export default function CartPage() {
                       {deliveryFee.toLocaleString()}₮
                     </span>
                   </div>
-                  
+
                   <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                       <Sparkles className="w-4 h-4 text-blue-500" />
-                       <span className="text-xs font-semibold text-blue-700">Цуглуулах оноо:</span>
+                      <Sparkles className="w-4 h-4 text-blue-500" />
+                      <span className="text-xs font-semibold text-blue-700">Цуглуулах оноо:</span>
                     </div>
-                    <span className="text-sm font-bold text-blue-800">+{earnedPoints.toLocaleString()} оноо</span>
+                    <span className="text-sm font-bold text-blue-800">
+                      +{earnedPoints.toLocaleString()} оноо
+                    </span>
                   </div>
 
                   <div className="flex justify-between text-sm w-full">
@@ -610,12 +646,12 @@ export default function CartPage() {
                       </span>
                     </div>
                     {pointsSubtotal > 0 && (
-                        <div className="flex justify-between items-center">
-                            <span className="font-bold text-yellow-700">Нийт ашиглах оноо</span>
-                            <span className="text-lg font-bold text-yellow-600">
-                                {pointsSubtotal.toLocaleString()} оноо
-                            </span>
-                        </div>
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-yellow-700">Нийт ашиглах оноо</span>
+                        <span className="text-lg font-bold text-yellow-600">
+                          {pointsSubtotal.toLocaleString()} оноо
+                        </span>
+                      </div>
                     )}
                   </div>
                 </CardContent>
