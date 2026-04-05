@@ -334,10 +334,10 @@ export default function CartPage() {
                   <Button
                     onClick={() => router.push('/')}
                     size="lg"
-                    className="flex-1 max-w-max mx-auto min-h-[48px] py-3 sm:py-2 px-4 sm:px-6 text-base bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    className="flex-1 max-w-max mx-auto min-h-[48px] py-1 sm:py-2 px-6 sm:px-6 text-sm sm:text-base bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                   >
                     Дэлгүүрт үргэлжлүүлэх
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1 mr-0" />
                   </Button>
                 </div>
               </CardContent>
