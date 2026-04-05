@@ -88,6 +88,7 @@ export function Navigation() {
   } | null>(null);
   // Track hover for both trigger and content
   const [categoryMenuHover, setCategoryMenuHover] = useState(false);
+  const [open, setOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1498,16 +1499,30 @@ export function Navigation() {
                   </button>
                 </>
               ) : (
-                <button
-                  onClick={() => {
-                    setMobileProfileMenuOpen(false);
-                    setLoginModalOpen(true);
-                  }}
-                  className="flex mt-8 items-center gap-3 py-2 px-4 border border-primary mx-auto text-primary font-semibold max-w-max hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
-                >
-                  {/* <User className="w-5 h-5" /> */}
-                  <span>Нэвтрэх</span>
-                </button>
+                <div className="flex flex-col items-center pt-8">
+                  <button
+                    onClick={() => {
+                      setMobileProfileMenuOpen(false);
+                      setLoginModalOpen(true);
+                    }}
+                    className="flex mt-8 items-center gap-3 py-2 px-11 border border-primary mx-auto text-primary font-semibold max-w-max hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
+                  >
+                    {/* <User className="w-5 h-5" /> */}
+                    <span>Нэвтрэх</span>
+                  </button>
+                  <Button
+                    className="mt-4 px-8 sm:px-16 max-w-max mx-auto text-md h-10 sm:h-12 text-white bg-primary border border-primary/50 border-2 hover:bg-primary/90 hover:text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-100"
+                    onClick={() => {
+                      setMobileProfileMenuOpen(false);
+                      setOpen(true);
+                    }}
+                    variant={'outline'}
+                    type="button"
+                  >
+                    Бүртгүүлэх
+                  </Button>
+                  <RegisterModal open={open} onOpenChange={setOpen} />
+                </div>
               )}
             </div>
           </div>

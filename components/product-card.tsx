@@ -56,7 +56,7 @@ export function ProductCard({
         productId: product.id,
         quantity: 1,
       });
-      toast.success('Сагсанд нэмэгдсэн');
+      toast.success('Сагсанд нэмэгдсэн', { duration: 1500 });
       window.dispatchEvent(new Event('cartUpdated'));
       if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
         (window as any).fbq('track', 'AddToCart');
