@@ -1048,7 +1048,7 @@ export default function OrderCreatePage() {
                         onChange={e => setUserName(e.target.value)}
                         placeholder="Нэр"
                         required
-                        className={`text-sm ${userNameError ? 'border-red-500' : ''}`}
+                        className={`${userNameError ? 'border-red-500' : ''}`}
                         style={
                           userNameError
                             ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1068,7 +1068,7 @@ export default function OrderCreatePage() {
                         placeholder="Утасны дугаар"
                         maxLength={8}
                         required
-                        className={`text-sm ${userPhoneError ? 'border-red-500' : ''}`}
+                        className={`${userPhoneError ? 'border-red-500' : ''}`}
                         style={
                           userPhoneError
                             ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1091,7 +1091,6 @@ export default function OrderCreatePage() {
                       value={userEmail}
                       onChange={e => setUserEmail(e.target.value)}
                       placeholder={savedEmailPlaceholder || 'Имэйл'}
-                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -1110,7 +1109,7 @@ export default function OrderCreatePage() {
                         }
                         placeholder="Нэрээ оруулна уу"
                         required
-                        className={`text-sm ${guestNameError ? 'border-red-500' : ''}`}
+                        className={`${guestNameError ? 'border-red-500' : ''}`}
                         style={
                           guestNameError
                             ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1137,7 +1136,7 @@ export default function OrderCreatePage() {
                         placeholder={userPhone || 'xxxx-xxxx'}
                         maxLength={8}
                         required
-                        className={`text-sm ${guestPhoneError ? 'border-red-500' : ''}`}
+                        className={`${guestPhoneError ? 'border-red-500' : ''}`}
                         style={
                           guestPhoneError
                             ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1160,7 +1159,6 @@ export default function OrderCreatePage() {
                       value={guestAddress.email || ''}
                       onChange={e => setGuestAddress({ ...guestAddress, email: e.target.value })}
                       placeholder={savedEmailPlaceholder || 'user@gmail.com'}
-                      className="text-sm"
                     />
                   </div>
                   <p className="text-sm text-gray-600 mt-3">
@@ -1278,7 +1276,7 @@ export default function OrderCreatePage() {
                           setUserAddressLabelError(false);
                         }}
                         placeholder="Жишээ: гэр, ажил, оффис"
-                        className={`text-sm ${userAddressLabelError ? 'border-red-500' : ''}`}
+                        className={`${userAddressLabelError ? 'border-red-500' : ''}`}
                         style={
                           userAddressLabelError
                             ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1306,7 +1304,7 @@ export default function OrderCreatePage() {
                             setSelectedDistrict(e.target.value);
                             setNewAddress({ ...newAddress, provinceOrDistrict: e.target.value });
                           }}
-                          className={`flex h-10 w-full rounded-md text-sm border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${userDistrictError ? 'border-red-500' : 'border-input'}`}
+                          className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${userDistrictError ? 'border-red-500' : 'border-input'}`}
                           required
                           style={
                             userDistrictError
@@ -1339,7 +1337,7 @@ export default function OrderCreatePage() {
                             setNewAddress({ ...newAddress, khorooOrSoum: e.target.value });
                             setUserKhorooError(false);
                           }}
-                          className={`flex h-10 w-full text-sm rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${userKhorooError ? 'border-red-500' : 'border-input'}`}
+                          className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${userKhorooError ? 'border-red-500' : 'border-input'}`}
                           required
                           style={
                             userKhorooError
@@ -1380,7 +1378,7 @@ export default function OrderCreatePage() {
                           }}
                           required
                           placeholder="Байр"
-                          className={`text-sm ${userBairError ? 'border-red-500' : ''}`}
+                          className={`${userBairError ? 'border-red-500' : ''}`}
                           style={
                             userBairError
                               ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1407,7 +1405,7 @@ export default function OrderCreatePage() {
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
-                          className={`text-sm ${userOrtsError ? 'border-red-500' : ''}`}
+                          className={`${userOrtsError ? 'border-red-500' : ''}`}
                           style={
                             userOrtsError
                               ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1434,7 +1432,7 @@ export default function OrderCreatePage() {
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
-                          className={`text-sm ${userTootError ? 'border-red-500' : ''}`}
+                          className={`${userTootError ? 'border-red-500' : ''}`}
                           style={
                             userTootError
                               ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1461,7 +1459,6 @@ export default function OrderCreatePage() {
                         placeholder="Дэлгэрэнгүй хаягийн мэдээлэл"
                         maxLength={500}
                         rows={3}
-                        className="text-sm"
                         disabled={
                           createAddressMutation.isPending || updateAddressMutation.isPending
                         }
@@ -1553,7 +1550,7 @@ export default function OrderCreatePage() {
                           setSelectedDistrict(district);
                           setGuestAddress({ ...guestAddress, provinceOrDistrict: district });
                         }}
-                        className={`text-sm flex h-10 w-full rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${guestDistrictError ? 'border-red-500' : 'border-input'}`}
+                        className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${guestDistrictError ? 'border-red-500' : 'border-input'}`}
                         required
                         style={
                           guestDistrictError
@@ -1583,7 +1580,7 @@ export default function OrderCreatePage() {
                           setGuestAddress({ ...guestAddress, khorooOrSoum: e.target.value });
                           setGuestKhorooError(false);
                         }}
-                        className={`text-sm flex h-10 w-full rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${guestKhorooError ? 'border-red-500' : 'border-input'}`}
+                        className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${guestKhorooError ? 'border-red-500' : 'border-input'}`}
                         required
                         style={
                           guestKhorooError
@@ -1622,7 +1619,7 @@ export default function OrderCreatePage() {
                         }}
                         required
                         placeholder="Байр"
-                        className={`text-sm ${guestBairError ? 'border-red-500' : ''}`}
+                        className={`${guestBairError ? 'border-red-500' : ''}`}
                         style={
                           guestBairError
                             ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1646,7 +1643,7 @@ export default function OrderCreatePage() {
                         }}
                         required
                         placeholder="Орц"
-                        className={`text-sm ${guestOrtsError ? 'border-red-500' : ''}`}
+                        className={`${guestOrtsError ? 'border-red-500' : ''}`}
                         style={
                           guestOrtsError
                             ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1670,7 +1667,7 @@ export default function OrderCreatePage() {
                         }}
                         required
                         placeholder="Тоотоо оруулна уу"
-                        className={`text-sm ${guestTootError ? 'border-red-500' : ''}`}
+                        className={`${guestTootError ? 'border-red-500' : ''}`}
                         style={
                           guestTootError
                             ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
@@ -1695,7 +1692,6 @@ export default function OrderCreatePage() {
                       placeholder="Хаягийн дэлгэрэнгүй мэдээлэл"
                       maxLength={500}
                       rows={3}
-                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -1944,7 +1940,7 @@ export default function OrderCreatePage() {
                               setEbarimtRegNoError(false);
                             }}
                             placeholder="Регистрийн дугаар"
-                            className={`bg-white text-sm ${ebarimtRegNoError ? 'border-red-500' : 'border-gray-200'}`}
+                            className={`bg-white ${ebarimtRegNoError ? 'border-red-500' : 'border-gray-200'}`}
                             style={
                               ebarimtRegNoError
                                 ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
