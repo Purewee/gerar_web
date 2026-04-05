@@ -503,7 +503,6 @@ export default function OrderCreatePage() {
         } else {
           setUserPhoneError(false);
         }
-        console.log('end irjin0');
 
         if (addresses.length === 0) {
           // Prevent further validation and scroll if address must be saved
@@ -571,7 +570,6 @@ export default function OrderCreatePage() {
             setUserTootError(false);
           }
         }
-        console.log('end irjin1');
         // Custom: If user is authenticated and must save address, show red border and message on save button (after toot check)
         if (addresses.length === 0 && !showAddAddressForm) {
           setShowAddAddressForm(true);
@@ -587,7 +585,6 @@ export default function OrderCreatePage() {
         } else {
           setShowSaveAddressError(false);
         }
-        console.log('end irjin2');
       } else {
         if (!guestAddress.fullName || !guestAddress.fullName.trim()) {
           setGuestNameError(true);
