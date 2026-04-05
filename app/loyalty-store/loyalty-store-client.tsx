@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { usePointProducts, useCurrentUser } from '@/lib/api';
 import { PointProductCard } from '@/components/point-product-card';
 import { ProductGridSkeleton } from '@/components/skeleton';
-import { ArrowLeft, Loader2, Coins, ArrowRight } from 'lucide-react';
+import { Loader2, Coins } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 
 function LoyaltyStoreContent() {
@@ -30,34 +30,6 @@ function LoyaltyStoreContent() {
     <div className=" min-h-screen max-w-7xl mx-auto pt-4">
       <BackButton className="ml-4 md:ml-6 border-2 border-gray-200  transition-all duration-200 rounded-lg shadow-sm" />
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 sm:py-8">
-        {/* 
-        <div className="flex flex-col md:flex-row  md:items-center justify-between gap-6 mb-8 p-6 rounded-2xl bg-white-200 shadow-sm border border-yellow-200">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
-                <Coins className="w-8 h-8 text-yellow-500" />
-                Онооны дэлгүүр
-              </h1>
-              <p className="text-gray-500 text-sm mt-1">Цуглуулсан оноогоороо бэлэг аваарай</p>
-            </div>
-          </div>
-
-          {user && (
-            <div className="bg-yellow-500/10 border border-yellow-500/20 px-6 py-3 rounded-xl flex items-center gap-4">
-              <div className="bg-yellow-500 p-2 rounded-full shadow-md">
-                <Coins className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <span className="text-sm text-yellow-800 font-medium block">Таны оноо</span>
-                <span className="text-2xl font-bold text-yellow-700">
-                  {user.points.toLocaleString()}{' '}
-                  <span className="text-sm font-semibold uppercase">оноо</span>
-                </span>
-              </div>
-            </div>
-          )}
-        </div> */}
-
         <div className="flex flex-col mb-4 gap-8">
           <div className="relative group overflow-hidden">
             <div className="absolute inset-0 bg-linear-to-br from-yellow-400 via-yellow-500 to-amber-600 opacity-10 group-hover:opacity-15 transition-opacity duration-500 rounded-2xl" />
@@ -169,7 +141,7 @@ function LoyaltyStoreContent() {
             </Card>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-              {products.map(product => (
+              {products.slice(8).map(product => (
                 <div
                   key={product.id}
                   className="animate-in fade-in slide-in-from-bottom-4 duration-500"
