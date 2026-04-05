@@ -73,7 +73,8 @@ export function PointProductCard({
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
-        description: error.message || 'Сагсанд нэмэхэд алдаа гарлаа',
+        description: 'Таны оноо хүрэлцэхгүй байна',
+        duration: 2500,
       });
     } finally {
       setIsProcessingCart(false);
@@ -123,46 +124,43 @@ export function PointProductCard({
           featured ? 'ring-2 ring-primary/20 bg-primary/5' : ''
         }`}
       >
-        <Link
+        {/* <Link
           href={`/loyalty-store/${product?.id}`}
           className="block h-full"
           aria-label={`${
             product?.name
           } - ${product?.pointsPrice} оноо - Дэлгэрэнгүй мэдээлэл харах`}
-        >
-          <CardContent className="flex flex-col h-full p-0">
-            {/* Image Section - 1:1 square */}
-            <div
-              className="relative bg-gray-100 w-full overflow-hidden"
-              style={{ aspectRatio: '1' }}
-            >
-              {product?.stock === 0 && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50">
-                  <span className="text-white font-bold text-lg sm:text-xl uppercase tracking-wider">
-                    Дууссан
-                  </span>
-                </div>
-              )}
-              {isImageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={product?.name ?? ''}
-                  sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-                  className="object-cover hover:scale-105 transition-transform duration-300"
-                  fill
-                />
-              ) : (
-                <div
-                  className={`absolute inset-0 flex items-center justify-center ${
-                    compact ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'
-                  }`}
-                >
-                  {displayImage}
-                </div>
-              )}
+        > */}
+        <CardContent className="flex flex-col h-full p-0">
+          {/* Image Section - 1:1 square */}
+          <div className="relative bg-gray-100 w-full overflow-hidden" style={{ aspectRatio: '1' }}>
+            {product?.stock === 0 && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50">
+                <span className="text-white font-bold text-lg sm:text-xl uppercase tracking-wider">
+                  Дууссан
+                </span>
+              </div>
+            )}
+            {isImageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={product?.name ?? ''}
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                className="object-cover hover:scale-105 transition-transform duration-300"
+                fill
+              />
+            ) : (
+              <div
+                className={`absolute inset-0 flex items-center justify-center ${
+                  compact ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'
+                }`}
+              >
+                {displayImage}
+              </div>
+            )}
 
-              {/* Point Badge */}
-              {/* <div className="absolute top-2 left-2 z-10 bg-white font-bold px-2 py-1 rounded-md text-xs shadow-lg border border-gray-100 flex items-center gap-1">
+            {/* Point Badge */}
+            {/* <div className="absolute top-2 left-2 z-10 bg-white font-bold px-2 py-1 rounded-md text-xs shadow-lg border border-gray-100 flex items-center gap-1">
                 <div className="bg-yellow-500 p-1 rounded-full shadow-md">
                   <Coins className="w-3 h-3 text-white" />
                 </div>
@@ -171,8 +169,8 @@ export function PointProductCard({
                 </span>
               </div> */}
 
-              {/* Favorite Button - Top Right */}
-              {/* <button
+            {/* Favorite Button - Top Right */}
+            {/* <button
                 onClick={handleToggleFavorite}
                 disabled={isProcessingFavorite}
                 className={`absolute cursor-pointer z-10 rounded-full bg-white/90 border border-gray-200 backdrop-blur-sm hover:bg-white transition-colors shadow-md hover:shadow-lg disabled:opacity-50 ${
@@ -186,21 +184,21 @@ export function PointProductCard({
                   }`}
                 />
               </button> */}
-            </div>
+          </div>
 
-            {/* Content Section */}
-            <div className={`flex flex-col justify-between flex-1 ${compact ? 'p-2' : 'p-3'}`}>
-              <h3
-                className={`font-medium line-clamp-2 hover:text-primary transition-colors ${
-                  compact ? 'text-xs mb-1' : 'text-xs sm:text-sm mb-2'
-                }`}
-              >
-                {product?.name}
-              </h3>
+          {/* Content Section */}
+          <div className={`flex flex-col justify-between flex-1 ${compact ? 'p-2' : 'p-3'}`}>
+            <h3
+              className={`font-medium line-clamp-2 hover:text-primary transition-colors ${
+                compact ? 'text-xs mb-1' : 'text-xs sm:text-sm mb-2'
+              }`}
+            >
+              {product?.name}
+            </h3>
 
-              <div>
-                {/* Price Section */}
-                {/* <div className={`flex flex-col gap-0.5 ${compact ? 'mb-1' : 'mb-2'}`}>
+            <div>
+              {/* Price Section */}
+              {/* <div className={`flex flex-col gap-0.5 ${compact ? 'mb-1' : 'mb-2'}`}>
                   <div className="flex items-baseline gap-1.5 flex-wrap items-center">
                     <div className="bg-yellow-500 p-1 rounded-full shadow-md">
                       <Coins className="w-3 h-3 text-white" />
@@ -215,33 +213,33 @@ export function PointProductCard({
                   </div>
                 </div> */}
 
-                {/* Action Buttons */}
-                <div className={`flex gap-1.5 mt-auto ${compact ? 'gap-1' : ''}`}>
-                  <Button
-                    onClick={handleAddToCart}
-                    loading={isProcessingCart}
-                    disabled={isProcessingCart}
-                    className={`flex-1 font-medium bg-yellow-500 hover:bg-yellow-600 text-white border border-1 gap-1 border-yellow-600 transition-all duration-200 rounded-lg shadow-sm ${
-                      compact ? 'h-7 text-[10px] px-1.5' : 'h-8 text-xs sm:text-sm'
-                    }`}
-                    size="sm"
-                  >
-                    {/* <ShoppingCart
+              {/* Action Buttons */}
+              <div className={`flex gap-1.5 mt-auto ${compact ? 'gap-1' : ''}`}>
+                <Button
+                  onClick={handleAddToCart}
+                  loading={isProcessingCart}
+                  disabled={isProcessingCart}
+                  className={`flex-1 font-medium bg-yellow-500 hover:bg-yellow-600 text-white border border-1 gap-1 border-yellow-600 transition-all duration-200 rounded-lg shadow-sm ${
+                    compact ? 'h-7 text-[10px] px-1.5' : 'h-8 text-xs sm:text-sm'
+                  }`}
+                  size="sm"
+                >
+                  {/* <ShoppingCart
                       className={`mr-1 shrink-0 ${compact ? 'w-3 h-3' : 'w-3.5 h-3.5'}`}
                       aria-hidden="true"
                     /> */}
-                    <div className="bg-yellow-400 p-1 rounded-full shadow-md">
-                      <Coins className="w-3 h-3 text-white" />
-                    </div>
-                    <span className={compact ? 'truncate' : ''}>
-                      {product?.pointsPrice.toLocaleString()}
-                    </span>
-                  </Button>
-                </div>
+                  <div className="bg-yellow-400 p-1 rounded-full shadow-md">
+                    <Coins className="w-3 h-3 text-white" />
+                  </div>
+                  <span className={compact ? 'truncate' : ''}>
+                    {product?.pointsPrice.toLocaleString()}
+                  </span>
+                </Button>
               </div>
             </div>
-          </CardContent>
-        </Link>
+          </div>
+        </CardContent>
+        {/* </Link> */}
       </Card>
     </div>
   );

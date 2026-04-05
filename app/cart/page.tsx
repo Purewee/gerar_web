@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useIsAuthenticated } from '@/components/use-is-authenticated';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ import { CardSkeleton } from '@/components/skeleton';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { getDeliveryFee } from '@/lib/utils';
+import { MobileHomeFooter } from '@/components/mobile-footer';
 
 function CartItemFavoriteRemove({
   productId,
@@ -55,14 +57,15 @@ function CartItemFavoriteRemove({
     try {
       if (isFavorited) {
         await removeFavoriteMutation.mutateAsync(productId);
-        toast.success('Барааг хассан');
+        toast.success('Барааг хассан', { duration: 1500 });
       } else {
         await addFavoriteMutation.mutateAsync({ productId, isPointProduct });
-        toast.success('Барааг хадгалсан');
+        toast.success('Барааг хадгалсан', { duration: 1500 });
       }
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
         description: error.message || 'Шинэчлэхэд алдаа гарлаа',
+        duration: 1500,
       });
     }
   };
@@ -100,6 +103,7 @@ export default function CartPage() {
   const [mounted, setMounted] = useState(false);
   const [quantityInputs, setQuantityInputs] = useState<Record<number, string>>({});
   const [isProceeding, setIsProceeding] = useState(false);
+  const isAuthenticated = useIsAuthenticated();
 
   // Prevent hydration mismatch by only rendering dynamic content after mount
   useEffect(() => {
@@ -146,10 +150,7 @@ export default function CartPage() {
   ) => {
     // Be flexible with item lookup
     const item = cartItems.find(
-      item =>
-        item.productId === productId &&
-        (item.isPointProduct === isPointProduct ||
-          (item as any).is_point_product === isPointProduct),
+      item => item.productId === productId && item._computedIsPointProduct === isPointProduct,
     );
     if (!item) return;
 
@@ -162,6 +163,7 @@ export default function CartPage() {
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
         description: error.message || 'Тоо ширхэг шинэчлэхэд алдаа гарлаа',
+        duration: 1500,
       });
     }
   };
@@ -198,6 +200,7 @@ export default function CartPage() {
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
         description: error.message || 'Тоо ширхэг шинэчлэхэд алдаа гарлаа',
+        duration: 2500,
       });
     }
   };
@@ -208,10 +211,12 @@ export default function CartPage() {
       window.dispatchEvent(new Event('cartUpdated'));
       toast.success('Сагснаас хасагдсан', {
         description: 'Барааг таны сагснаас хассан.',
+        duration: 1500,
       });
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
         description: error.message || 'Зүйл устгахад алдаа гарлаа',
+        duration: 2500,
       });
     }
   };
@@ -220,10 +225,11 @@ export default function CartPage() {
     try {
       await clearCartMutation.mutateAsync();
       window.dispatchEvent(new Event('cartUpdated'));
-      toast.success('Сагс цэвэрлэгдсэн');
+      toast.success('Сагс цэвэрлэгдсэн', { duration: 2500 });
     } catch (error: any) {
       toast.error('Алдаа гарлаа', {
         description: error.message || 'Сагс цэвэрлэхэд алдаа гарлаа',
+        duration: 2500,
       });
     }
   };
@@ -245,7 +251,7 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
-      toast.error('Сагс хоосон байна');
+      toast.error('Сагс хоосон байна', { duration: 2500 });
       return;
     }
     setIsProceeding(true);
@@ -254,6 +260,15 @@ export default function CartPage() {
     }
     router.push('/orders/create');
   };
+
+  // Helper: check if mobile (screen width <= 768px)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div className="sm:min-h-screen bg-gray-100">
@@ -360,32 +375,8 @@ export default function CartPage() {
             )} */}
 
             {/* Suggested Products Section */}
-            {/* {suggestedProducts.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
-                      <Sparkles className="w-5 h-5 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">Санал болгох бүтээгдэхүүн</h3>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => router.push('/products')}
-                    className="text-primary hover:text-primary/80 hover:bg-primary/5 transition-colors"
-                    aria-label="Санал болгож буй бүх бараа харах"
-                  >
-                    <span>Бүгдийг харах</span>
-                    <ArrowRight className="w-4 h-4 ml-1" aria-hidden="true" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {suggestedProducts.map(product => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              </div>
-            )} */}
+            {/* {suggestedProducts.length > 0 && ... */}
+            {isMobile && <MobileHomeFooter />}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -621,22 +612,36 @@ export default function CartPage() {
                     </span>
                   </div>
 
-                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs font-semibold text-blue-700">Цуглуулах оноо:</span>
-                    </div>
-                    <span className="text-sm font-bold text-blue-800">
-                      +{earnedPoints.toLocaleString()} оноо
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between text-sm w-full">
-                    <span className="text-gray-600 bg-orange-100 w-full border-orange-400 border rounded-md p-2">
+                  <div className="flex justify-between text-sm w-full font-semibold">
+                    <span className="text-gray-500 bg-orange-50 w-full border-orange-200 border rounded-md p-2">
                       <span> </span> 0 – 50,000₮ захиалга = 5,000₮ <br /> 50,000 – 90,000₮ захиалга
                       = 3,000₮ <br />
                       90,000₮ + захиалга = <span className="uppercase text-red-500">үнэгүй</span>
                     </span>
+                  </div>
+                  {!isAuthenticated && (
+                    <p className="text-sm text-gray-600 mt-3">
+                      Та зөвхөн нэвтэрсэн үед л оноогоо цуглуулах боломжтой.{' '}
+                      <button
+                        type="button"
+                        onClick={() => window.dispatchEvent(new CustomEvent('openLoginModal'))}
+                        className="text-primary font-medium hover:underline"
+                      >
+                        {' '}
+                        Нэвтрэх
+                      </button>
+                    </p>
+                  )}
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-blue-500" />
+                        <span className="text-xs font-semibold text-blue-700">Цуглуулах оноо:</span>
+                      </div>
+                      <span className="text-sm font-bold text-blue-800">
+                        +{earnedPoints.toLocaleString()} оноо
+                      </span>
+                    </div>
                   </div>
                   <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
                     <div className="flex justify-between items-center">

@@ -1,6 +1,8 @@
 'use client';
 
+import { useRef } from 'react';
 import { useState, useEffect } from 'react';
+import { useIsAuthenticated } from '@/components/use-is-authenticated';
 
 // Force dynamic rendering to prevent build errors
 export const dynamic = 'force-dynamic';
@@ -8,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronRight, ChevronLeft, Plus, Edit, Trash2, Info, User, Building2 } from 'lucide-react';
+import { Loader2, ChevronRight, ChevronLeft, Plus, Edit, Trash2 } from 'lucide-react';
 import { MongolianDatePicker } from '@/components/mongolian-date-picker';
 import {
   useOrderCreate,
@@ -17,10 +19,8 @@ import {
   useAddressUpdate,
   useAddressDelete,
   useCart,
-  getAuthToken,
   GuestAddress,
   useDistricts,
-  useKhoroo,
   useOffDeliveryDates,
   validateDeliveryTimeSlot,
   authApi,
@@ -28,14 +28,56 @@ import {
   type CreateAddressRequest,
   type Address,
 } from '@/lib/api';
+import { A_ZONE } from '@/lib/zones';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { getDeliveryFee } from '@/lib/utils';
 import { getSessionToken } from '@/lib/api';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import TermsPrivacyModal from '@/components/terms-privacy-modal';
 
 export default function OrderCreatePage() {
-  // ...existing code...
+  const guestDeliveryDateRef = useRef<HTMLDivElement>(null);
+  const [guestDeliveryDateError, setGuestDeliveryDateError] = useState(false);
+  const guestTootRef = useRef<HTMLInputElement>(null);
+  const [guestTootError, setGuestTootError] = useState(false);
+  // Delivery time slot error state for guest
+  const [guestDeliveryTimeSlotError, setGuestDeliveryTimeSlotError] = useState(false);
+  const guestOrtsRef = useRef<HTMLInputElement>(null);
+  const [guestOrtsError, setGuestOrtsError] = useState(false);
+  const guestBairRef = useRef<HTMLInputElement>(null);
+  const [guestBairError, setGuestBairError] = useState(false);
+  const guestKhorooRef = useRef<HTMLSelectElement>(null);
+  const [guestKhorooError, setGuestKhorooError] = useState(false);
+  const userDistrictRef = useRef<HTMLSelectElement>(null);
+  const guestDistrictRef = useRef<HTMLSelectElement>(null);
+  const [userDistrictError, setUserDistrictError] = useState(false);
+  // Error state for address label (authenticated user)
+  const [userAddressLabelError, setUserAddressLabelError] = useState(false);
+  const [guestDistrictError, setGuestDistrictError] = useState(false);
+  // Refs for error scrolling (must be before state to avoid TDZ)
+  const userNameInputRef = useRef<HTMLInputElement>(null);
+  const guestNameInputRef = useRef<HTMLInputElement>(null);
+  const userPhoneInputRef = useRef<HTMLInputElement>(null);
+  const guestPhoneInputRef = useRef<HTMLInputElement>(null);
+  // Error states for name/phone fields
+  const [userNameError, setUserNameError] = useState(false);
+  const [guestNameError, setGuestNameError] = useState(false);
+  const [userPhoneError, setUserPhoneError] = useState(false);
+  const [guestPhoneError, setGuestPhoneError] = useState(false);
+
+  // Error state for user khoroo select
+  const [userKhorooError, setUserKhorooError] = useState(false);
+  // Error state for user Орц, Тоот
+  const [userOrtsError, setUserOrtsError] = useState(false);
+  const [userTootError, setUserTootError] = useState(false);
+  // Error state for user Байр
+  const [userBairError, setUserBairError] = useState(false);
+
+  // State for save address error
+  const [showSaveAddressError, setShowSaveAddressError] = useState(false);
+  console.log('showSaveAddressError:', showSaveAddressError);
 
   const router = useRouter();
   const createOrderMutation = useOrderCreate();
@@ -52,25 +94,29 @@ export default function OrderCreatePage() {
   const currentUser = userResponse?.data;
   const addresses = addressesResponse?.data || [];
   // Robust detection of point products and filtering
-  const cartItems = (cartResponse?.data || []).map(item => ({
-    ...item,
-    _computedIsPointProduct: item.isPointProduct || (item as any).is_point_product || !!(item.pointProduct || (item as any).point_product)
-  })).filter(
-    item => (item.product || item.pointProduct || (item as any).point_product) != null,
-  );
+  const cartItems = (cartResponse?.data || [])
+    .map(item => ({
+      ...item,
+      _computedIsPointProduct:
+        item.isPointProduct ||
+        (item as any).is_point_product ||
+        !!(item.pointProduct || (item as any).point_product),
+    }))
+    .filter(item => (item.product || item.pointProduct || (item as any).point_product) != null);
 
-  // Use state to avoid hydration mismatch - localStorage is only available on client
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Use custom hook for authentication state
+  const isAuthenticated = useIsAuthenticated();
   const [isMounted, setIsMounted] = useState(false);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [savedEmailPlaceholder, setSavedEmailPlaceholder] = useState('');
   const [userPhone, setUserPhone] = useState('');
 
-  // Set authentication state after mount to avoid hydration issues
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
+  // Set mount state after mount to avoid hydration issues
   useEffect(() => {
     setIsMounted(true);
-    setIsAuthenticated(!!getAuthToken());
   }, []);
 
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
@@ -85,11 +131,8 @@ export default function OrderCreatePage() {
   const { data: districtsResponse } = useDistricts();
   const districts = Array.isArray(districtsResponse?.data) ? districtsResponse.data : [];
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
-  const {
-    data: khorooResponse,
-    isLoading: khorooLoading,
-    error: khorooError,
-  } = useKhoroo(selectedDistrict || null);
+  // Backend khoroo fetching is disabled. Use A_ZONE for khoroo options.
+  const khorooLoading = false;
   const { data: offDeliveryResponse } = useOffDeliveryDates();
   const offDeliveryData = offDeliveryResponse?.data;
   const offWeekdays = offDeliveryData?.offWeekdays ?? [];
@@ -106,38 +149,34 @@ export default function OrderCreatePage() {
     return offWeekdays.includes(weekday);
   };
 
-  // API returns { data: { district: string, khorooOptions: string[] } }
+  // Use static khoroo options from A_ZONE
   const khorooOptions =
-    khorooResponse?.data &&
-    typeof khorooResponse.data === 'object' &&
-    'khorooOptions' in khorooResponse.data &&
-    Array.isArray(khorooResponse.data.khorooOptions)
-      ? khorooResponse.data.khorooOptions
-      : Array.isArray(khorooResponse?.data)
-        ? khorooResponse.data
-        : [];
+    selectedDistrict &&
+    (A_ZONE[selectedDistrict.replace(' дүүрэг', '')] || A_ZONE[selectedDistrict] || []);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Ebarimt state
   const [ebarimtType, setEbarimtType] = useState<'CITIZEN' | 'COMPANY'>('CITIZEN');
   const [ebarimtRegNo, setEbarimtRegNo] = useState('');
   const [ebarimtOrgName, setEbarimtOrgName] = useState('');
   const [isFetchingOrg, setIsFetchingOrg] = useState(false);
+  // Error state for ebarimtRegNo
+  const [ebarimtRegNoError, setEbarimtRegNoError] = useState(false);
 
   // Debug: Log khoroo response
   useEffect(() => {
     if (selectedDistrict) {
       console.log('Selected district:', selectedDistrict);
-      console.log('Khoroo response:', khorooResponse);
+      // console.log('Khoroo response:', khorooResponse);
       console.log('Khoroo options:', khorooOptions);
       console.log('Khoroo loading:', khorooLoading);
-      console.log('Khoroo error:', khorooError);
-      if (khorooError) {
-        console.error('Khoroo API Error:', khorooError);
-      }
+      // console.log('Khoroo error:', khorooError);
+      // if (khorooError) {
+      //   console.error('Khoroo API Error:', khorooError);
+      // }
     }
-  }, [selectedDistrict, khorooResponse, khorooOptions, khorooLoading, khorooError]);
+  }, [selectedDistrict, khorooOptions, khorooLoading]);
 
   // Ebarimt Organization Info Fetcher
   useEffect(() => {
@@ -145,11 +184,38 @@ export default function OrderCreatePage() {
       if (ebarimtType === 'COMPANY' && ebarimtRegNo.length >= 7) {
         setIsFetchingOrg(true);
         try {
-          const response = await fetch(`https://info.ebarimt.mn/rest/merchant/info?regno=${ebarimtRegNo}`);
+          const response = await fetch(
+            `https://info.ebarimt.mn/rest/merchant/info?regno=${ebarimtRegNo}`,
+          );
           const data = await response.json();
           if (data && data.found) {
             setEbarimtOrgName(data.name);
           } else {
+            // Guest: Хүргэлтийн өдөр, цаг заавал
+            if (!deliveryDate) {
+              setGuestDeliveryDateError(true);
+              setIsSubmitting(false);
+              setTimeout(() => {
+                guestDeliveryDateRef.current?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                });
+              }, 400);
+              return;
+            } else {
+              setGuestDeliveryDateError(false);
+            }
+            if (!deliveryTimeSlot) {
+              setGuestDeliveryTimeSlotError(true);
+              setIsSubmitting(false);
+              setTimeout(() => {
+                const el = document.getElementById('guest-delivery-time-slot');
+                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }, 400);
+              return;
+            } else {
+              setGuestDeliveryTimeSlotError(false);
+            }
             setEbarimtOrgName('');
           }
         } catch (error) {
@@ -177,6 +243,14 @@ export default function OrderCreatePage() {
   >({
     provinceOrDistrict: '',
     khorooOrSoum: '',
+    residentialComplex: '',
+    entrance: '',
+    apartmentNumber: '',
+    street: '',
+    neighborhood: '',
+    building: '',
+    addressNote: '',
+    label: '',
   });
 
   // Guest address form state
@@ -192,8 +266,8 @@ export default function OrderCreatePage() {
     entrance: '',
     apartmentNumber: '',
     addressNote: '',
-    label: '',
-    email: '',
+    label: 'Хоосон', // Default label for guest address
+    email: '', // Optional email field for guest address
   });
 
   // Load user info from localStorage
@@ -375,55 +449,212 @@ export default function OrderCreatePage() {
     khorooOrSoum: string;
     label?: string;
   }): boolean => {
-    if (address.label !== undefined && !address.label.trim()) {
-      toast.warning('Хаягийн гарчиг оруулна уу');
-      return false;
-    }
-    if (!address.provinceOrDistrict.trim()) {
-      toast.warning('Аймаг/Дүүрэг оруулна уу');
-      return false;
-    }
-    if (!address.khorooOrSoum.trim()) {
-      toast.warning('Хороо/Сум оруулна уу');
-      return false;
-    }
+    // Хороо/Сум заавал биш тул шалгахгүй
     return true;
   };
 
   const validateContactInfo = (): boolean => {
     if (isAuthenticated) {
       if (!userName.trim()) {
-        toast.warning('Нэр оруулна уу');
         return false;
       }
       if (!userPhone || userPhone.length !== 8) {
         toast.warning('8 оронтой утасны дугаар оруулна уу');
         return false;
       }
-      if (!userEmail.trim() || !userEmail.includes('@')) {
-        toast.warning('Зөв имэйл хаяг оруулна уу');
-        return false;
-      }
+      // Email is now optional for user; no validation or toast
     } else {
       if (!guestAddress.fullName.trim()) {
-        toast.warning('Нэр оруулна уу');
         return false;
       }
       if (!guestAddress.phoneNumber || guestAddress.phoneNumber.length !== 8) {
         toast.warning('8 оронтой утасны дугаар оруулна уу');
         return false;
       }
-      if (!guestAddress.email?.trim() || !guestAddress.email.includes('@')) {
-        toast.warning('Зөв имэйл хаяг оруулна уу');
-        return false;
-      }
+      // Guest email is now optional
     }
     return true;
   };
-
+  console.log('addresses:', addresses);
   const handleCreateOrder = async () => {
     try {
       setIsSubmitting(true);
+
+      // Always check fields in order for both user and guest
+
+      if (isAuthenticated) {
+        if (!userName || !userName.trim()) {
+          setUserNameError(true);
+          setIsSubmitting(false);
+          setTimeout(() => {
+            userNameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400); // delay scroll for slower effect
+          return;
+        } else {
+          setUserNameError(false);
+        }
+        if (!userPhone || userPhone.length !== 8) {
+          setUserPhoneError(true);
+          setIsSubmitting(false);
+          setTimeout(() => {
+            userPhoneInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400);
+          return;
+        } else {
+          setUserPhoneError(false);
+        }
+        console.log('end irjin0');
+
+        if (addresses.length === 0) {
+          // Prevent further validation and scroll if address must be saved
+          if (showSaveAddressError) {
+            setIsSubmitting(false);
+            return;
+          }
+          if (!newAddress.label || !newAddress.label.trim()) {
+            setUserAddressLabelError(true);
+            setIsSubmitting(false);
+            setTimeout(() => {
+              const el = document.getElementById('user-address-label-input');
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+            return;
+          } else {
+            setUserAddressLabelError(false);
+          }
+
+          if (!newAddress.provinceOrDistrict || !newAddress.provinceOrDistrict.trim()) {
+            setUserDistrictError(true);
+            setIsSubmitting(false);
+            setTimeout(() => {
+              userDistrictRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+            return;
+          } else {
+            setUserDistrictError(false);
+          }
+          if (!newAddress.khorooOrSoum || !newAddress.khorooOrSoum.trim()) {
+            // Хороо заавал биш, алгасана
+            setUserKhorooError(false);
+          }
+          if (!newAddress.residentialComplex || !newAddress.residentialComplex.trim()) {
+            setUserBairError(true);
+            setIsSubmitting(false);
+            setTimeout(() => {
+              const el = document.getElementById('user-bair-input');
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+            return;
+          } else {
+            setUserBairError(false);
+          }
+          if (!newAddress.entrance || !newAddress.entrance.trim()) {
+            setUserOrtsError(true);
+            setIsSubmitting(false);
+            setTimeout(() => {
+              const el = document.getElementById('user-orts-input');
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+            return;
+          } else {
+            setUserOrtsError(false);
+          }
+          if (!newAddress.apartmentNumber || !newAddress.apartmentNumber.trim()) {
+            setUserTootError(true);
+            setIsSubmitting(false);
+            setTimeout(() => {
+              const el = document.getElementById('user-toot-input');
+              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+            return;
+          } else {
+            setUserTootError(false);
+          }
+        }
+        console.log('end irjin1');
+        // Custom: If user is authenticated and must save address, show red border and message on save button (after toot check)
+        if (addresses.length === 0 && !showAddAddressForm) {
+          setShowAddAddressForm(true);
+          setTimeout(() => {
+            const el = document.getElementById('user-address-label-input');
+            el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 400);
+          setIsSubmitting(false);
+          setShowSaveAddressError(true);
+          return;
+        } else if (addresses.length !== 0) {
+          setShowSaveAddressError(false);
+        } else {
+          setShowSaveAddressError(false);
+        }
+        console.log('end irjin2');
+      } else {
+        if (!guestAddress.fullName || !guestAddress.fullName.trim()) {
+          setGuestNameError(true);
+          setIsSubmitting(false);
+          setTimeout(() => {
+            guestNameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400); // delay scroll for slower effect
+          return;
+        } else {
+          setGuestNameError(false);
+        }
+        if (!guestAddress.phoneNumber || guestAddress.phoneNumber.length !== 8) {
+          setGuestPhoneError(true);
+          setIsSubmitting(false);
+          setTimeout(() => {
+            guestPhoneInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400);
+          return;
+        } else {
+          setGuestPhoneError(false);
+        }
+
+        if (!guestAddress.provinceOrDistrict || !guestAddress.provinceOrDistrict.trim()) {
+          setGuestDistrictError(true);
+          setIsSubmitting(false);
+          setTimeout(() => {
+            guestDistrictRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400);
+          return;
+        } else {
+          setGuestDistrictError(false);
+        }
+        if (!guestAddress.khorooOrSoum || !guestAddress.khorooOrSoum.trim()) {
+          // Хороо заавал биш, алгасана
+          setGuestKhorooError(false);
+        }
+        if (!guestAddress.residentialComplex || !guestAddress.residentialComplex.trim()) {
+          setGuestBairError(true);
+          setIsSubmitting(false);
+          setTimeout(() => {
+            guestBairRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400);
+          return;
+        } else {
+          setGuestBairError(false);
+        }
+        if (!guestAddress.entrance || !guestAddress.entrance.trim()) {
+          setGuestOrtsError(true);
+          setIsSubmitting(false);
+          setTimeout(() => {
+            guestOrtsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400);
+          return;
+        } else {
+          setGuestOrtsError(false);
+        }
+        if (!guestAddress.apartmentNumber || !guestAddress.apartmentNumber.trim()) {
+          setGuestTootError(true);
+          setIsSubmitting(false);
+          setTimeout(() => {
+            guestTootRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400);
+          return;
+        } else {
+          setGuestTootError(false);
+        }
+      }
 
       if (cartItems.length === 0) {
         toast.warning('Сагс хоосон', {
@@ -434,15 +665,26 @@ export default function OrderCreatePage() {
       }
 
       if (!deliveryDate) {
-        toast.warning('Хүргэлтийн огноо сонгоно уу');
+        setGuestDeliveryDateError(true);
         setIsSubmitting(false);
+        setTimeout(() => {
+          guestDeliveryDateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 400);
         return;
+      } else {
+        setGuestDeliveryDateError(false);
       }
 
       if (!deliveryTimeSlot) {
-        toast.warning('Хүргэлтийн цаг сонгоно уу');
+        setGuestDeliveryTimeSlotError(true);
         setIsSubmitting(false);
+        setTimeout(() => {
+          const el = document.getElementById('guest-delivery-time-slot');
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 400);
         return;
+      } else {
+        setGuestDeliveryTimeSlotError(false);
       }
 
       // Points balance check
@@ -482,9 +724,15 @@ export default function OrderCreatePage() {
 
       if (ebarimtType === 'COMPANY') {
         if (!ebarimtRegNo.trim()) {
-          toast.warning('Байгууллагын регистрийн дугаар оруулна уу');
+          setEbarimtRegNoError(true);
           setIsSubmitting(false);
+          setTimeout(() => {
+            const el = document.getElementById('ebarimt-regno-input');
+            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 400);
           return;
+        } else {
+          setEbarimtRegNoError(false);
         }
         if (!ebarimtOrgName.trim()) {
           toast.warning('Байгууллагын нэр олдсонгүй. Регистрийн дугаараа шалгана уу');
@@ -504,15 +752,12 @@ export default function OrderCreatePage() {
       };
 
       if (isAuthenticated) {
-        if (!selectedAddressId) {
-          toast.warning('Хүргэлтийн хаяг хуудсанаас сонгоно уу');
-          setIsSubmitting(false);
-          return;
-        }
+        // Removed blocking for missing selectedAddressId
         orderPayload.addressId = selectedAddressId;
         orderPayload.fullName = userName.trim();
         orderPayload.phoneNumber = userPhone.trim();
-        orderPayload.email = (userEmail || '').trim();
+        // If user email is empty, use default
+        orderPayload.email = (userEmail && userEmail.trim()) || 'gerarhousehold@gmail.com';
 
         if (!orderPayload.fullName || orderPayload.fullName.length < 2) {
           toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
@@ -524,20 +769,18 @@ export default function OrderCreatePage() {
           setIsSubmitting(false);
           return;
         }
-        if (!orderPayload.email || !orderPayload.email.includes('@')) {
-          toast.warning('Зөв имэйл хаяг оруулна уу');
-          setIsSubmitting(false);
-          return;
-        }
+        // Removed email validation toast and blocking for user flow
       } else {
         if (!validateAddress(guestAddress)) {
           setIsSubmitting(false);
           return;
         }
-        
+
         orderPayload.fullName = guestAddress.fullName.trim();
         orderPayload.phoneNumber = guestAddress.phoneNumber.trim();
-        orderPayload.email = (guestAddress.email || '').trim();
+        // If guest email is empty, use default
+        orderPayload.email =
+          (guestAddress.email && guestAddress.email.trim()) || 'gerarhousehold@gmail.com';
 
         if (!orderPayload.fullName || orderPayload.fullName.length < 2) {
           toast.warning('Нэр хамгийн багадаа 2 үсэг байх ёстой');
@@ -549,18 +792,15 @@ export default function OrderCreatePage() {
           setIsSubmitting(false);
           return;
         }
-        // NOTE: Optional guest email enforcement
-        // if (!orderPayload.email || !orderPayload.email.includes('@')) {
-        //   toast.warning('Зөв имэйл хаяг оруулна уу');
-        //   setIsSubmitting(false);
-        //   return;
-        // }
 
         orderPayload.address = {
           fullName: orderPayload.fullName,
           phoneNumber: orderPayload.phoneNumber,
           provinceOrDistrict: guestAddress.provinceOrDistrict.trim(),
-          khorooOrSoum: guestAddress.khorooOrSoum.trim(),
+          khorooOrSoum:
+            guestAddress.khorooOrSoum && guestAddress.khorooOrSoum.trim()
+              ? guestAddress.khorooOrSoum.trim()
+              : '1-р хороо',
           street: guestAddress.street?.trim() || undefined,
           neighborhood: guestAddress.neighborhood?.trim() || undefined,
           residentialComplex: guestAddress.residentialComplex?.trim() || undefined,
@@ -568,7 +808,8 @@ export default function OrderCreatePage() {
           entrance: guestAddress.entrance?.trim() || undefined,
           apartmentNumber: guestAddress.apartmentNumber?.trim() || undefined,
           addressNote: guestAddress.addressNote?.trim() || undefined,
-        };
+          label: 'Хоосон', // Default label for guest address
+        }; // End of address payload
         orderPayload.sessionToken = typeof window !== 'undefined' ? getSessionToken() || '' : '';
       }
 
@@ -627,7 +868,10 @@ export default function OrderCreatePage() {
     setNewAddress({
       label: address.label || undefined,
       provinceOrDistrict: address.provinceOrDistrict,
-      khorooOrSoum: address.khorooOrSoum,
+      khorooOrSoum:
+        address.khorooOrSoum && address.khorooOrSoum.trim()
+          ? address.khorooOrSoum.trim()
+          : '1-р хороо',
       street: address.street || undefined,
       neighborhood: address.neighborhood || undefined,
       residentialComplex: address.residentialComplex || undefined,
@@ -667,6 +911,10 @@ export default function OrderCreatePage() {
     // Include user's name and phone from contact section
     const addressData: CreateAddressRequest = {
       ...newAddress,
+      khorooOrSoum:
+        newAddress.khorooOrSoum && newAddress.khorooOrSoum.trim()
+          ? newAddress.khorooOrSoum.trim()
+          : '1-р хороо',
       fullName: userName,
       phoneNumber: userPhone,
       label: newAddress.label?.trim() || undefined,
@@ -714,7 +962,7 @@ export default function OrderCreatePage() {
   const cashSubtotal = cartItems.reduce((sum, item) => {
     if (item._computedIsPointProduct) return sum;
     const productData = item.product || (item as any).product;
-    return sum + (parseFloat(productData?.price || '0') * item.quantity);
+    return sum + parseFloat(productData?.price || '0') * item.quantity;
   }, 0);
 
   const pointsSubtotal = cartItems.reduce((sum, item) => {
@@ -758,127 +1006,6 @@ export default function OrderCreatePage() {
     createAddressMutation.isPending ||
     isSubmitting;
 
-  const orderSummaryContent = (
-    <>
-      <h3 className="text-lg font-semibold mb-4">Захиалгын хураангуй</h3>
-
-      {/* Products */}
-      <div className="space-y-4 mb-6">
-        {cartItems.map(item => {
-          const _isPointProduct = item._computedIsPointProduct;
-          const productData = _isPointProduct ? (item.pointProduct || (item as any).point_product || item.product) : item.product;
-          const price = _isPointProduct 
-            ? (productData as any)?.pointsPrice || 0 
-            : parseFloat((productData as any)?.price || '0');
-          return (
-            <div key={`${item.id}-${_isPointProduct}`} className="flex gap-4">
-              <div className="relative w-20 h-20 shrink-0">
-                <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
-                  {productData?.firstImage || productData?.images?.[0] ? (
-                    <Image
-                      src={productData.firstImage || productData.images[0]}
-                      alt={productData.name || 'Бүтээгдэхүүн'}
-                      width={80}
-                      height={80}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      quality={75}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl">
-                      📦
-                    </div>
-                  )}
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-semibold z-10 shadow-sm">
-                  {item.quantity}
-                </div>
-              </div>
-              <div className="flex-1 min-w-0 py-1">
-                <h4 className="font-medium text-sm line-clamp-2 mb-1 group-hover:text-primary transition-colors">
-                  {productData?.name || 'Бүтээгдэхүүн'}
-                </h4>
-                <div className="flex items-center gap-1.5">
-                    <p className={`text-sm font-bold ${_isPointProduct ? 'text-yellow-600' : 'text-gray-900'}`}>
-                      {price.toLocaleString()}{_isPointProduct ? ' оноо' : '₮'}
-                    </p>
-                    {_isPointProduct && (
-                        <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-tighter">
-                            Оноо
-                        </span>
-                    )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Price Breakdown */}
-      <div className="space-y-3 border-t border-gray-200 pt-4">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">
-            {cartItems.reduce((sum, item) => sum + item.quantity, 0)} барааны дүн
-          </span>
-          <span className="font-semibold">{cashSubtotal.toLocaleString()}₮</span>
-        </div>
-        {pointsSubtotal > 0 && (
-          <div className="flex justify-between text-sm">
-            <span className="text-yellow-600 font-medium whitespace-nowrap">Урамшууллын оноогоор</span>
-            <span className="font-bold text-yellow-600">{pointsSubtotal.toLocaleString()} оноо</span>
-          </div>
-        )}
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600 text-xs">Хүргэлт</span>
-          <span className="font-semibold text-xs">{deliveryFee.toLocaleString()}₮</span>
-        </div>
-        <div className="border-t border-gray-200 pt-3 mt-3 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold">Нийт төлөх</span>
-            <span className="text-xl font-bold text-primary">
-              {total.toLocaleString()}₮
-            </span>
-          </div>
-          
-          {isAuthenticated && currentUser && (
-             <div className={`p-4 rounded-xl border text-sm flex flex-col gap-2 ${pointsSubtotal > currentUser.points ? 'bg-red-50 border-red-200 text-red-800' : 'bg-yellow-50 border-yellow-200 text-yellow-800'}`}>
-                <div className="flex justify-between items-center">
-                    <span className="font-medium">Таны оноо:</span>
-                    <span className="font-bold">{currentUser.points.toLocaleString()} оноо</span>
-                </div>
-                {pointsSubtotal > 0 && (
-                    <div className="flex justify-between items-center pt-2 border-t border-yellow-200/50">
-                        <span className="font-medium">Ашиглах оноо:</span>
-                        <span className={`font-bold ${pointsSubtotal > currentUser.points ? 'text-red-600' : 'text-yellow-700'}`}>-{pointsSubtotal.toLocaleString()} оноо</span>
-                    </div>
-                )}
-                {pointsSubtotal > currentUser.points && (
-                    <p className="text-[10px] font-bold text-red-600 mt-1 uppercase text-center bg-white/50 py-1 rounded">Хүрэлцэхгүй байна</p>
-                )}
-             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Pay button */}
-      <Button
-        onClick={handleCreateOrder}
-        disabled={isDisabled}
-        className="w-full mt-4 bg-primary hover:bg-primary/90"
-        size="lg"
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Захиалга үүсгэж байна...
-          </>
-        ) : (
-          'Төлбөр төлөх'
-        )}
-      </Button>
-    </>
-  );
-
   return (
     <div className="min-h-screen bg-[#f7f7f7]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6  py-6">
@@ -906,45 +1033,65 @@ export default function OrderCreatePage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Contact Information Section */}
             <div className="bg-white rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Холбоо барих мэдээлэл</h2>
+              <h2 className="text-xl font-semibold mb-4">Холбоо барих</h2>
 
               {isAuthenticated ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Нэр <span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={userNameInputRef}
                         value={userName}
                         onChange={e => setUserName(e.target.value)}
                         placeholder="Нэр"
                         required
+                        className={`text-sm ${userNameError ? 'border-red-500' : ''}`}
+                        style={
+                          userNameError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                       />
+                      {userNameError && <p className="text-xs text-red-600 mt-1">Нэр оруулна уу</p>}
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Утасны дугаар <span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={userPhoneInputRef}
                         value={userPhone}
                         onChange={e => setUserPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
                         placeholder="Утасны дугаар"
                         maxLength={8}
                         required
+                        className={`text-sm ${userPhoneError ? 'border-red-500' : ''}`}
+                        style={
+                          userPhoneError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                       />
+                      {userPhoneError && (
+                        <p className="text-xs text-red-600 mt-1">
+                          8 оронтой утасны дугаар оруулна уу
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      И-мэйл хаяг <span className="text-red-500">*</span>
+                    <label className="font-medium text-gray-700 mb-1 block">
+                      И-мэйл хаяг <span className="text-gray-400">(заавал биш)</span>
                     </label>
                     <Input
                       type="email"
                       value={userEmail}
                       onChange={e => setUserEmail(e.target.value)}
                       placeholder={savedEmailPlaceholder || 'Имэйл'}
-                      required
+                      className="text-sm"
                     />
                   </div>
                 </div>
@@ -952,23 +1099,34 @@ export default function OrderCreatePage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Нэр <span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={guestNameInputRef}
                         value={guestAddress.fullName}
                         onChange={e =>
                           setGuestAddress({ ...guestAddress, fullName: e.target.value })
                         }
-                        placeholder="Нэр"
+                        placeholder="Нэрээ оруулна уу"
                         required
+                        className={`text-sm ${guestNameError ? 'border-red-500' : ''}`}
+                        style={
+                          guestNameError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                       />
+                      {guestNameError && (
+                        <p className="text-xs text-red-600 mt-1">Нэр оруулна уу</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Утасны дугаар <span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={guestPhoneInputRef}
                         value={guestAddress.phoneNumber}
                         onChange={e =>
                           setGuestAddress({
@@ -976,22 +1134,33 @@ export default function OrderCreatePage() {
                             phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 8),
                           })
                         }
-                        placeholder={userPhone || 'Утасны дугаар'}
+                        placeholder={userPhone || 'xxxx-xxxx'}
                         maxLength={8}
                         required
+                        className={`text-sm ${guestPhoneError ? 'border-red-500' : ''}`}
+                        style={
+                          guestPhoneError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                       />
+                      {guestPhoneError && (
+                        <p className="text-xs text-red-600 mt-1">
+                          8 оронтой утасны дугаар оруулна уу
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      И-мэйл хаяг <span className="text-red-500">*</span>
+                    <label className="font-medium text-gray-700 mb-1 block">
+                      И-мэйл хаяг <span className="text-gray-400">(заавал биш)</span>
                     </label>
                     <Input
                       type="email"
                       value={guestAddress.email || ''}
                       onChange={e => setGuestAddress({ ...guestAddress, email: e.target.value })}
-                      placeholder={savedEmailPlaceholder || 'Имэйл'}
-                      required
+                      placeholder={savedEmailPlaceholder || 'user@gmail.com'}
+                      className="text-sm"
                     />
                   </div>
                   <p className="text-sm text-gray-600 mt-3">
@@ -1010,7 +1179,7 @@ export default function OrderCreatePage() {
 
             {/* Delivery Address Information Section */}
             <div className="bg-white rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Хүргэлт хүлээн авах мэдээлэл</h2>
+              <h2 className="text-xl font-semibold mb-4">Хүргэлтийн мэдээлэл</h2>
 
               {isAuthenticated ? (
                 addresses.length > 0 && !showAddAddressForm ? (
@@ -1098,33 +1267,52 @@ export default function OrderCreatePage() {
                   <div className="space-y-4">
                     {/* Label input at the top */}
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Хаягийн гарчиг <span className="text-red-500">*</span>
                       </label>
                       <Input
+                        id="user-address-label-input"
                         value={newAddress.label || ''}
-                        onChange={e => setNewAddress({ ...newAddress, label: e.target.value })}
-                        placeholder="Жишээ: Гэр, Ажил, Оффис"
+                        onChange={e => {
+                          setNewAddress({ ...newAddress, label: e.target.value });
+                          setUserAddressLabelError(false);
+                        }}
+                        placeholder="Жишээ: гэр, ажил, оффис"
+                        className={`text-sm ${userAddressLabelError ? 'border-red-500' : ''}`}
+                        style={
+                          userAddressLabelError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                         required
                         disabled={
                           createAddressMutation.isPending || updateAddressMutation.isPending
                         }
                       />
+                      {userAddressLabelError && (
+                        <p className="text-xs text-red-600 mt-1">Хаягийн гарчиг оруулна уу</p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="font-medium text-gray-700 mb-1 block">
                           Дүүрэг <span className="text-red-500">*</span>
                         </label>
                         <select
+                          ref={userDistrictRef}
                           value={selectedDistrict}
                           onChange={e => {
                             setSelectedDistrict(e.target.value);
                             setNewAddress({ ...newAddress, provinceOrDistrict: e.target.value });
                           }}
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          className={`flex h-10 w-full rounded-md text-sm border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${userDistrictError ? 'border-red-500' : 'border-input'}`}
                           required
+                          style={
+                            userDistrictError
+                              ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                              : {}
+                          }
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
@@ -1136,18 +1324,28 @@ export default function OrderCreatePage() {
                             </option>
                           ))}
                         </select>
+                        {userDistrictError && (
+                          <p className="text-xs text-red-600 mt-1">Дүүрэг сонгоно уу</p>
+                        )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
-                          Хороо <span className="text-red-500">*</span>
+                        <label className="font-medium text-gray-700 mb-1 block">
+                          Хороо <span className="text-gray-500"> (заавал биш)</span>
                         </label>
                         <select
+                          id="user-khoroo-select"
                           value={newAddress.khorooOrSoum}
-                          onChange={e =>
-                            setNewAddress({ ...newAddress, khorooOrSoum: e.target.value })
-                          }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          onChange={e => {
+                            setNewAddress({ ...newAddress, khorooOrSoum: e.target.value });
+                            setUserKhorooError(false);
+                          }}
+                          className={`flex h-10 w-full text-sm rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${userKhorooError ? 'border-red-500' : 'border-input'}`}
                           required
+                          style={
+                            userKhorooError
+                              ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                              : {}
+                          }
                           disabled={
                             createAddressMutation.isPending || !selectedDistrict || khorooLoading
                           }
@@ -1156,7 +1354,7 @@ export default function OrderCreatePage() {
                             {khorooLoading
                               ? 'Ачаалж байна...'
                               : selectedDistrict
-                                ? 'Хороо/Сум сонгох'
+                                ? 'Хороо сонгох'
                                 : 'Эхлээд дүүрэг сонгоно уу'}
                           </option>
                           {Array.isArray(khorooOptions) &&
@@ -1167,53 +1365,89 @@ export default function OrderCreatePage() {
                               </option>
                             ))}
                         </select>
+                        {/* Хороо заавал биш тул алдаа харуулахгүй */}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="font-medium text-gray-700 mb-1 block">
                           Байр<span className="text-red-500">*</span>
                         </label>
                         <Input
-                          value={newAddress.residentialComplex}
-                          onChange={e =>
-                            setNewAddress({ ...newAddress, residentialComplex: e.target.value })
-                          }
+                          id="user-bair-input"
+                          value={newAddress.residentialComplex || ''}
+                          onChange={e => {
+                            setNewAddress({ ...newAddress, residentialComplex: e.target.value });
+                            setUserBairError(false);
+                          }}
                           required
                           placeholder="Байр"
+                          className={`text-sm ${userBairError ? 'border-red-500' : ''}`}
+                          style={
+                            userBairError
+                              ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                              : {}
+                          }
                         />
+                        {userBairError && (
+                          <p className="text-xs text-red-600 mt-1">Байр оруулна уу</p>
+                        )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="font-medium text-gray-700 mb-1 block">
                           Орц<span className="text-red-500">*</span>
                         </label>
                         <Input
+                          id="user-orts-input"
                           value={newAddress.entrance || ''}
-                          onChange={e => setNewAddress({ ...newAddress, entrance: e.target.value })}
+                          onChange={e => {
+                            setNewAddress({ ...newAddress, entrance: e.target.value });
+                            setUserOrtsError(false);
+                          }}
                           placeholder="Орцны дугаар"
                           required
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
+                          className={`text-sm ${userOrtsError ? 'border-red-500' : ''}`}
+                          style={
+                            userOrtsError
+                              ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                              : {}
+                          }
                         />
+                        {userOrtsError && (
+                          <p className="text-xs text-red-600 mt-1">Орц оруулна уу</p>
+                        )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                        <label className="font-medium text-gray-700 mb-1 block">
                           Тоот<span className="text-red-500">*</span>
                         </label>
                         <Input
+                          id="user-toot-input"
                           value={newAddress.apartmentNumber || ''}
-                          onChange={e =>
-                            setNewAddress({ ...newAddress, apartmentNumber: e.target.value })
-                          }
+                          onChange={e => {
+                            setNewAddress({ ...newAddress, apartmentNumber: e.target.value });
+                            setUserTootError(false);
+                          }}
                           placeholder="Тоот"
                           required
                           disabled={
                             createAddressMutation.isPending || updateAddressMutation.isPending
                           }
+                          className={`text-sm ${userTootError ? 'border-red-500' : ''}`}
+                          style={
+                            userTootError
+                              ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                              : {}
+                          }
                         />
+                        {userTootError && (
+                          <p className="text-xs text-red-600 mt-1">Тоот оруулна уу</p>
+                        )}
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Дэлгэрэнгүй хаяг
                       </label>
                       <Textarea
@@ -1227,6 +1461,7 @@ export default function OrderCreatePage() {
                         placeholder="Дэлгэрэнгүй хаягийн мэдээлэл"
                         maxLength={500}
                         rows={3}
+                        className="text-sm"
                         disabled={
                           createAddressMutation.isPending || updateAddressMutation.isPending
                         }
@@ -1236,26 +1471,39 @@ export default function OrderCreatePage() {
                     {/* Save/Cancel Buttons - show when form is visible: adding new, editing, or user has no addresses */}
                     {(showAddAddressForm || addresses.length === 0) && (
                       <div className="flex gap-3 pt-4">
-                        <Button
-                          onClick={handleSaveAddress}
-                          disabled={
-                            createAddressMutation.isPending ||
-                            updateAddressMutation.isPending ||
-                            // !newAddress.label?.trim() ||
-                            !newAddress.provinceOrDistrict ||
-                            !newAddress.khorooOrSoum
-                          }
-                          className="flex-1 bg-primary hover:bg-primary/90"
-                        >
-                          {createAddressMutation.isPending || updateAddressMutation.isPending ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Хадгалж байна...
-                            </>
-                          ) : (
-                            'Хадгалах'
+                        <div className="flex-1">
+                          <Button
+                            onClick={handleSaveAddress}
+                            disabled={
+                              createAddressMutation.isPending ||
+                              updateAddressMutation.isPending ||
+                              !newAddress.provinceOrDistrict ||
+                              !newAddress.residentialComplex?.trim() ||
+                              !newAddress.entrance?.trim() ||
+                              !newAddress.apartmentNumber?.trim()
+                            }
+                            className={`w-full bg-primary hover:bg-primary/90 ${showSaveAddressError ? 'border-2 border-red-500' : ''}`}
+                            style={
+                              showSaveAddressError
+                                ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                                : {}
+                            }
+                          >
+                            {createAddressMutation.isPending || updateAddressMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Хадгалж байна...
+                              </>
+                            ) : (
+                              'Хадгалах'
+                            )}
+                          </Button>
+                          {showSaveAddressError && (
+                            <p className="text-xs text-red-600 mt-2 text-center font-semibold">
+                              Хаягаа хадгална уу
+                            </p>
                           )}
-                        </Button>
+                        </div>
                         <Button
                           onClick={handleCancelAddressForm}
                           variant="outline"
@@ -1292,31 +1540,26 @@ export default function OrderCreatePage() {
                 )
               ) : (
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Хаягийн гарчиг <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      value={guestAddress.label || ''}
-                      onChange={e => setGuestAddress({ ...guestAddress, label: e.target.value })}
-                      placeholder="Жишээ: Гэр, Ажил, Оффис"
-                      required
-                    />
-                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Дүүрэг <span className="text-red-500">*</span>
                       </label>
                       <select
+                        ref={guestDistrictRef}
                         value={selectedDistrict}
                         onChange={e => {
                           const district = e.target.value;
                           setSelectedDistrict(district);
                           setGuestAddress({ ...guestAddress, provinceOrDistrict: district });
                         }}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className={`text-sm flex h-10 w-full rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${guestDistrictError ? 'border-red-500' : 'border-input'}`}
                         required
+                        style={
+                          guestDistrictError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                       >
                         <option value="">Дүүрэг сонгох</option>
                         {districts.map(district => (
@@ -1325,25 +1568,35 @@ export default function OrderCreatePage() {
                           </option>
                         ))}
                       </select>
+                      {guestDistrictError && (
+                        <p className="text-xs text-red-600 mt-1">Дүүрэг сонгоно уу</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Хороо <span className="text-red-500">*</span>
+                      <label className="font-medium text-gray-700 mb-1 block">
+                        Хороо <span className="text-gray-500">(заавал биш)</span>
                       </label>
                       <select
+                        ref={guestKhorooRef}
                         value={guestAddress.khorooOrSoum}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, khorooOrSoum: e.target.value })
-                        }
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        onChange={e => {
+                          setGuestAddress({ ...guestAddress, khorooOrSoum: e.target.value });
+                          setGuestKhorooError(false);
+                        }}
+                        className={`text-sm flex h-10 w-full rounded-md border bg-background px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${guestKhorooError ? 'border-red-500' : 'border-input'}`}
                         required
+                        style={
+                          guestKhorooError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                         disabled={!selectedDistrict || khorooLoading}
                       >
                         <option value="">
                           {khorooLoading
                             ? 'Ачаалж байна...'
                             : selectedDistrict
-                              ? 'Хороо/Сум сонгох'
+                              ? 'Хороо сонгох '
                               : 'Эхлээд дүүрэг сонгоно уу'}
                         </option>
                         {Array.isArray(khorooOptions) &&
@@ -1354,51 +1607,83 @@ export default function OrderCreatePage() {
                             </option>
                           ))}
                       </select>
+                      {/* Хороо заавал биш тул алдаа харуулахгүй */}
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Байр<span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={guestBairRef}
                         value={guestAddress.residentialComplex}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, residentialComplex: e.target.value })
-                        }
+                        onChange={e => {
+                          setGuestAddress({ ...guestAddress, residentialComplex: e.target.value });
+                          setGuestBairError(false);
+                        }}
                         required
                         placeholder="Байр"
+                        className={`text-sm ${guestBairError ? 'border-red-500' : ''}`}
+                        style={
+                          guestBairError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                       />
+                      {guestBairError && (
+                        <p className="text-xs text-red-600 mt-1">Байр оруулна уу</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Орц<span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={guestOrtsRef}
                         value={guestAddress.entrance}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, entrance: e.target.value })
-                        }
+                        onChange={e => {
+                          setGuestAddress({ ...guestAddress, entrance: e.target.value });
+                          setGuestOrtsError(false);
+                        }}
                         required
                         placeholder="Орц"
+                        className={`text-sm ${guestOrtsError ? 'border-red-500' : ''}`}
+                        style={
+                          guestOrtsError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                       />
+                      {guestOrtsError && (
+                        <p className="text-xs text-red-600 mt-1">Орц оруулна уу</p>
+                      )}
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
+                      <label className="font-medium text-gray-700 mb-1 block">
                         Тоот<span className="text-red-500">*</span>
                       </label>
                       <Input
+                        ref={guestTootRef}
                         value={guestAddress.apartmentNumber}
-                        onChange={e =>
-                          setGuestAddress({ ...guestAddress, apartmentNumber: e.target.value })
-                        }
+                        onChange={e => {
+                          setGuestAddress({ ...guestAddress, apartmentNumber: e.target.value });
+                          setGuestTootError(false);
+                        }}
                         required
                         placeholder="Тоотоо оруулна уу"
+                        className={`text-sm ${guestTootError ? 'border-red-500' : ''}`}
+                        style={
+                          guestTootError
+                            ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                            : {}
+                        }
                       />
+                      {guestTootError && (
+                        <p className="text-xs text-red-600 mt-1">Тоот оруулна уу</p>
+                      )}
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Дэлгэрэнгүй хаяг
-                    </label>
+                    <label className="font-medium text-gray-700 mb-1 block">Дэлгэрэнгүй хаяг</label>
                     <Textarea
                       value={guestAddress.addressNote || ''}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -1410,30 +1695,53 @@ export default function OrderCreatePage() {
                       placeholder="Хаягийн дэлгэрэнгүй мэдээлэл"
                       maxLength={500}
                       rows={3}
+                      className="text-sm"
                     />
                   </div>
                 </div>
               )}
 
               {/* Delivery Date */}
-              <div className="mt-6">
-                <label className="mb-3 text-sm font-medium block">
+              <div className="mt-6" ref={guestDeliveryDateRef}>
+                <label className="mb-3 font-medium block">
                   Хүргэлтийн өдөр сонгох <span className="text-red-500">*</span>
                 </label>
-                <MongolianDatePicker
-                  value={deliveryDate}
-                  onChange={setDeliveryDate}
-                  minDate={new Date().toISOString().split('T')[0]}
-                  isDateDisabled={isDeliveryDateDisabled}
-                />
+                <div
+                  className={`rounded-md border bg-white max-w-max ${guestDeliveryDateError ? 'border-red-500' : 'border-input'}`}
+                  style={
+                    guestDeliveryDateError
+                      ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                      : {}
+                  }
+                >
+                  <MongolianDatePicker
+                    value={deliveryDate}
+                    onChange={date => {
+                      setDeliveryDate(date);
+                      setGuestDeliveryDateError(false);
+                    }}
+                    minDate={new Date().toISOString().split('T')[0]}
+                    isDateDisabled={isDeliveryDateDisabled}
+                  />
+                </div>
+                {guestDeliveryDateError && (
+                  <p className="text-xs text-red-600 mt-1">Хүргэлтийн огноо сонгоно уу</p>
+                )}
               </div>
 
               {/* Delivery Time Slot */}
-              <div className="mt-6">
-                <p className="mb-3 text-sm font-medium">
+              <div className="mt-6" id="guest-delivery-time-slot">
+                <p className="mb-3 font-medium">
                   Хүргэлтийн цаг сонгох <span className="text-red-500">*</span>
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div
+                  className={`grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-md bg-white px-2 py-2 ${guestDeliveryTimeSlotError ? 'border-red-500' : 'border-input'}`}
+                  style={
+                    guestDeliveryTimeSlotError
+                      ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                      : {}
+                  }
+                >
                   {DELIVERY_SLOT_ORDER.map((slot, slotIndex) => {
                     const formatTimeSlot = (s: string) => {
                       const [start, end] = s.split('-');
@@ -1526,7 +1834,12 @@ export default function OrderCreatePage() {
                     return (
                       <button
                         key={slot}
-                        onClick={() => isAvailable && setDeliveryTimeSlot(slot)}
+                        onClick={() => {
+                          if (isAvailable) {
+                            setDeliveryTimeSlot(slot);
+                            setGuestDeliveryTimeSlotError(false);
+                          }
+                        }}
                         disabled={!isAvailable}
                         className={`p-3 border-2 rounded-lg text-sm font-medium transition-colors ${
                           !isAvailable
@@ -1541,105 +1854,174 @@ export default function OrderCreatePage() {
                     );
                   })}
                 </div>
+                {guestDeliveryTimeSlotError && (
+                  <p className="text-xs text-red-600 mt-1">Хүргэлтийн цаг сонгоно уу</p>
+                )}
               </div>
 
               {/* Ebarimt Section */}
               <div className="mt-8 pt-8 border-t border-gray-100">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Image src="/ebarimt-logo.svg" alt="Ebarimt" width={24} height={24} className="w-6 h-6 object-contain" />
+                    <Image
+                      src="/ebarimt-logo.svg"
+                      alt="Ebarimt"
+                      width={24}
+                      height={24}
+                      className="w-6 h-6 object-contain"
+                    />
                   </div>
-                  <h3 className="text-lg font-semibold">И-Баримт</h3>
+                  <h3 className="text-lg font-semibold">ebarimt</h3>
                 </div>
 
-                <div className="space-y-4">
+                <div className="flex flex-row gap-1 w-full">
                   {/* Citizen Option */}
-                  <div 
+                  <div
                     onClick={() => setEbarimtType('CITIZEN')}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      ebarimtType === 'CITIZEN' 
-                        ? 'border-primary bg-primary/5' 
+                    className={`px-4 py-2 rounded-xl border-2 cursor-pointer transition-all w-1/2 ${
+                      ebarimtType === 'CITIZEN'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-100 bg-gray-50 hover:border-gray-200'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        ebarimtType === 'CITIZEN' ? 'border-primary' : 'border-gray-300'
-                      }`}>
-                        {ebarimtType === 'CITIZEN' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                      <div
+                        className={`w-4 h-4 rounded-full border-1 flex items-center justify-center ${
+                          ebarimtType === 'CITIZEN' ? 'border-primary' : 'border-gray-300'
+                        }`}
+                      >
+                        {ebarimtType === 'CITIZEN' && (
+                          <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                        )}
                       </div>
-                      <span className="font-medium">Хувь хүн</span>
+                      <span className="font-medium text-sm">Хувь хүн</span>
                     </div>
                   </div>
 
                   {/* Organization Option */}
-                  <div 
+                  <div
                     onClick={() => setEbarimtType('COMPANY')}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      ebarimtType === 'COMPANY' 
-                        ? 'border-primary bg-primary/5' 
+                    className={`px-4 py-2 rounded-xl border-1 cursor-pointer transition-all w-1/2 ${
+                      ebarimtType === 'COMPANY'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-100 bg-gray-50 hover:border-gray-200'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        ebarimtType === 'COMPANY' ? 'border-primary' : 'border-gray-300'
-                      }`}>
-                        {ebarimtType === 'COMPANY' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          ebarimtType === 'COMPANY' ? 'border-primary' : 'border-gray-300'
+                        }`}
+                      >
+                        {ebarimtType === 'COMPANY' && (
+                          <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                        )}
                       </div>
-                      <span className="font-medium">Албан байгууллага</span>
+                      <span className="font-medium text-sm">Байгууллага</span>
                     </div>
-
-                    {ebarimtType === 'COMPANY' && (
-                      <div className="mt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 flex gap-3">
-                          <Info className="w-5 h-5 text-amber-500 shrink-0" />
-                          <p className="text-sm text-amber-800 leading-snug">
-                            Та байгууллагын регистрийн дугаараа зөв бичнэ үү. Төлбөр төлөгдсөн тохиолдолд регистрийн дугаараа солих боломжгүйг анхаарна уу!
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
-                              Байгууллагын регистр <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                              <Input
-                                value={ebarimtRegNo}
-                                onChange={(e) => setEbarimtRegNo(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                placeholder="Регистрийн дугаар"
-                                className="bg-white border-gray-200"
-                              />
-                              {isFetchingOrg && (
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <label className="text-xs font-semibold text-gray-500 mb-1 block uppercase tracking-wider">
-                              Байгууллагын нэр <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                              value={ebarimtOrgName}
-                              readOnly
-                              placeholder="Байгууллагын нэр"
-                              className="bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
+                {ebarimtType === 'COMPANY' && (
+                  <div className="mt-4 space-y-4" onClick={e => e.stopPropagation()}>
+                    <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 flex gap-3">
+                      <p className="text-xs text-amber-800 leading-snug flex">
+                        Та байгууллагын регистрийн дугаараа зөв бичнэ үү. Төлбөр төлөгдсөн
+                        тохиолдолд регистрийн дугаар солих боломжгүйг анхаарна уу!
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-base font-semibold text-gray-500 mb-1 block ">
+                          Байгууллагын регистр <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <Input
+                            id="ebarimt-regno-input"
+                            value={ebarimtRegNo}
+                            onChange={e => {
+                              setEbarimtRegNo(e.target.value.replace(/\D/g, '').slice(0, 10));
+                              setEbarimtRegNoError(false);
+                            }}
+                            placeholder="Регистрийн дугаар"
+                            className={`bg-white text-sm ${ebarimtRegNoError ? 'border-red-500' : 'border-gray-200'}`}
+                            style={
+                              ebarimtRegNoError
+                                ? { borderColor: '#ef4444', boxShadow: '0 0 0 1.5px #ef4444' }
+                                : {}
+                            }
+                          />
+                          {isFetchingOrg && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            </div>
+                          )}
+                          {ebarimtRegNoError && (
+                            <p className="text-xs text-red-600 mt-1">
+                              Байгууллагын регистр оруулна уу
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-base font-semibold text-gray-500 mb-1 block ">
+                          Байгууллагын нэр <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          value={ebarimtOrgName}
+                          readOnly
+                          className="bg-gray-100 border-gray-200 text-gray-600 cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+              {/* Үйлчилгээний нөхцөл зөвшөөрөх хэсэг */}
+              <div className="flex flex-col gap-2 mt-6 pt-6 border-t border-gray-200">
+                <label className="flex gap-2 text-xs">
+                  <span>
+                    Төлбөр төлөх дарснаар{' '}
+                    <button
+                      type="button"
+                      className="cursor-pointer font-semibold"
+                      style={{ background: 'none', border: 'none', padding: 0 }}
+                      onClick={() => setShowTermsModal(true)}
+                    >
+                      <span className="text-primary hover:text-primary/80 transition-colors">
+                        Үйлчилгээний нөхцөл
+                      </span>
+                    </button>
+                    -ийг зөвшөөрч байгаад тооцно
+                  </span>
+                </label>
+                <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
+                  <DialogContent className="max-w-2xl">
+                    <TermsPrivacyModal onClose={() => setShowTermsModal(false)} />
+                  </DialogContent>
+                </Dialog>
+              </div>
+              {/* Pay button */}
+              <Button
+                onClick={handleCreateOrder}
+                className="w-full text-base mt-4 bg-primary hover:bg-primary/90"
+                size="lg"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Захиалга үүсгэж байна...
+                  </>
+                ) : (
+                  'Төлбөр төлөх'
+                )}
+              </Button>
 
               {/* Mobile Order Summary & Navigation */}
-              <div className="lg:hidden mt-6 pt-6 border-t border-gray-200 space-y-4">
+              {/* <div className="lg:hidden mt-6 pt-6 border-t border-gray-200 space-y-4">
                 {orderSummaryContent}
-              </div>
+              </div> */}
 
               {/* Desktop Navigation */}
               <div className="hidden lg:flex items-center mt-6 pt-6 border-t border-gray-200">
@@ -1651,7 +2033,7 @@ export default function OrderCreatePage() {
                   Сагс руу буцах
                 </a>
               </div>
-              
+
               {/* Mobile Navigation */}
               <div className="flex lg:hidden items-center justify-center mt-4">
                 <a
@@ -1666,11 +2048,9 @@ export default function OrderCreatePage() {
           </div>
 
           {/* Right Column - Order Summary */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-white rounded-lg p-6 sticky top-6">
-              {orderSummaryContent}
-            </div>
-          </div>
+          {/* <div className="hidden lg:block lg:col-span-1">
+            <div className="bg-white rounded-lg p-6 sticky top-6">{orderSummaryContent}</div>
+          </div> */}
         </div>
       </div>
     </div>
