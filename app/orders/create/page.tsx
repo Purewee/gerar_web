@@ -584,7 +584,11 @@ export default function OrderCreatePage() {
           setShowAddAddressForm(true);
           setTimeout(() => {
             const el = document.getElementById('user-address-label-input');
-            el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (el) {
+              const y = el.getBoundingClientRect().top + window.pageYOffset - 0; // 20px margin
+              window.scrollTo({ top: 1000, behavior: 'smooth' });
+            }
           }, 400);
           setIsSubmitting(false);
           setShowSaveAddressError(true);
