@@ -198,7 +198,7 @@ export function RegisterModal({
                 Утасны дугаар
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div className="absolute left-0 pl-4 pt-4 flex items-center pointer-events-none">
                   <span className="text-gray-500 text-sm font-medium">+976</span>
                 </div>
                 <Input
@@ -209,10 +209,18 @@ export function RegisterModal({
                     setMobile(e.target.value.replace(/\D/g, '').slice(0, 8));
                     if (errors.mobile) setErrors({ ...errors, mobile: undefined });
                   }}
+                  onBlur={() => {
+                    if (mobile.length !== 8) {
+                      setErrors(prev => ({
+                        ...prev,
+                        mobile: '8 оронтой утасны дугаар оруулна уу',
+                      }));
+                    }
+                  }}
                   placeholder="8 оронтой утасны дугаар"
                   className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-md transition-all ${
                     errors.mobile
-                      ? 'border-red-300 focus:border-red-400'
+                      ? 'border-2 border-red-300 focus:border-red-400'
                       : 'border-gray-300 focus:border-primary'
                   }`}
                   required

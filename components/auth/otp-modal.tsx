@@ -264,10 +264,18 @@ export function OTPModal({
                       setMobileInput(e.target.value.replace(/\D/g, '').slice(0, 8));
                       if (errors.mobile) setErrors({ ...errors, mobile: undefined });
                     }}
+                    onBlur={() => {
+                      if (mobileInput.length !== 8) {
+                        setErrors(prev => ({
+                          ...prev,
+                          mobile: '8 оронтой утасны дугаар оруулна уу',
+                        }));
+                      }
+                    }}
                     placeholder="8 оронтой утасны дугаар"
                     className={`pl-14 h-12 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all ${
                       errors.mobile
-                        ? 'border-red-300 focus:border-red-400'
+                        ? 'border-2 border-red-300 focus:border-red-400'
                         : 'border-gray-300 focus:border-primary'
                     }`}
                     required
