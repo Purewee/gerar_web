@@ -6,9 +6,21 @@ import { getAuthToken } from '@/lib/api';
  * Returns: boolean
  */
 export function useIsAuthenticated(): boolean {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!getAuthToken());
+
   useEffect(() => {
-    setIsAuthenticated(!!getAuthToken());
+    const checkAuth = () => setIsAuthenticated(!!getAuthToken());
+    checkAuth();
+
+    // Listen for login/logout events (custom events or storage changes)
+    window.addEventListener('authChanged', checkAuth);
+    window.addEventListener('storage', checkAuth);
+
+    return () => {
+      window.removeEventListener('authChanged', checkAuth);
+      window.removeEventListener('storage', checkAuth);
+    };
   }, []);
+
   return isAuthenticated;
 }
