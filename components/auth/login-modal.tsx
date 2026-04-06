@@ -88,6 +88,7 @@ export function LoginModal({
         setPassword(['', '', '', '']);
         setErrors({});
         onOpenChange(false);
+        window.location.reload();
       } else {
         setErrors({ password: 'Хариу буцаахгүй байна. Дахин оролдоно уу.' });
       }
