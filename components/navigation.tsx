@@ -16,10 +16,7 @@ import {
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useCart, authApi, useSessionValidator, productsApi, useCurrentUser } from '@/lib/api';
 import { useCategoriesStore } from '@/lib/stores/categories';
-import { LoginModal } from '@/components/auth/login-modal';
-import { RegisterModal } from '@/components/auth/register-modal';
-import { OTPModal } from '@/components/auth/otp-modal';
-import { RegisterVerifyModal } from '@/components/auth/register-verify-modal';
+import { UnifiedAuthModal } from '@/components/auth/unified-auth-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 import { Spinner, Skeleton } from '@/components/skeleton';
 import Link from 'next/link';
@@ -75,6 +72,8 @@ export function Navigation() {
     pin: string;
     name: string;
   } | null>(null);
+  // Unified auth modal for mobile sidebar
+  const [mobileAuthModalOpen, setMobileAuthModalOpen] = useState(false);
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
   const [resetPasswordData, setResetPasswordData] = useState<{
     phoneNumber: string;
@@ -178,7 +177,15 @@ export function Navigation() {
 
   // Open login modal when requested from other components (e.g. bottom nav "Нэвтрэх")
   useEffect(() => {
-    const onOpenLogin = () => setLoginModalOpen(true);
+    const onOpenLogin = () => {
+      if (window.innerWidth < 768) {
+        setMobileAuthModalOpen(true);
+        setLoginModalOpen(false);
+      } else {
+        setLoginModalOpen(true);
+        setMobileAuthModalOpen(false);
+      }
+    };
     window.addEventListener('openLoginModal', onOpenLogin);
     return () => window.removeEventListener('openLoginModal', onOpenLogin);
   }, []);
@@ -1486,28 +1493,17 @@ export function Navigation() {
                 </>
               ) : (
                 <div className="flex flex-col items-center pt-8">
-                  <button
-                    onClick={() => {
-                      setMobileProfileMenuOpen(false);
-                      setLoginModalOpen(true);
-                    }}
-                    className="flex mt-8 items-center gap-3 py-2 px-11 border border-primary mx-auto text-primary font-semibold max-w-max hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
-                  >
-                    {/* <User className="w-5 h-5" /> */}
-                    <span>Нэвтрэх</span>
-                  </button>
                   <Button
-                    className="mt-4 px-8 sm:px-16 max-w-max mx-auto text-md h-10 sm:h-12 text-white bg-primary border border-primary/50 border-2 hover:bg-primary/90 hover:text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-100"
+                    className="flex mt-8 items-center gap-3 py-2 px-11 border border-primary mx-auto text-primary font-semibold max-w-max hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
                     onClick={() => {
                       setMobileProfileMenuOpen(false);
-                      setOpen(true);
+                      setMobileAuthModalOpen(true);
                     }}
                     variant={'outline'}
                     type="button"
                   >
-                    Бүртгүүлэх
+                    Нэвтрэх / Бүртгүүлэх
                   </Button>
-                  <RegisterModal open={open} onOpenChange={setOpen} />
                 </div>
               )}
             </div>
@@ -1515,55 +1511,14 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Auth Modals */}
-      <LoginModal
-        open={loginModalOpen}
-        onOpenChange={setLoginModalOpen}
-        onSwitchToRegister={() => {
-          setLoginModalOpen(false);
-          setRegisterModalOpen(true);
+      {/* Unified Auth Modal (single instance for both mobile & desktop) */}
+      <UnifiedAuthModal
+        open={loginModalOpen || mobileAuthModalOpen}
+        onOpenChange={open => {
+          setLoginModalOpen(open);
+          setMobileAuthModalOpen(open);
         }}
-        onSwitchToOTP={() => {
-          setLoginModalOpen(false);
-          setOtpModalOpen(true);
-        }}
-      />
-      <RegisterModal
-        open={registerModalOpen}
-        onOpenChange={setRegisterModalOpen}
-        onSwitchToLogin={() => {
-          setRegisterModalOpen(false);
-          setLoginModalOpen(true);
-        }}
-        onOTPSent={(phoneNumber, pin, name) => {
-          setRegistrationData({ phoneNumber, pin, name });
-          setRegisterVerifyModalOpen(true);
-        }}
-      />
-      <RegisterVerifyModal
-        open={registerVerifyModalOpen}
-        onOpenChange={setRegisterVerifyModalOpen}
-        onSwitchToLogin={() => {
-          setRegisterVerifyModalOpen(false);
-          setLoginModalOpen(true);
-        }}
-        phoneNumber={registrationData?.phoneNumber || ''}
-        pin={registrationData?.pin || ''}
-        name={registrationData?.name || ''}
-      />
-      <OTPModal
-        open={otpModalOpen}
-        onOpenChange={setOtpModalOpen}
-        onSwitchToLogin={() => {
-          setOtpModalOpen(false);
-          setLoginModalOpen(true);
-        }}
-        onOTPVerified={(phoneNumber, otpCode) => {
-          // OTP verified, open reset password modal
-          setResetPasswordData({ phoneNumber, otpCode });
-          setResetPasswordModalOpen(true);
-        }}
-        purpose="PASSWORD_RESET"
+        initialMode="login"
       />
       <ResetPasswordModal
         open={resetPasswordModalOpen}

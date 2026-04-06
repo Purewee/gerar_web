@@ -298,7 +298,7 @@ export default function CartPage() {
           <div className="space-y-10">
             {/* Empty Cart Main Message */}
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
-              <CardContent className="flex flex-col items-center justify-center py-16 sm:py-20 px-6">
+              <CardContent className="flex flex-col items-center justify-center py-12 sm:py-20 px-6">
                 <div className="relative mb-8">
                   <div className="w-28 h-28 sm:w-36 sm:h-36 bg-linear-to-br from-primary/20 via-primary/10 to-primary/5 rounded-3xl flex items-center justify-center shadow-lg shadow-primary/10">
                     <ShoppingBag className="w-14 h-14 sm:w-18 sm:h-18 text-primary" />
@@ -309,7 +309,7 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
-                <p className="text-md sm:text-xl lg:text-2xl px-8 sm:px-0 text-gray-500 mb-4 py-4 text-center">
+                <p className="text-md sm:text-xl lg:text-2xl px-8 sm:px-0 text-gray-500  text-center">
                   {cartError ? 'Сагс ачаалахад алдаа гарлаа' : 'Таны сагс одоогоор хоосон байна'}
                 </p>
                 <p className="text-gray-600 mb-2 text-center max-w-lg text-lg leading-5">
@@ -317,9 +317,6 @@ export default function CartPage() {
                     ? 'Сагс ачаалахад алдаа гарлаа. Дахин оролдох эсвэл дэлгүүрт үргэлжлүүлэх боломжтой.'
                     : ''}
                 </p>
-                {/* <p className="text-sm text-gray-500 mb-10 text-center">
-                  Бид танд шилдэг бүтээгдэхүүн санал болгож байна
-                </p> */}
                 <div className="flex flex-col sm:flex-row gap-4 w-full">
                   {cartError && (
                     <Button
@@ -332,50 +329,16 @@ export default function CartPage() {
                     </Button>
                   )}
                   <Button
-                    onClick={() => router.push('/')}
-                    size="lg"
-                    className="flex-1 max-w-max mx-auto min-h-[48px] py-1 sm:py-2 px-6 sm:px-6 text-sm sm:text-base bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                    variant="link"
+                    asChild
+                    className="bg-white border border-2 border-gray-200 max-w-max text-gray-700 mx-auto"
                   >
-                    Дэлгүүрт үргэлжлүүлэх
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1 mr-0" />
+                    <Link href="/">Дэлгүүрт орох</Link>
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Categories Section */}
-            {/* {categories.length > 0 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-linear-to-br from-primary/10 to-primary/5 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900">Ангилалууд</h3>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
-                  {categories.slice(0, 10).map(category => (
-                    <Link
-                      key={category.id}
-                      href={`/category?categoryId=${category.id}`}
-                      className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:border-primary/40 p-4 sm:p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
-                    >
-                      <div className="text-center space-y-3">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto bg-linear-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-sm">
-                          🛍️
-                        </div>
-                        <h4 className="font-semibold text-sm sm:text-base text-gray-900 group-hover:text-primary transition-colors line-clamp-2">
-                          {category.name}
-                        </h4>
-                      </div>
-                      <div className="absolute inset-0 bg-linear-to-br from-primary/0 to-primary/0 group-hover:from-primary/5 group-hover:to-transparent transition-all duration-300 rounded-2xl" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )} */}
-
-            {/* Suggested Products Section */}
-            {/* {suggestedProducts.length > 0 && ... */}
             {isMobile && <MobileHomeFooter />}
           </div>
         ) : (
@@ -628,7 +591,7 @@ export default function CartPage() {
                         className="text-primary font-medium hover:underline"
                       >
                         {' '}
-                        Нэвтрэх
+                        Нэвтрэх / Бүртгүүлэх
                       </button>
                     </p>
                   )}

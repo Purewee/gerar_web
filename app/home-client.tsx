@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RegisterModal } from '@/components/auth/register-modal';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
@@ -19,20 +18,20 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
+import { UnifiedAuthModal } from '@/components/auth/unified-auth-modal';
+
 function RegisterSectionButton() {
-  const [open, setOpen] = useState(false);
   return (
-    <>
-      <Button
-        className="mt-4 px-8 sm:px-16 text-lg h-10 sm:h-12 text-white bg-primary border border-primary/50 border-2 hover:bg-primary/90 hover:text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-100"
-        onClick={() => setOpen(true)}
-        variant={'outline'}
-        type="button"
-      >
-        Бүртгүүлэх
-      </Button>
-      <RegisterModal open={open} onOpenChange={setOpen} />
-    </>
+    <Button
+      className="flex mt-8 items-center gap-3 py-2 px-11 border border-primary mx-auto text-primary font-semibold max-w-max hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
+      onClick={() => {
+        window.dispatchEvent(new CustomEvent('openLoginModal'));
+      }}
+      variant={'outline'}
+      type="button"
+    >
+      Нэвтрэх / Бүртгүүлэх
+    </Button>
   );
 }
 

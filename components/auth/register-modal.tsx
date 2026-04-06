@@ -146,9 +146,11 @@ export function RegisterModal({
 
       if (otpResponse.data) {
         toast.success('Таны утасны дугаарт 4 оронтой OTP код илгээгдлээ');
-
-        onOpenChange(false);
-        onOTPSent?.(mobile, passString, name.trim());
+        if (onOTPSent) {
+          onOTPSent(mobile, passString, name.trim());
+        } else {
+          onOpenChange(false);
+        }
       }
     } catch (error: any) {
       setErrors({ mobile: error.message || 'Алдаа гарлаа. Дахин оролдоно уу' });
@@ -317,18 +319,11 @@ export function RegisterModal({
             </div>
 
             <div className="flex items-start space-x-3 py-2">
-              <Checkbox
-                id="register-agree"
-                checked={agreed}
-                onChange={(e: any) => setAgreed(e.target.checked)}
-                className="mt-0.5"
-                size={5}
-              />
               <label
                 htmlFor="register-agree"
                 className="text-sm text-gray-600 leading-tight cursor-pointer select-none"
               >
-                Би{' '}
+                Бүртгэл үүсгэх дарснаар{' '}
                 <Link
                   href="/terms"
                   target="_blank"
@@ -346,7 +341,7 @@ export function RegisterModal({
                 >
                   Нууцлалын бодлого
                 </Link>
-                -ийг хүлээн зөвшөөрч байна.
+                -ийг зөвшөөрч байгаад тооцно.
               </label>
             </div>
 
@@ -357,8 +352,7 @@ export function RegisterModal({
                 mobile.length !== 8 ||
                 !name.trim() ||
                 password.join('').length !== 4 ||
-                confirmPassword.join('').length !== 4 ||
-                !agreed
+                confirmPassword.join('').length !== 4
               }
               className="w-full h-12 bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold rounded-md shadow-lg hover:shadow-xl transition-all duration-200"
             >
@@ -386,12 +380,11 @@ export function RegisterModal({
             type="button"
             variant="outline"
             onClick={() => {
-              handleClose();
               onSwitchToLogin?.();
             }}
             className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-semibold rounded-md transition-all duration-200"
           >
-            Аль хэдийн бүртгэлтэй юу? Нэвтрэх
+            Нэвтрэх
           </Button>
         </div>
       </DialogContent>
