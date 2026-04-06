@@ -146,6 +146,17 @@ export default function OrderCreatePage() {
     const [y, m, d] = dateString.split('-').map(Number);
     const date = new Date(y, m - 1, d);
     const weekday = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+
+    // Disable today if current time is past 18:00
+    const today = new Date();
+    const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    if (dateString === todayString) {
+      const currentHour = today.getHours();
+      if (currentHour >= 18) {
+        return true;
+      }
+    }
+
     return offWeekdays.includes(weekday);
   };
 

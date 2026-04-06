@@ -46,7 +46,7 @@ export function SpecialGiftButton() {
   return (
     <Button
       onClick={() => router.push('/gift-store')}
-      className={`relative p-0 font-bold flex items-center justify-center
+      className={`relative p-0 font-bold flex items-center px-1 justify-center
         transition-transform duration-200 bg-white hover:bg-yellow-50 
         ${animate ? 'animate-float ' : ''}
         hover:scale-105 hover:shadow-xl`}

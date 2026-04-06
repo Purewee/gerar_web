@@ -38,7 +38,7 @@ function GiftStoreContent() {
           <div className="text-sm text-blue-800">
             <strong className="md:text-2xl text-xl">5 сарын 15-ыг хүртэл</strong>
             <article className="text-sm md:text-base text-justify">
-              Манайхаас худалдан авалт хийхэд таньд урамшуулал болгож захиалга бүрт бэлэг дагалдана
+              Захиалга бүрт урамшууллын бэлэг дагалдана.
             </article>
           </div>
         </div>

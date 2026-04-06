@@ -307,7 +307,7 @@ export function OTPModal({
                 }}
                 className="w-full h-12 border-2 border-primary/20 text-primary hover:text-primary hover:bg-primary/5 font-semibold rounded-xl transition-all duration-200"
               >
-                Аль хэдийн бүртгэлтэй юу? Нэвтрэх
+                Нэвтрэх
               </Button>
             </form>
           ) : (
@@ -415,7 +415,7 @@ export function OTPModal({
                   }}
                   className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-semibold rounded-xl transition-all duration-200"
                 >
-                  Аль хэдийн бүртгэлтэй юу? Нэвтрэх
+                  Нэвтрэх
                 </Button>
               </div>
             </>

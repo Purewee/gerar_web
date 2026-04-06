@@ -233,7 +233,6 @@ export function LoginModal({
               type="button"
               variant="outline"
               onClick={() => {
-                handleClose();
                 onSwitchToRegister?.();
               }}
               className="w-full h-12 border-2 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary font-semibold rounded-md transition-all duration-200"
