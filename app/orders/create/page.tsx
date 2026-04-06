@@ -279,18 +279,16 @@ export default function OrderCreatePage() {
       const name = localStorage.getItem('user_name') || '';
       const phone = localStorage.getItem('mobile') || '';
 
-      if (!userName) setUserName(name);
-      if (!userEmail) setUserEmail(email);
-      if (!userPhone) setUserPhone(phone);
+      setUserName(name);
+      setUserEmail(email);
+      setUserPhone(phone);
     } else {
       const phone = localStorage.getItem('mobile') || '';
-
-      if (!userPhone) setUserPhone(phone);
-
+      setUserPhone(phone);
       if (phone) {
         setGuestAddress(prev => ({
           ...prev,
-          phoneNumber: prev.phoneNumber || phone,
+          phoneNumber: phone,
         }));
       }
     }

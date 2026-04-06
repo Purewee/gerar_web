@@ -81,7 +81,7 @@ export function LoginModal({
         localStorage.setItem('mobile', mobile);
         localStorage.setItem('user_name', response.data.user.name);
         localStorage.setItem('user_email', response.data.user.email);
-        window.dispatchEvent(new CustomEvent('authStateChanged'));
+        window.dispatchEvent(new CustomEvent('authChanged'));
 
         toast.success('Амжилттай нэвтэрлээ!');
         setMobile('');

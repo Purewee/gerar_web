@@ -148,10 +148,12 @@ export function Navigation() {
     window.addEventListener('storage', handleStorageChange);
     // Custom event for same-tab updates
     window.addEventListener('authStateChanged', updateAuthState);
+    window.addEventListener('authChanged', updateAuthState);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('authStateChanged', updateAuthState);
+      window.removeEventListener('authChanged', updateAuthState);
     };
   }, []);
 
@@ -188,13 +190,19 @@ export function Navigation() {
       setUserName('');
       setUserEmail('');
       setMobileProfileMenuOpen(false);
-      localStorage.clear();
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('mobile');
       // Invalidate user query so points update everywhere
       queryClient.removeQueries({ queryKey: ['auth', 'me'] });
       window.dispatchEvent(new CustomEvent('authStateChanged'));
     } catch (error) {
       console.error('Logout error:', error);
-      localStorage.clear();
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_email');
+      localStorage.removeItem('mobile');
       setIsAuthenticated(false);
       setUserName('');
       setMobileProfileMenuOpen(false);
@@ -669,30 +677,6 @@ export function Navigation() {
                     align="end"
                     className="bg-white border border-gray-200 shadow-xl rounded-lg mt-2 w-48"
                   >
-                    <DropdownMenuItem
-                      asChild
-                      className="cursor-pointer bg-yellow-400/5 focus:bg-yellow-400/10"
-                    >
-                      <Link
-                        href="/loyalty-store"
-                        className="flex items-center gap-2 w-full text-yellow-700 font-bold"
-                      >
-                        <Coins className="w-4 h-4" />
-                        Онооны дэлгүүр
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      asChild
-                      className="cursor-pointer bg-yellow-400/5 focus:bg-yellow-400/10"
-                    >
-                      <Link
-                        href="/gift-store"
-                        className="flex items-center gap-2 w-full text-yellow-700 font-bold"
-                      >
-                        <Coins className="w-4 h-4" />
-                        Бэлэг дэлгүүр
-                      </Link>
-                    </DropdownMenuItem>
                     <div className="h-px bg-gray-100 my-1" />
                     <DropdownMenuItem asChild className="cursor-pointer">
                       <Link href="/profile" className="flex items-center gap-2 w-full">

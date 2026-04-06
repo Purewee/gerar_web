@@ -36,10 +36,9 @@ function GiftStoreContent() {
             <MessageSquareWarning className="md:w-8 w-4 h-4 md:h-8" />
           </div>
           <div className="text-sm text-blue-800">
-            <strong className="md:text-2xl text-xl">5 сарын 15 ыг хүртэл</strong>
+            <strong className="md:text-2xl text-xl">5 сарын 15-ыг хүртэл</strong>
             <article className="text-sm md:text-base text-justify">
-              Манайхаас захиалга хийх бүрт таньд жижиг урамшуулал бэлдсэн байгаа бөгөөд захиалга
-              бүрт бэлэг дагалдана
+              Манайхаас захиалга хийх бүрт таньд урамшуулал болгож захиалга бүрт бэлэг дагалдана
             </article>
           </div>
         </div>
