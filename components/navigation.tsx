@@ -197,6 +197,7 @@ export function Navigation() {
       // Invalidate user query so points update everywhere
       queryClient.removeQueries({ queryKey: ['auth', 'me'] });
       window.dispatchEvent(new CustomEvent('authStateChanged'));
+      window.location.reload();
     } catch (error) {
       console.error('Logout error:', error);
       localStorage.removeItem('isAuthenticated');
@@ -208,6 +209,7 @@ export function Navigation() {
       setMobileProfileMenuOpen(false);
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       window.dispatchEvent(new CustomEvent('authStateChanged'));
+      window.location.reload();
     }
   };
 

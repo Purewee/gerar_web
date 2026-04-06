@@ -148,6 +148,7 @@ export function RegisterVerifyModal({
           setOtp(['', '', '', '']);
           setErrors({});
           onOpenChange(false);
+          window.location.reload();
         }
       }
     } catch (error: any) {
