@@ -632,17 +632,21 @@ export default function CartPage() {
                       </button>
                     </p>
                   )}
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-blue-500" />
-                        <span className="text-xs font-semibold text-blue-700">Цуглуулах оноо:</span>
+                  {isAuthenticated && (
+                    <div className="rounded-lg border border-blue-100 bg-blue-50 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-blue-500" />
+                          <span className="text-xs font-semibold text-blue-700">
+                            Цуглуулах оноо:
+                          </span>
+                        </div>
+                        <span className="text-sm font-bold text-blue-800">
+                          +{earnedPoints.toLocaleString()} оноо
+                        </span>
                       </div>
-                      <span className="text-sm font-bold text-blue-800">
-                        +{earnedPoints.toLocaleString()} оноо
-                      </span>
                     </div>
-                  </div>
+                  )}
                   <div className="border-t border-gray-200 pt-3 mt-3 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-gray-900">Нийт төлөх дүн</span>
