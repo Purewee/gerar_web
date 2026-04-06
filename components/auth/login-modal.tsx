@@ -15,6 +15,7 @@ interface LoginModalProps {
   onOpenChange: (open: boolean) => void;
   onSwitchToRegister?: () => void;
   onSwitchToOTP?: () => void;
+  onSwitchToResetPassword?: (phoneNumber: string, otpCode: string) => void;
 }
 
 export function LoginModal({
@@ -22,6 +23,7 @@ export function LoginModal({
   onOpenChange,
   onSwitchToRegister,
   onSwitchToOTP,
+  onSwitchToResetPassword,
 }: LoginModalProps) {
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState(['', '', '', '']);
@@ -94,6 +96,7 @@ export function LoginModal({
       }
     } catch (error: any) {
       setErrors({ password: error.message || 'Утасны дугаар эсвэл PIN буруу байна' });
+      // Do NOT call onOpenChange(false) here
     }
   };
 
@@ -212,10 +215,13 @@ export function LoginModal({
             <button
               type="button"
               onClick={() => {
-                handleClose();
-                onSwitchToOTP?.();
+                if (onSwitchToResetPassword) {
+                  onSwitchToResetPassword(mobile, '');
+                } else {
+                  onSwitchToOTP?.();
+                }
               }}
-              className="text-sm text-primary hover:text-primary/80 font-medium w-full text-center transition-colors"
+              className="text-sm text-primary cursor-pointer hover:text-primary/80 font-medium w-full text-center transition-colors"
             >
               Нууц үг мартсан уу?
             </button>

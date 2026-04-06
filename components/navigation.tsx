@@ -177,7 +177,15 @@ export function Navigation() {
 
   // Open login modal when requested from other components (e.g. bottom nav "Нэвтрэх")
   useEffect(() => {
-    const onOpenLogin = () => setLoginModalOpen(true);
+    const onOpenLogin = () => {
+      if (window.innerWidth < 768) {
+        setMobileAuthModalOpen(true);
+        setLoginModalOpen(false);
+      } else {
+        setLoginModalOpen(true);
+        setMobileAuthModalOpen(false);
+      }
+    };
     window.addEventListener('openLoginModal', onOpenLogin);
     return () => window.removeEventListener('openLoginModal', onOpenLogin);
   }, []);
@@ -1503,16 +1511,13 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Unified Auth Modal for mobile sidebar */}
+      {/* Unified Auth Modal (single instance for both mobile & desktop) */}
       <UnifiedAuthModal
-        open={mobileAuthModalOpen}
-        onOpenChange={setMobileAuthModalOpen}
-        initialMode="login"
-      />
-      {/* Unified Auth Modal for desktop */}
-      <UnifiedAuthModal
-        open={loginModalOpen}
-        onOpenChange={setLoginModalOpen}
+        open={loginModalOpen || mobileAuthModalOpen}
+        onOpenChange={open => {
+          setLoginModalOpen(open);
+          setMobileAuthModalOpen(open);
+        }}
         initialMode="login"
       />
       <ResetPasswordModal

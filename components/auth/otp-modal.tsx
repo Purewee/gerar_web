@@ -43,13 +43,19 @@ export function OTPModal({
   useEffect(() => {
     const newOtpLength = purpose === 'REGISTRATION' ? 4 : 6;
     if (open) {
-      const storedMobile = sessionStorage.getItem('mobile');
-      if (storedMobile) {
-        setMobile(storedMobile);
-        setShowMobileInput(false);
-      } else {
+      // For PASSWORD_RESET, always show mobile input first
+      if (purpose === 'PASSWORD_RESET') {
         setShowMobileInput(true);
         setMobile('');
+      } else {
+        const storedMobile = sessionStorage.getItem('mobile');
+        if (storedMobile) {
+          setMobile(storedMobile);
+          setShowMobileInput(false);
+        } else {
+          setShowMobileInput(true);
+          setMobile('');
+        }
       }
       setOtp(Array(newOtpLength).fill(''));
       setMobileInput('');
@@ -165,7 +171,10 @@ export function OTPModal({
         toast.success('OTP код амжилттай баталгаажлаа');
 
         onOTPVerified?.(mobile, otpString);
-        onOpenChange(false);
+        // For PASSWORD_RESET, parent will handle modal transition, so do not close here
+        if (purpose !== 'PASSWORD_RESET') {
+          onOpenChange(false);
+        }
       }
     } catch (error: any) {
       setErrors({ otp: error.message || 'Буруу эсвэл хугацаа дууссан OTP код' });
