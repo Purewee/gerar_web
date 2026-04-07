@@ -36,6 +36,7 @@ import { MobileHomeFooter } from '@/components/mobile-footer';
 
 import { useOTPSendForSimpleOrder, useSimpleOrderCreate } from '@/lib/api';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogTitle, DialogClose } from '@/components/ui/dialog';
 
 function CartItemFavoriteRemove({
   productId,
@@ -846,9 +847,14 @@ export default function CartPage() {
           )}
         </div>
       </div>
-      {simpleOrderOpen && (
-        <div className="fixed inset-0 z-50 px-4 sm:px-0 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto p-6 relative animate-fade-in">
+      <Dialog
+        open={simpleOrderOpen}
+        onOpenChange={open => {
+          if (!open) setSimpleOrderOpen(false);
+        }}
+      >
+        <DialogContent className="p-4 border-none rounded-lg sm:max-w-md w-full">
+          <DialogClose asChild>
             <button
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
               onClick={() => setSimpleOrderOpen(false)}
@@ -857,142 +863,139 @@ export default function CartPage() {
             >
               <X className="w-5 h-5" />
             </button>
+          </DialogClose>
+          <DialogTitle asChild>
             <h3 className="text-xl font-bold mb-6 text-center text-gray-800">Хялбар захиалга</h3>
-            {simpleOrderSuccess ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <Sparkles className="w-10 h-10 text-green-500 mb-2" />
-                <div className="text-lg font-semibold text-green-700 mb-2">Захиалга амжилттай!</div>
-                <div className="text-gray-600 text-center mb-4">Таны захиалгыг хүлээн авлаа.</div>
-                <Button
-                  className="mt-2"
-                  onClick={() => setSimpleOrderOpen(false)}
-                  variant="outline"
-                >
-                  Хаах
-                </Button>
+          </DialogTitle>
+          {/* ...existing modal content... */}
+          {simpleOrderSuccess ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <Sparkles className="w-10 h-10 text-green-500 mb-2" />
+              <div className="text-lg font-semibold text-green-700 mb-2">Захиалга амжилттай!</div>
+              <div className="text-gray-600 text-center mb-4">Таны захиалгыг хүлээн авлаа.</div>
+              <Button className="mt-2" onClick={() => setSimpleOrderOpen(false)} variant="outline">
+                Хаах
+              </Button>
+            </div>
+          ) : simpleOrderStep === 'form' ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Утасны дугаар<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  className="w-full border border-input rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-300 autofill:!bg-white"
+                  placeholder="xxxx-xxxx"
+                  value={simpleOrderPhone}
+                  onChange={e => setSimpleOrderPhone(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                  maxLength={8}
+                  disabled={simpleOrderLoading}
+                  autoComplete="off"
+                />
               </div>
-            ) : simpleOrderStep === 'form' ? (
-              <form onSubmit={handleSendOtp} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Утасны дугаар<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    className="w-full border border-input rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-300 autofill:!bg-white"
-                    placeholder="xxxx-xxxx"
-                    value={simpleOrderPhone}
-                    onChange={e =>
-                      setSimpleOrderPhone(e.target.value.replace(/\D/g, '').slice(0, 8))
-                    }
-                    maxLength={8}
-                    disabled={simpleOrderLoading}
-                    autoComplete="off"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Хаяг<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border border-input rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-300 autofill:!bg-white"
-                    placeholder="барилга, хороолол, оффис"
-                    value={simpleOrderAddress}
-                    onChange={e => setSimpleOrderAddress(e.target.value)}
-                    disabled={simpleOrderLoading}
-                    autoComplete="off"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Дэлгэрэнгүй хаяг<span className="text-red-500">*</span>
-                  </label>
-                  <Textarea
-                    value={simpleOrderNote}
-                    onChange={e => setSimpleOrderNote(e.target.value)}
-                    placeholder="давхар, тоот, орцны код гэх мэт"
-                    maxLength={500}
-                    rows={2}
-                    disabled={simpleOrderLoading}
-                  />
-                </div>
-                <div className="p-2 bg-blue-50 border border-blue-100 rounded-md flex items-center gap-3">
-                  <div className="text-sm text-blue-800">
-                    <article className="text-sm  ">
-                      Хялбар захиалга хийх үед: <br />
-                      - Урамшууллын оноо, бэлэг, НӨАТ олгохгүй <br /> - Захиалгаа өөрчлөх боломжгүй{' '}
-                      <br />- Хүргэлт 48 цагын дотор хийгдэнэ
-                    </article>
-                  </div>
-                </div>
-                {simpleOrderError && (
-                  <div className="text-red-600 text-sm text-center">{simpleOrderError}</div>
-                )}
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg py-2 font-semibold mt-2"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Хаяг<span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="w-full border border-input rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-300 autofill:!bg-white"
+                  placeholder="барилга, хороолол, оффис"
+                  value={simpleOrderAddress}
+                  onChange={e => setSimpleOrderAddress(e.target.value)}
                   disabled={simpleOrderLoading}
-                >
-                  {simpleOrderLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                  ) : null}
-                  OTP илгээх
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={handleConfirmOtp} className="space-y-4">
-                <div className="text-center text-gray-700 mb-2">
-                  <span className="font-medium">Утас:</span> {simpleOrderPhone}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">OTP код</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="w-full border border-input rounded-lg px-3 py-2 text-center tracking-widest text-lg font-bold focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="____"
-                    value={simpleOrderOtp}
-                    onChange={e => setSimpleOrderOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    maxLength={4}
-                    disabled={simpleOrderLoading}
-                  />
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-500">
-                      {otpResendActive && otpResendTimer > 0
-                        ? `Дахин илгээх (${otpResendTimer} сек)`
-                        : ''}
-                    </span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="text-xs px-2 py-1"
-                      onClick={handleResendOtp}
-                      disabled={otpResendActive || simpleOrderLoading}
-                    >
-                      Дахин илгээх
-                    </Button>
-                  </div>
-                </div>
-                {simpleOrderError && (
-                  <div className="text-red-600 text-sm text-center">{simpleOrderError}</div>
-                )}
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg py-2 font-semibold mt-2"
+                  autoComplete="off"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Дэлгэрэнгүй хаяг<span className="text-red-500">*</span>
+                </label>
+                <Textarea
+                  value={simpleOrderNote}
+                  onChange={e => setSimpleOrderNote(e.target.value)}
+                  placeholder="давхар, тоот, орцны код гэх мэт"
+                  maxLength={500}
+                  rows={2}
                   disabled={simpleOrderLoading}
-                >
-                  {simpleOrderLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                  ) : null}
-                  Захиалга баталгаажуулах
-                </Button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+                />
+              </div>
+              <div className="p-2 bg-blue-50 border border-blue-100 rounded-md flex items-center gap-3">
+                <div className="text-sm text-blue-800">
+                  <article className="text-sm  ">
+                    Хялбар захиалга хийх үед: <br />
+                    - Урамшууллын оноо, бэлэг, НӨАТ олгохгүй <br /> - Захиалгаа өөрчлөх боломжгүй{' '}
+                    <br />- Хүргэлт 48 цагын дотор хийгдэнэ
+                  </article>
+                </div>
+              </div>
+              {simpleOrderError && (
+                <div className="text-red-600 text-sm text-center">{simpleOrderError}</div>
+              )}
+              <Button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg py-2 font-semibold mt-2"
+                disabled={simpleOrderLoading}
+              >
+                {simpleOrderLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                ) : null}
+                OTP илгээх
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleConfirmOtp} className="space-y-4">
+              <div className="text-center text-gray-700 mb-2">
+                <span className="font-medium">Утас:</span> {simpleOrderPhone}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">OTP код</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="w-full border border-input rounded-lg px-3 py-2 text-center tracking-widest text-lg font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="____"
+                  value={simpleOrderOtp}
+                  onChange={e => setSimpleOrderOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  maxLength={4}
+                  disabled={simpleOrderLoading}
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-500">
+                    {otpResendActive && otpResendTimer > 0
+                      ? `Дахин илгээх (${otpResendTimer} сек)`
+                      : ''}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="text-xs px-2 py-1"
+                    onClick={handleResendOtp}
+                    disabled={otpResendActive || simpleOrderLoading}
+                  >
+                    Дахин илгээх
+                  </Button>
+                </div>
+              </div>
+              {simpleOrderError && (
+                <div className="text-red-600 text-sm text-center">{simpleOrderError}</div>
+              )}
+              <Button
+                type="submit"
+                className="w-full bg-primary hover:bg-primary/90 text-white rounded-lg py-2 font-semibold mt-2"
+                disabled={simpleOrderLoading}
+              >
+                {simpleOrderLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                ) : null}
+                Захиалга баталгаажуулах
+              </Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
