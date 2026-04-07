@@ -853,7 +853,11 @@ export default function CartPage() {
           if (!open) setSimpleOrderOpen(false);
         }}
       >
-        <DialogContent className="p-4 border-none rounded-lg sm:max-w-md w-full">
+        <DialogContent
+          className="p-4 border-none rounded-lg sm:max-w-md w-full"
+          onInteractOutside={e => e.preventDefault()}
+          tabIndex={-1}
+        >
           <DialogClose asChild>
             <button
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-700"
