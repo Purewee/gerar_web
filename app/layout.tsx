@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     url: 'https://gerar.mn/', // Хуудасны үндсэн URL
     images: [
       {
-        url: '/og-image.jpg', // public фолдер доторх зураг
+        url: '/og.jpg', // public фолдер доторх зураг
         width: 1200,
         height: 630,
         alt: 'OG зураг',
