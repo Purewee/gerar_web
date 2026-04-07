@@ -1,4 +1,27 @@
+// ==================== SIMPLE ORDER ====================
 'use client';
+export interface SimpleOrderCreateRequest {
+  phoneNumber: string;
+  otpCode: string;
+  address: string;
+  addressNote?: string;
+  sessionToken?: string;
+}
+
+export interface SimpleOrderCreateResponse {
+  order: any; // You can replace 'any' with your actual order type
+}
+
+export const useSimpleOrderCreate = () => {
+  return useMutation({
+    mutationFn: async (data: SimpleOrderCreateRequest) => {
+      return apiFetch<SimpleOrderCreateResponse>('/simple-orders/create', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+  });
+};
 
 // ==================== BANNERS ====================
 export interface Banner {
@@ -555,6 +578,19 @@ export const useOTPSend = () => {
   });
 };
 
+// OTP for simple order hooks
+export const useOTPSendForSimpleOrder = () => {
+  return useMutation({
+    mutationFn: async (data: { phoneNumber: string }) => {
+      // Call the simple order OTP endpoint
+      return apiFetch<SendOTPResponse>('/simple-orders/send-otp', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+  });
+};
+
 export const useOTPVerify = () => {
   return useMutation({
     mutationFn: otpApiFunctions.verify,
@@ -909,7 +945,11 @@ const cartApiFunctions = {
     });
   },
 
-  update: async (productId: number, quantity: number, isPointProduct: boolean = false): Promise<ApiResponse<CartItem>> => {
+  update: async (
+    productId: number,
+    quantity: number,
+    isPointProduct: boolean = false,
+  ): Promise<ApiResponse<CartItem>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
     const body: any = { quantity, isPointProduct };
@@ -925,7 +965,10 @@ const cartApiFunctions = {
     });
   },
 
-  remove: async (productId: number, isPointProduct: boolean = false): Promise<ApiResponse<CartItem>> => {
+  remove: async (
+    productId: number,
+    isPointProduct: boolean = false,
+  ): Promise<ApiResponse<CartItem>> => {
     const token = getAuthToken();
     const sessionToken = getSessionToken();
     const body: any = { isPointProduct };
@@ -1011,8 +1054,15 @@ export const useCartAdd = () => {
 export const useCartUpdate = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, quantity, isPointProduct = false }: { productId: number; quantity: number, isPointProduct?: boolean }) =>
-      cartApiFunctions.update(productId, quantity, isPointProduct),
+    mutationFn: ({
+      productId,
+      quantity,
+      isPointProduct = false,
+    }: {
+      productId: number;
+      quantity: number;
+      isPointProduct?: boolean;
+    }) => cartApiFunctions.update(productId, quantity, isPointProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
     },
@@ -1022,8 +1072,13 @@ export const useCartUpdate = () => {
 export const useCartRemove = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, isPointProduct = false }: { productId: number, isPointProduct?: boolean }) => 
-      cartApiFunctions.remove(productId, isPointProduct),
+    mutationFn: ({
+      productId,
+      isPointProduct = false,
+    }: {
+      productId: number;
+      isPointProduct?: boolean;
+    }) => cartApiFunctions.remove(productId, isPointProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.cart.all });
     },
@@ -1067,7 +1122,10 @@ const favoritesApiFunctions = {
     return apiFetch<Product[]>(`/favorites${query ? `?${query}` : ''}`, {}, true);
   },
 
-  add: async (productId: number, isPointProduct: boolean = false): Promise<ApiResponse<Product>> => {
+  add: async (
+    productId: number,
+    isPointProduct: boolean = false,
+  ): Promise<ApiResponse<Product>> => {
     requireAuth();
     return apiFetch<Product>(
       '/favorites',
@@ -1125,8 +1183,13 @@ export const useFavoriteStatus = (productId: number, isPointProduct: boolean = f
 export const useFavoriteAdd = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, isPointProduct = false }: { productId: number; isPointProduct?: boolean }) => 
-      favoritesApiFunctions.add(productId, isPointProduct),
+    mutationFn: ({
+      productId,
+      isPointProduct = false,
+    }: {
+      productId: number;
+      isPointProduct?: boolean;
+    }) => favoritesApiFunctions.add(productId, isPointProduct),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.favorites.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.products.all });
