@@ -869,7 +869,12 @@ export default function CartPage() {
             </button>
           </DialogClose>
           <DialogTitle asChild>
-            <h3 className="text-xl font-bold mb-6 text-center text-gray-800">Хялбар захиалга</h3>
+            <div>
+              <h3 className="text-xl font-bold mb-2 text-center text-gray-800">Хялбар захиалга</h3>
+              <h4 className=" mb-2 text-sm text-center text-gray-600">
+                Та захиалгаа хүлээж авах үедээ төлбөрөө төлнө
+              </h4>
+            </div>
           </DialogTitle>
           {/* ...existing modal content... */}
           {simpleOrderSuccess ? (
