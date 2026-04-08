@@ -286,7 +286,7 @@ export function OTPModal({
                   <FieldError message={errors.mobile} />
                 ) : (
                   <p className="text-xs text-gray-500 mt-1">
-                    Бид таны дугаарыг баталгаажуулахын тулд OTP илгээх болно
+                    Бид таны дугаарыг баталгаажуулахын тулд Нэг удаагын код болно
                   </p>
                 )}
               </div>
@@ -302,7 +302,7 @@ export function OTPModal({
                     OTP илгээж байна...
                   </span>
                 ) : (
-                  'OTP илгээх'
+                  'Нэг удаагын код'
                 )}
               </Button>
 
