@@ -173,7 +173,7 @@ export default function ProfileOrdersPage() {
                           {order.items?.length ?? 0} бүтээгдэхүүн
                         </p>
                       )}
-                      
+
                       {order.usedPoints > 0 && (
                         <div className="flex items-center gap-1.5 mt-1">
                           <div className="px-2 py-0.5 rounded bg-yellow-100 border border-yellow-200">

@@ -945,7 +945,7 @@ export default function CartPage() {
                 {simpleOrderLoading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
                 ) : null}
-                OTP илгээх
+                Нэг удаагын код илгээх
               </Button>
             </form>
           ) : (
