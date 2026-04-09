@@ -24,9 +24,9 @@ function RegisterSectionButton() {
   return (
     <Button
       className="flex mt-8 items-center gap-3 py-2 px-11 border border-primary mx-auto text-primary font-semibold max-w-max hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
-      onClick={() => {
-        window.dispatchEvent(new CustomEvent('openLoginModal'));
-      }}
+      // onClick={() => {
+      //   window.dispatchEvent(new CustomEvent('openLoginModal'));
+      // }}
       variant={'outline'}
       type="button"
     >
