@@ -1175,7 +1175,7 @@ export default function OrderCreatePage() {
                     Бүртгэлтэй хэрэглэгч?{' '}
                     <button
                       type="button"
-                      // onClick={() => window.dispatchEvent(new CustomEvent('openLoginModal'))}
+                      onClick={() => window.dispatchEvent(new CustomEvent('openLoginModal'))}
                       className="text-primary font-medium hover:underline"
                     >
                       Нэвтрэх

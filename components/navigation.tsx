@@ -722,7 +722,7 @@ export function Navigation() {
               ) : (
                 <Button
                   variant="ghost"
-                  // onClick={() => setLoginModalOpen(true)}
+                  onClick={() => setLoginModalOpen(true)}
                   className="hidden sm:flex hover:bg-gray-100 rounded-lg transition-all hover:text-primary duration-200 text-sm text-primary border border-primary sm:text-base whitespace-nowrap font-medium"
                 >
                   Нэвтрэх
@@ -1495,10 +1495,10 @@ export function Navigation() {
                 <div className="flex flex-col items-center pt-8">
                   <Button
                     className="flex mt-8 items-center gap-3 py-2 px-11 border border-primary mx-auto text-primary font-semibold max-w-max hover:text-primary hover:bg-gray-50 transition-colors duration-200 rounded-lg mx-2 w-full text-left"
-                    // onClick={() => {
-                    //   setMobileProfileMenuOpen(false);
-                    //   setMobileAuthModalOpen(true);
-                    // }}
+                    onClick={() => {
+                      setMobileProfileMenuOpen(false);
+                      setMobileAuthModalOpen(true);
+                    }}
                     variant={'outline'}
                     type="button"
                   >

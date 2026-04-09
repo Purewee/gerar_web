@@ -752,7 +752,7 @@ export default function CartPage() {
                         Та зөвхөн нэвтэрсэн үед л оноогоо цуглуулах боломжтой.{' '}
                         <button
                           type="button"
-                          // onClick={() => window.dispatchEvent(new CustomEvent('openLoginModal'))}
+                          onClick={() => window.dispatchEvent(new CustomEvent('openLoginModal'))}
                           className="text-primary font-medium hover:underline"
                         >
                           {' '}
@@ -800,7 +800,7 @@ export default function CartPage() {
                     variant="outline"
                     className="w-full min-h-[48px] py-3 sm:py-2 px-4 sm:px-6 rounded-xl text-base font-semibold border-2 border-primary text-primary hover:bg-primary/10 transition-all hover:text-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     size="lg"
-                    // onClick={handleOpenSimpleOrder}
+                    onClick={handleOpenSimpleOrder}
                     disabled={simpleOrderLoading}
                   >
                     {simpleOrderLoading ? (
@@ -836,7 +836,7 @@ export default function CartPage() {
                     <Button
                       type="button"
                       className="w-full min-h-[48px] py-3 sm:py-2 px-4 sm:px-6 rounded-xl text-base font-semibold border border-primary text-white hover:bg-primary/90 bg-primary"
-                      // onClick={() => window.dispatchEvent(new CustomEvent('openLoginModal'))}
+                      onClick={() => window.dispatchEvent(new CustomEvent('openLoginModal'))}
                     >
                       Нэвтрэх / Бүртгүүлэх
                     </Button>
