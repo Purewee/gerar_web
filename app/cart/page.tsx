@@ -124,6 +124,8 @@ export default function CartPage() {
 
   // Open modal handler
   const handleOpenSimpleOrder = () => {
+    toast.warning('Уучлаарай, одоогоор хялбар захиалга хийх боломжгүй.', { duration: 2000 });
+    return null;
     if (cartItems.length === 0) {
       setSimpleOrderLoading(true);
       toast.error('Сагс хоосон байна', { duration: 2500 });
